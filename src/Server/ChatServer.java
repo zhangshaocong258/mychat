@@ -248,3 +248,17 @@ public class ChatServer {
 
 
 }
+
+class User{
+    private String name = "";
+    private String port = "";
+    private String str = "";
+    private String peer = "";
+    private Map<String,String> clientInfo= new HashMap<>();
+    private java.util.List<ChatServer.Client> clients = new ArrayList<ChatServer.Client>();
+    private String DELIMITER ="\f";
+    private String SEPARATOR ="\r";
+    User(){
+
+    }
+}
