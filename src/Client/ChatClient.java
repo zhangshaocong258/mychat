@@ -26,36 +26,36 @@ public class ChatClient{
     String name = "";
     String port = "";
     String str = "";
-    String peer = "ç¾¤èŠ";
+    String peer = "ÈºÁÄ";
     String all = "";
     String DELIMITER ="\f";
     String SEPARATOR ="\r";
     boolean bconnected = false;
     boolean cClient = false;
 
-    Label clientLabel = new Label("ç”¨æˆ·å");
+    Label clientLabel = new Label("ÓÃ»§Ãû");
     TextField clientName = new TextField(10);
-    Button login = new Button("ç™»å½•");
+    Button login = new Button("µÇÂ¼");
 
-    Label chatLabel = new Label("èŠå¤©è®°å½•");
+    Label chatLabel = new Label("ÁÄÌì¼ÇÂ¼");
     TextArea ta = new TextArea(25,20);
     TextArea content = new TextArea(2,20);
 
-    Label onlineLabel = new Label("åœ¨çº¿å¥½å‹åˆ—è¡¨");
-    TextField onlineCount = new TextField("åœ¨çº¿äººæ•°");
+    Label onlineLabel = new Label("ÔÚÏßºÃÓÑÁĞ±í");
+    TextField onlineCount = new TextField("ÔÚÏßÈËÊı");
     List clientList = new List(30,false);
 
-    Button ok = new Button("å‘é€");
-    Button clear = new Button("æ¸…é™¤");
+    Button ok = new Button("·¢ËÍ");
+    Button clear = new Button("Çå³ı");
 
     public static void main(String[] args) {
         new ChatClient().init();
     }
 
     public void init(){
-        f.setTitle("å®¢æˆ·ç«¯");
+        f.setTitle("¿Í»§¶Ë");
 
-        //ç”¨æˆ·
+        //ÓÃ»§
         Box client = Box.createHorizontalBox();
         client.add(clientLabel);
         //client.add(Box.createHorizontalGlue());
@@ -65,13 +65,13 @@ public class ChatClient{
         client.add(Box.createHorizontalGlue());
         //client.add(cancel);
 
-        //å‘é€æ¸…é™¤
+        //·¢ËÍÇå³ı
         Box bottom = Box.createHorizontalBox();
         bottom.add(ok);
         bottom.add(Box.createHorizontalGlue());
         bottom.add(clear);
 
-        //å·¦è¾¹
+        //×ó±ß
         Box left = Box.createVerticalBox();
         left.add(Box.createVerticalStrut(10));
         left.add(client);
@@ -81,7 +81,7 @@ public class ChatClient{
         left.add(content);
         left.add(bottom);
         left.add(Box.createVerticalStrut(5));
-        //å³è¾¹
+        //ÓÒ±ß
         Box right = Box.createVerticalBox();
         right.add(Box.createVerticalStrut(10));
         right.add(onlineLabel);
@@ -90,13 +90,13 @@ public class ChatClient{
         right.add(Box.createVerticalStrut(5));
         right.add(clientList);
         right.add(Box.createVerticalStrut(5));
-        //åˆå¹¶
+        //ºÏ²¢
         Box all = Box.createHorizontalBox();
         all.add(left);
         all.add(Box.createHorizontalStrut(10));
         all.add(right);
         f.add(all);
-        clientList.add("ç¾¤èŠ");
+        clientList.add("ÈºÁÄ");
         f.pack();
 
         f.addWindowListener(
@@ -113,7 +113,7 @@ public class ChatClient{
         clientList.addItemListener(new peerListener());
         f.setVisible(true);
     }
-    //å®¢æˆ·ç«¯æœåŠ¡
+    //¿Í»§¶Ë·şÎñ
     class ClientServer implements Runnable {
         boolean start = false;
         public void run() {
@@ -122,7 +122,7 @@ public class ChatClient{
                 System.out.println(s.getLocalPort());
                 start = true;
             } catch (BindException e) {
-                System.out.println("ç«¯å£ä½¿ç”¨ä¸­");
+                System.out.println("¶Ë¿ÚÊ¹ÓÃÖĞ");
                 System.exit(0);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -147,7 +147,7 @@ public class ChatClient{
         }
     }
 
-    //å®¢æˆ·ç«¯æ¥æ”¶å®¢æˆ·ç«¯
+    //¿Í»§¶Ë½ÓÊÕ¿Í»§¶Ë
     class cClient implements Runnable{
         private Socket s;
 
@@ -189,7 +189,7 @@ public class ChatClient{
             }
         }
     }
-    //å®¢æˆ·ç«¯è¿æ¥æœåŠ¡ç«¯
+    //¿Í»§¶ËÁ¬½Ó·şÎñ¶Ë
     public void connect(){
         try {
             s = new Socket("127.0.0.1", 8888);
@@ -223,7 +223,7 @@ public class ChatClient{
             System.exit(0);
         }
     }
-    //å®¢æˆ·ç«¯è¿æ¥å®¢æˆ·ç«¯
+    //¿Í»§¶ËÁ¬½Ó¿Í»§¶Ë
     public void connectpeer(int peerport){
         try {
             socketWithPeer = new Socket("127.0.0.1",peerport);
@@ -234,15 +234,15 @@ public class ChatClient{
         }
     }
 
-    //å®¢æˆ·ç«¯æ–­å¼€è¿æ¥å®¢æˆ·ç«¯
+    //¿Í»§¶Ë¶Ï¿ªÁ¬½Ó¿Í»§¶Ë
     public void disconnectpeer(){
         cClient = false;
         System.out.println("peer disconnected");
     }
 
-    //å‘é€ä¿¡æ¯
+    //·¢ËÍĞÅÏ¢
     private void SendThread() {
-        str = name + "è¯´ï¼š" + content.getText().trim();
+        str = name + "Ëµ£º" + content.getText().trim();
         all = name +DELIMITER + port + DELIMITER+ str + DELIMITER + peer;
         //ta.setText(str);
         content.setText(null);
@@ -255,7 +255,7 @@ public class ChatClient{
                 peerDos.writeUTF(str);
                 System.out.println("CCCCCCC" + str);
                 peerDos.flush();
-                if(!str.split("ï¼š")[1].equals(""))
+                if(!str.split("£º")[1].equals(""))
                     ta.setText(ta.getText() + str + "\n");
             }
             //dos.close();
@@ -264,7 +264,7 @@ public class ChatClient{
         }
     }
 
-    //æ¥æ”¶ä¿¡æ¯
+    //½ÓÊÕĞÅÏ¢
     private class RecvThread implements Runnable{
         String data = null;
         java.util.List<String> data_split =null;
@@ -283,14 +283,14 @@ public class ChatClient{
                     if(data_split.get(2).equals("")){
                         clientInfo.clear();
                         clientList.removeAll();
-                        clientList.add("ç¾¤èŠ");
+                        clientList.add("ÈºÁÄ");
                         for(int j =0;j<listname.size();j++){
                             clientList.add(listname.get(j).split(SEPARATOR)[0]);
                             clientInfo.put(listname.get(j).split(SEPARATOR)[0],listname.get(j).split(SEPARATOR)[1]);
                         }
                         System.out.println(clientInfo.size());
 
-                        onlineCount.setText("åœ¨çº¿äººæ•°" + ": " + (clientList.getItemCount()-1));
+                        onlineCount.setText("ÔÚÏßÈËÊı" + ": " + (clientList.getItemCount()-1));
                     }
 
                 } catch (SocketException e1){
@@ -307,7 +307,7 @@ public class ChatClient{
                 try {
                     //str = b.get(2);
                     System.out.println(str);
-                    if(!str.split("ï¼š")[1].equals("")){
+                    if(!str.split("£º")[1].equals("")){
                         ta.setText(ta.getText() + str + "\n");
                     }
                 } catch (Exception e) {
@@ -344,7 +344,7 @@ public class ChatClient{
         public void itemStateChanged(ItemEvent e) {
             System.out.println(clientList.getSelectedItem());
             peer = clientList.getSelectedItem();
-            if(!peer.equals("ç¾¤èŠ")){
+            if(!peer.equals("ÈºÁÄ")){
                 connectpeer(Integer.parseInt(clientInfo.get(peer)));
             }
             else{
