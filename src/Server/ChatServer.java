@@ -13,82 +13,33 @@ import java.util.List;
  * Created by zsc on 2015/3/9.
  */
 public class ChatServer {
-    public static void main(String[] args) {
-        new ChatServer().init();
-    }
-    Frame f = new Frame();
+
+    ServerFrame serverFrame = new ServerFrame();
+//    Frame f = new Frame();
     ServerSocket serverSocket = null;
     Socket socket = null;
     boolean bconnected = false;
     Map<String,String> clientInfo= new HashMap<>();
-    java.util.List<Client> clients = new ArrayList<Client>();
+    java.util.List<ReceiveMsg> clients = new ArrayList<ReceiveMsg>();
     String DELIMITER ="\f";
     String SEPARATOR ="\r";
 
-    Button login = new Button("å¯åŠ¨");
-    Label chat = new Label("è®°å½•");
-    java.awt.List chatList = new java.awt.List(20,false);
-    Label online = new Label("åœ¨çº¿ç”¨æˆ·åˆ—è¡¨");
-    TextField onlienCount = new TextField("åœ¨çº¿äººæ•°");
-    java.awt.List clientList = new java.awt.List(20,false);
 
-    private void init(){
-        f.setTitle("æœåŠ¡ç«¯");
-        //ç”¨æˆ·
-        Box client = Box.createHorizontalBox();
-//        client.add(clientname);
-//        client.add(Box.createHorizontalGlue());
-//        client.add(clienttf);
-        client.add(Box.createHorizontalStrut(20));
-        client.add(login);
-        client.add(Box.createHorizontalGlue());
-        //client.add(cancel);
+//    Button login = new Button("Æô¶¯");
+//    Label chat = new Label("¼ÇÂ¼");
+//    java.awt.List chatList = new java.awt.List(20,false);
+//    Label online = new Label("ÔÚÏßÓÃ»§ÁĞ±í");
+//    TextField onlienCount = new TextField("ÔÚÏßÈËÊı");
+//    java.awt.List clientList = new java.awt.List(20,false);
 
-        //å·¦è¾¹
-        Box left = Box.createVerticalBox();
-        left.add(Box.createVerticalStrut(10));
-        left.add(client);
-        left.add(chat);
-        //left.add(Box.createVerticalStrut(5));
-        left.add(chatList);
-        left.add(Box.createVerticalStrut(5));
-//        left.add(content);
-//        left.add(bottom);
-        //å³è¾¹
-        Box right = Box.createVerticalBox();
-        right.add(Box.createVerticalStrut(5));
-        right.add(online);
-        right.add(Box.createVerticalStrut(0));
-        right.add(onlienCount);
-        right.add(Box.createVerticalStrut(5));
-        right.add(clientList);
-        right.add(Box.createVerticalStrut(5));
-        //åˆå¹¶
-        Box all = Box.createHorizontalBox();
-        all.add(left);
-        all.add(Box.createHorizontalStrut(10));
-        all.add(right);
-        f.add(all);
-        f.pack();
-
-        f.addWindowListener(
-                new WindowAdapter() {
-                    public void windowClosing(WindowEvent e) {
-                        System.exit(0);
-                    }
-                }
-        );
-        login.addActionListener(new loginListener());
-        f.setVisible(true);
-
+    public static void main(String[] args) {
+        new ChatServer().init();
     }
-    private class loginListener implements ActionListener {
-        public void actionPerformed(ActionEvent e) {
-            new Thread(new Server()).start();
-            login.setEnabled(false);
-        }
+
+    void init(){
+        serverFrame.init();
     }
-    //å¯åŠ¨æœåŠ¡ç«¯
+    //Æô¶¯·şÎñ¶Ë
     class Server implements Runnable {
         boolean start = false;
         public void run() {
@@ -96,7 +47,7 @@ public class ChatServer {
                 serverSocket = new ServerSocket(8888);
                 start = true;
             } catch (BindException e) {
-                System.out.println("ç«¯å£ä½¿ç”¨ä¸­");
+                System.out.println("¶Ë¿ÚÊ¹ÓÃÖĞ");
                 System.exit(0);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -104,7 +55,7 @@ public class ChatServer {
             try {
                 while (start) {
                     socket = serverSocket.accept();
-                    Client c = new Client(socket);
+                    ReceiveMsg c = new ReceiveMsg(socket);
                     clients.add(c);
 
                     System.out.println("a client connected!");
@@ -122,8 +73,8 @@ public class ChatServer {
             }
         }
     }
-    //æ¥å—å®¢æˆ·ç«¯è¿æ¥
-    class Client implements Runnable{
+    //½ÓÊÜ¿Í»§¶ËÁ¬½Ó
+    class ReceiveMsg implements Runnable{
         private Socket s;
         private DataInputStream disWithClient = null;
         private DataOutputStream dosWithClient = null;
@@ -133,7 +84,7 @@ public class ChatServer {
         String peer = "";
 
 
-        Client(Socket s ){
+        ReceiveMsg(Socket s ){
             this.s=s;
             try {
                 disWithClient = new DataInputStream(s.getInputStream());
@@ -143,7 +94,7 @@ public class ChatServer {
                 e.printStackTrace();
             }
         }
-        //å‘é€ä¿¡æ¯
+        //·¢ËÍĞÅÏ¢
         private void send(String str) throws IOException{
             try {
                 dosWithClient.writeUTF(str);
@@ -152,14 +103,14 @@ public class ChatServer {
                 e.printStackTrace();
             }
         }
-        //å‘é€ä¿¡æ¯å’Œåå­—ä¸ç«¯å£å·
+        //·¢ËÍĞÅÏ¢ºÍÃû×ÖÓë¶Ë¿ÚºÅ
         private void sendAll(String data,String name_and_port) throws IOException{
             for(int i=0;i<clients.size();i++){
-                Client c = clients.get(i);
+                ReceiveMsg c = clients.get(i);
                 c.send(data);
                 c.send(name_and_port);
             }
-            onlienCount.setText("åœ¨çº¿äººæ•°" + ": " + clientList.getItemCount());
+            serverFrame.onlienCount.setText("ÔÚÏßÈËÊı" + ": " + serverFrame.clientList.getItemCount());
         }
 
         private String nameAndPort(java.awt.List clientList, Map<String,String> clientInfo) {
@@ -183,12 +134,12 @@ public class ChatServer {
                     boolean flag = false;
                     System.out.println("DDDDDD" + clientInfo.size());
 
-                    for(int j =0;j<clientList.getItemCount();j++){
-                        if(clientList.getItem(j).equals(name)) flag = true;
+                    for(int j =0;j<serverFrame.clientList.getItemCount();j++){
+                        if(serverFrame.clientList.getItem(j).equals(name)) flag = true;
                     }
                     if(!flag) {
-                        clientList.add(name);
-                        chatList.add(name + "å·²ä¸Šçº¿");
+                        serverFrame.clientList.add(name);
+                        serverFrame.chatList.add(name + "ÒÑÉÏÏß");
                     }
 //                    for(int k =0;k<clientList.getItemCount();k++){
 //                        name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
@@ -197,20 +148,20 @@ public class ChatServer {
                     str = data_from_client_split.get(2);
                     peer = data_from_client_split.get(3);
                     System.out.println(str + "aaaaa");
-                    sendAll(data_from_client, nameAndPort(clientList, clientInfo));
+                    sendAll(data_from_client, nameAndPort(serverFrame.clientList, clientInfo));
                     System.out.println("no1");
                 }
             }
             catch (SocketException e){
                 clients.remove(this);
-                clientList.remove(this.name);
-                chatList.add(name + "å·²ä¸‹çº¿");
+                serverFrame.clientList.remove(this.name);
+                serverFrame.chatList.add(name + "ÒÑÏÂÏß");
                 //StringBuilder name_port = new StringBuilder();
                 String without_str = name + DELIMITER + port + DELIMITER + "" + DELIMITER + peer;
 //                for(int k =0;k<clientList.getItemCount();k++){
 //                    name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
 //                }
-                if(clientList.getItemCount()==0){
+                if(serverFrame.clientList.getItemCount()==0){
                     try {
                         sendAll(without_str, " ");
                     } catch (IOException e1) {
@@ -220,7 +171,7 @@ public class ChatServer {
                 else{
                     //String name_and_port=nameAndPort(clientList, clientInfo);
                     try {
-                        sendAll(without_str, nameAndPort(clientList, clientInfo));
+                        sendAll(without_str, nameAndPort(serverFrame.clientList, clientInfo));
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -229,7 +180,7 @@ public class ChatServer {
             }
             catch (EOFException e){
                 clients.remove(this);
-                clientList.remove(this.name);
+                serverFrame.clientList.remove(this.name);
                 System.out.println("Client closed1");
             }catch (IOException e){
                 System.out.println("Client closed2");
@@ -249,16 +200,109 @@ public class ChatServer {
 
 }
 
-class User{
+class UserClient{
     private String name = "";
     private String port = "";
     private String str = "";
     private String peer = "";
+    private Socket socket = null;
+    private DataInputStream disWithClient;
+    private DataOutputStream dosWithClient;
+    private boolean bconnected = true;
     private Map<String,String> clientInfo= new HashMap<>();
-    private java.util.List<ChatServer.Client> clients = new ArrayList<ChatServer.Client>();
+    private java.util.List<ChatServer.ReceiveMsg> clients = new ArrayList<ChatServer.ReceiveMsg>();
     private String DELIMITER ="\f";
     private String SEPARATOR ="\r";
-    User(){
+    public UserClient(Socket socket){
+        this.socket = socket;
+        try {
+            disWithClient = new DataInputStream(socket.getInputStream());
+            dosWithClient = new DataOutputStream(socket.getOutputStream());
+            bconnected = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private void sendMsg(String str) throws IOException{
+        try {
+            dosWithClient.writeUTF(str);
+        } catch (IOException e) {
+            clients.remove(this);
+            e.printStackTrace();
+        }
+    }
+}
+
+class User{
+    private Socket socket = null;
+}
+
+final class ServerFrame{
+    Frame f = new Frame();
+
+    static java.awt.List chatList = new java.awt.List(20,false);
+    static TextField onlienCount = new TextField("ÔÚÏßÈËÊı");
+    static java.awt.List clientList = new java.awt.List(20,false);
+
+    Button login = new Button("Æô¶¯");
+    Label chat = new Label("¼ÇÂ¼");
+    Label online = new Label("ÔÚÏßÓÃ»§ÁĞ±í");
+
+    public void init(){
+        f.setTitle("·şÎñ¶Ë");
+        //ÓÃ»§
+        Box client = Box.createHorizontalBox();
+//        client.add(clientname);
+//        client.add(Box.createHorizontalGlue());
+//        client.add(clienttf);
+        client.add(Box.createHorizontalStrut(20));
+        client.add(login);
+        client.add(Box.createHorizontalGlue());
+        //client.add(cancel);
+
+        //×ó±ß
+        Box left = Box.createVerticalBox();
+        left.add(Box.createVerticalStrut(10));
+        left.add(client);
+        left.add(chat);
+        //left.add(Box.createVerticalStrut(5));
+        left.add(chatList);
+        left.add(Box.createVerticalStrut(5));
+//        left.add(content);
+//        left.add(bottom);
+        //ÓÒ±ß
+        Box right = Box.createVerticalBox();
+        right.add(Box.createVerticalStrut(5));
+        right.add(online);
+        right.add(Box.createVerticalStrut(0));
+        right.add(onlienCount);
+        right.add(Box.createVerticalStrut(5));
+        right.add(clientList);
+        right.add(Box.createVerticalStrut(5));
+        //ºÏ²¢
+        Box all = Box.createHorizontalBox();
+        all.add(left);
+        all.add(Box.createHorizontalStrut(10));
+        all.add(right);
+        f.add(all);
+        f.pack();
+
+        f.addWindowListener(
+                new WindowAdapter() {
+                    public void windowClosing(WindowEvent e) {
+                        System.exit(0);
+                    }
+                }
+        );
+        login.addActionListener(new loginListener());
+        f.setVisible(true);
+
+    }
+    private class loginListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            new Thread(new ChatServer().new Server()).start();
+            login.setEnabled(false);
+        }
     }
 }
