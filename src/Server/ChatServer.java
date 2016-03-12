@@ -16,11 +16,10 @@ public class ChatServer {
 
     ServerFrame serverFrame = new ServerFrame();
 //    Frame f = new Frame();
-    ServerSocket serverSocket = null;
     Socket socket = null;
     boolean bconnected = false;
     Map<String,String> clientInfo= new HashMap<>();
-    java.util.List<ReceiveMsg> clients = new ArrayList<ReceiveMsg>();
+    java.util.List<UserClient> clients = new ArrayList<UserClient>();
     String DELIMITER ="\f";
     String SEPARATOR ="\r";
 
@@ -41,6 +40,8 @@ public class ChatServer {
     }
     //启动服务端
     class Server implements Runnable {
+        private ServerSocket serverSocket = null;
+        private UserClient userClient;
         boolean start = false;
         public void run() {
             try {
@@ -55,11 +56,11 @@ public class ChatServer {
             try {
                 while (start) {
                     socket = serverSocket.accept();
-                    ReceiveMsg c = new ReceiveMsg(socket);
-                    clients.add(c);
-
+                    userClient = new UserClient(socket);
+                    ReceiveMsg client = new ReceiveMsg(userClient);
+                    clients.add(userClient);
                     System.out.println("a client connected!");
-                    new Thread(c).start();
+                    new Thread(client).start();
                     //dis.close();
                 }
             } catch (IOException e) {
@@ -76,6 +77,7 @@ public class ChatServer {
     //接受客户端连接
     class ReceiveMsg implements Runnable{
         private Socket s;
+        private UserClient userClient;
         private DataInputStream disWithClient = null;
         private DataOutputStream dosWithClient = null;
         String name = "";
@@ -83,32 +85,25 @@ public class ChatServer {
         String str = "";
         String peer = "";
 
-
-        ReceiveMsg(Socket s ){
-            this.s=s;
-            try {
-                disWithClient = new DataInputStream(s.getInputStream());
-                dosWithClient = new DataOutputStream(s.getOutputStream());
-                bconnected = true;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        ReceiveMsg(UserClient userClient){
+            this.userClient=userClient;
+            bconnected = true;
         }
         //发送信息
-        private void send(String str) throws IOException{
-            try {
-                dosWithClient.writeUTF(str);
-            } catch (IOException e) {
-                clients.remove(this);
-                e.printStackTrace();
-            }
-        }
+//        private void send(String str) throws IOException{
+//            try {
+//                dosWithClient.writeUTF(str);
+//            } catch (IOException e) {
+//                clients.remove(this);
+//                e.printStackTrace();
+//            }
+//        }
         //发送信息和名字与端口号
         private void sendAll(String data,String name_and_port) throws IOException{
             for(int i=0;i<clients.size();i++){
-                ReceiveMsg c = clients.get(i);
-                c.send(data);
-                c.send(name_and_port);
+                UserClient c = clients.get(i);
+                c.sendData(data);
+                c.sendData(name_and_port);
             }
             serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());
         }
@@ -125,7 +120,7 @@ public class ChatServer {
         public void run(){
             try {
                 while(bconnected) {
-                    String data_from_client = disWithClient.readUTF();
+                    String data_from_client = userClient.receiveData();
 //                    StringBuilder name_port = new StringBuilder();
                     java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
                     name = data_from_client_split.get(0);
@@ -153,7 +148,7 @@ public class ChatServer {
                 }
             }
             catch (SocketException e){
-                clients.remove(this);
+                clients.remove(this.userClient);
                 serverFrame.getClientList().remove(this.name);
                 serverFrame.getChatList().add(name + "已下线");
                 //StringBuilder name_port = new StringBuilder();
@@ -173,22 +168,21 @@ public class ChatServer {
                     try {
                         sendAll(without_str, nameAndPort(serverFrame.getClientList(), clientInfo));
                     } catch (IOException e1) {
-                        e1.printStackTrace();
+                        System.out.println("Client 退出");
+//                        e1.printStackTrace();
                     }
                 }
                 System.out.println("Client closed0");
             }
             catch (EOFException e){
-                clients.remove(this);
+                clients.remove(this.userClient);
                 serverFrame.getClientList().remove(this.name);
                 System.out.println("Client closed1");
             }catch (IOException e){
                 System.out.println("Client closed2");
             }finally {
                 try {
-                    if(disWithClient !=null) disWithClient.close();
-                    if(s !=null) s.close();
-                    if(dosWithClient !=null) dosWithClient.close();
+                    userClient.close();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -199,21 +193,14 @@ public class ChatServer {
 
 
 }
-
-class UserClient{
-    private String name = "";
-    private String port = "";
-    private String str = "";
-    private String peer = "";
+//启动socket连接，定义发送和接受信息
+class UserClient {
     private Socket socket = null;
     private DataInputStream disWithClient;
     private DataOutputStream dosWithClient;
     private boolean bconnected = true;
-    private Map<String,String> clientInfo= new HashMap<>();
-    private java.util.List<ChatServer.ReceiveMsg> clients = new ArrayList<ChatServer.ReceiveMsg>();
-    private String DELIMITER ="\f";
-    private String SEPARATOR ="\r";
-    public UserClient(Socket socket){
+
+    public UserClient(Socket socket) {
         this.socket = socket;
         try {
             disWithClient = new DataInputStream(socket.getInputStream());
@@ -224,22 +211,63 @@ class UserClient{
         }
     }
 
-    private void sendMsg(String str) throws IOException{
+    public void close() throws IOException {
         try {
-            dosWithClient.writeUTF(str);
-        } catch (IOException e) {
-            clients.remove(this);
-            e.printStackTrace();
+            if(disWithClient !=null) disWithClient.close();
+            if(socket !=null) socket.close();
+            if(dosWithClient !=null) dosWithClient.close();
+        } catch (IOException e1) {
+            e1.printStackTrace();
         }
     }
-}
 
-class User{
-    private Socket socket = null;
+    public void sendData(String str) throws IOException {
+            dosWithClient.writeUTF(str);
+
+    }
+
+    public String receiveData() throws IOException {
+        String msg = disWithClient.readUTF();
+        return msg;
+    }
 }
+//信息类的封装
+//class UserClientMsg{
+//    private String name = "";
+//    private String port = "";
+//    private String str = "";
+//    private String peer = "";
+//    Map<String,String> clientInfo= new HashMap<>();
+//    private static java.util.List<UserClient> clients = new ArrayList<UserClient>();
+//
+//    public void addClients(UserClient userClient){
+//        clients.add(userClient);
+//    }
+//
+//    public void removeClients(UserClient userClient){
+//        clients.remove(userClient);
+//    }
+//
+//    public java.util.List<UserClient> getClients(){
+//        return clients;
+//    }
+//
+//    public void sendMsg(String data,String name_and_port) throws IOException{
+//        for(int i=0;i<clients.size();i++){
+//            UserClient client = clients.get(i);
+//            try {
+//                client.sendData(data);
+//                client.sendData(name_and_port);
+//            } catch (IOException e) {
+//                removeClients(client);
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+//}
 
 class ServerFrame{
-    Frame f = new Frame();
+    private Frame f = new Frame();
 
     private static java.awt.List chatList = new java.awt.List(20,false);
     private static TextField onlineCount = new TextField("在线人数");
