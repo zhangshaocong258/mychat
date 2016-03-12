@@ -36,7 +36,7 @@ public class ChatServer {
         new ChatServer().init();
     }
 
-    void init(){
+    private void init(){
         serverFrame.init();
     }
     //启动服务端
@@ -110,7 +110,7 @@ public class ChatServer {
                 c.send(data);
                 c.send(name_and_port);
             }
-            serverFrame.onlienCount.setText("在线人数" + ": " + serverFrame.clientList.getItemCount());
+            serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());
         }
 
         private String nameAndPort(java.awt.List clientList, Map<String,String> clientInfo) {
@@ -134,12 +134,12 @@ public class ChatServer {
                     boolean flag = false;
                     System.out.println("DDDDDD" + clientInfo.size());
 
-                    for(int j =0;j<serverFrame.clientList.getItemCount();j++){
-                        if(serverFrame.clientList.getItem(j).equals(name)) flag = true;
+                    for(int j =0;j<serverFrame.getClientList().getItemCount();j++){
+                        if(serverFrame.getClientList().getItem(j).equals(name)) flag = true;
                     }
                     if(!flag) {
-                        serverFrame.clientList.add(name);
-                        serverFrame.chatList.add(name + "已上线");
+                        serverFrame.getClientList().add(name);
+                        serverFrame.getChatList().add(name + "已上线");
                     }
 //                    for(int k =0;k<clientList.getItemCount();k++){
 //                        name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
@@ -148,20 +148,20 @@ public class ChatServer {
                     str = data_from_client_split.get(2);
                     peer = data_from_client_split.get(3);
                     System.out.println(str + "aaaaa");
-                    sendAll(data_from_client, nameAndPort(serverFrame.clientList, clientInfo));
+                    sendAll(data_from_client, nameAndPort(serverFrame.getClientList(), clientInfo));
                     System.out.println("no1");
                 }
             }
             catch (SocketException e){
                 clients.remove(this);
-                serverFrame.clientList.remove(this.name);
-                serverFrame.chatList.add(name + "已下线");
+                serverFrame.getClientList().remove(this.name);
+                serverFrame.getChatList().add(name + "已下线");
                 //StringBuilder name_port = new StringBuilder();
                 String without_str = name + DELIMITER + port + DELIMITER + "" + DELIMITER + peer;
 //                for(int k =0;k<clientList.getItemCount();k++){
 //                    name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
 //                }
-                if(serverFrame.clientList.getItemCount()==0){
+                if(serverFrame.getClientList().getItemCount()==0){
                     try {
                         sendAll(without_str, " ");
                     } catch (IOException e1) {
@@ -171,7 +171,7 @@ public class ChatServer {
                 else{
                     //String name_and_port=nameAndPort(clientList, clientInfo);
                     try {
-                        sendAll(without_str, nameAndPort(serverFrame.clientList, clientInfo));
+                        sendAll(without_str, nameAndPort(serverFrame.getClientList(), clientInfo));
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -180,7 +180,7 @@ public class ChatServer {
             }
             catch (EOFException e){
                 clients.remove(this);
-                serverFrame.clientList.remove(this.name);
+                serverFrame.getClientList().remove(this.name);
                 System.out.println("Client closed1");
             }catch (IOException e){
                 System.out.println("Client closed2");
@@ -238,16 +238,28 @@ class User{
     private Socket socket = null;
 }
 
-final class ServerFrame{
+class ServerFrame{
     Frame f = new Frame();
 
-    static java.awt.List chatList = new java.awt.List(20,false);
-    static TextField onlienCount = new TextField("在线人数");
-    static java.awt.List clientList = new java.awt.List(20,false);
+    private static java.awt.List chatList = new java.awt.List(20,false);
+    private static TextField onlineCount = new TextField("在线人数");
+    private static java.awt.List clientList = new java.awt.List(20,false);
 
-    Button login = new Button("启动");
-    Label chat = new Label("记录");
-    Label online = new Label("在线用户列表");
+    private Button login = new Button("启动");
+    private Label chat = new Label("记录");
+    private Label online = new Label("在线用户列表");
+
+    public java.awt.List getChatList(){
+        return chatList;
+    }
+
+    public TextField getOnlienCount(){
+        return onlineCount;
+    }
+
+    public java.awt.List getClientList(){
+        return clientList;
+    }
 
     public void init(){
         f.setTitle("服务端");
@@ -276,7 +288,7 @@ final class ServerFrame{
         right.add(Box.createVerticalStrut(5));
         right.add(online);
         right.add(Box.createVerticalStrut(0));
-        right.add(onlienCount);
+        right.add(onlineCount);
         right.add(Box.createVerticalStrut(5));
         right.add(clientList);
         right.add(Box.createVerticalStrut(5));
