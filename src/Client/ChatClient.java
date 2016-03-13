@@ -344,6 +344,9 @@ public class ChatClient{
         public void itemStateChanged(ItemEvent e) {
             System.out.println(clientList.getSelectedItem());
             peer = clientList.getSelectedItem();
+            for (Map.Entry<String, String> entry : clientInfo.entrySet()) {
+                System.out.println("MapÄÚÈİ  " + entry.getKey() + "    " + entry.getValue());
+            }
             if(!peer.equals("ÈºÁÄ")){
                 connectpeer(Integer.parseInt(clientInfo.get(peer)));
             }
