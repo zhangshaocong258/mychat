@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * Created by zsc on 2015/3/9.
  */
-public class ChatClient{
+public class ChatClient {
 
     Frame f = new Frame();
     Socket s = null;
@@ -22,14 +22,14 @@ public class ChatClient{
     DataInputStream disWithServer = null;
     DataOutputStream peerDos = null;
     DataInputStream peerDis = null;
-    Map<String,String> clientInfo= new HashMap<>();
+    Map<String, String> clientInfo = new HashMap<>();
     String name = "";
     String port = "";
     String str = "";
     String peer = "群聊";
     String all = "";
-    String DELIMITER ="\f";
-    String SEPARATOR ="\r";
+    String DELIMITER = "\f";
+    String SEPARATOR = "\r";
     boolean bconnected = false;
     boolean cClient = false;
 
@@ -38,12 +38,12 @@ public class ChatClient{
     Button login = new Button("登录");
 
     Label chatLabel = new Label("聊天记录");
-    TextArea ta = new TextArea(25,20);
-    TextArea content = new TextArea(2,20);
+    TextArea ta = new TextArea(25, 20);
+    TextArea content = new TextArea(2, 20);
 
     Label onlineLabel = new Label("在线好友列表");
     TextField onlineCount = new TextField("在线人数");
-    List clientList = new List(30,false);
+    List clientList = new List(30, false);
 
     Button ok = new Button("发送");
     Button clear = new Button("清除");
@@ -52,7 +52,7 @@ public class ChatClient{
         new ChatClient().init();
     }
 
-    public void init(){
+    public void init() {
         f.setTitle("客户端");
 
         //用户
@@ -113,12 +113,14 @@ public class ChatClient{
         clientList.addItemListener(new peerListener());
         f.setVisible(true);
     }
+
     //客户端服务
     class ClientServer implements Runnable {
         boolean start = false;
+
         public void run() {
             try {
-                clientServerSocket = new ServerSocket(s.getLocalPort()+1);
+                clientServerSocket = new ServerSocket(s.getLocalPort() + 1);
                 System.out.println(s.getLocalPort());
                 start = true;
             } catch (BindException e) {
@@ -148,11 +150,11 @@ public class ChatClient{
     }
 
     //客户端接收客户端
-    class cClient implements Runnable{
+    class cClient implements Runnable {
         private Socket s;
 
-        public cClient(Socket s ){
-            this.s=s;
+        public cClient(Socket s) {
+            this.s = s;
             try {
                 peerDis = new DataInputStream(s.getInputStream());
                 cClient = true;
@@ -160,27 +162,26 @@ public class ChatClient{
                 e.printStackTrace();
             }
         }
-        public void run(){
+
+        public void run() {
             try {
-                while(cClient) {
+                while (cClient) {
                     String str = peerDis.readUTF();
                     ta.setText(ta.getText() + str + "\n");
                     System.out.println(str);
                 }
-            }
-            catch (SocketException e){
+            } catch (SocketException e) {
                 cClient = false;
                 System.out.println("Client closed0");
-            }
-            catch (EOFException e){
+            } catch (EOFException e) {
                 System.out.println("Client closed1");
-            }catch (IOException e){
+            } catch (IOException e) {
                 System.out.println("Client closed2");
 
-            }finally {
+            } finally {
                 try {
-                    if(peerDis !=null) peerDis.close();
-                    if(s !=null) s.close();
+                    if (peerDis != null) peerDis.close();
+                    if (s != null) s.close();
 
                 } catch (IOException e1) {
                     e1.printStackTrace();
@@ -189,17 +190,18 @@ public class ChatClient{
             }
         }
     }
+
     //客户端连接服务端
-    public void connect(){
+    public void connect() {
         try {
             s = new Socket("127.0.0.1", 8888);
             dosWithServer = new DataOutputStream(s.getOutputStream());
             disWithServer = new DataInputStream(s.getInputStream());
 
             name = clientName.getText();
-            port = String.valueOf(s.getLocalPort()+1);
+            port = String.valueOf(s.getLocalPort() + 1);
             peer = name;
-            all = name +DELIMITER + port + DELIMITER+ str + DELIMITER +peer;
+            all = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
             dosWithServer.writeUTF(all);
 
             System.out.println("connected");
@@ -207,26 +209,27 @@ public class ChatClient{
         } catch (UnknownHostException e) {
             System.out.println("sever not start");
             e.printStackTrace();
-        }catch (IOException e){
+        } catch (IOException e) {
             System.out.println("sever not start");
             System.exit(1);
             e.printStackTrace();
         }
     }
 
-    public void disconnect(){
+    public void disconnect() {
         try {
             dosWithServer.close();
             s.close();
             bconnected = false;
-        }catch (IOException e){
+        } catch (IOException e) {
             System.exit(0);
         }
     }
+
     //客户端连接客户端
-    public void connectpeer(int peerport){
+    public void connectpeer(int peerport) {
         try {
-            socketWithPeer = new Socket("127.0.0.1",peerport);
+            socketWithPeer = new Socket("127.0.0.1", peerport);
             peerDos = new DataOutputStream(socketWithPeer.getOutputStream());
             cClient = true;
         } catch (IOException e) {
@@ -235,7 +238,7 @@ public class ChatClient{
     }
 
     //客户端断开连接客户端
-    public void disconnectpeer(){
+    public void disconnectpeer() {
         cClient = false;
         System.out.println("peer disconnected");
     }
@@ -243,19 +246,18 @@ public class ChatClient{
     //发送信息
     private void SendThread() {
         str = name + "说：" + content.getText().trim();
-        all = name +DELIMITER + port + DELIMITER+ str + DELIMITER + peer;
+        all = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
         //ta.setText(str);
         content.setText(null);
         try {
-            if(!cClient){
+            if (!cClient) {
                 dosWithServer.writeUTF(all);
                 dosWithServer.flush();
-            }
-            else{
+            } else {
                 peerDos.writeUTF(str);
                 System.out.println("CCCCCCC" + str);
                 peerDos.flush();
-                if(!str.split("：")[1].equals(""))
+                if (!str.split("：")[1].equals(""))
                     ta.setText(ta.getText() + str + "\n");
             }
             //dos.close();
@@ -265,12 +267,13 @@ public class ChatClient{
     }
 
     //接收信息
-    private class RecvThread implements Runnable{
+    private class RecvThread implements Runnable {
         String data = null;
-        java.util.List<String> data_split =null;
+        java.util.List<String> data_split = null;
         String name_and_port = null;
-        public void run(){
-            while(bconnected){
+
+        public void run() {
+            while (bconnected) {
                 try {
                     data = disWithServer.readUTF();
                     name_and_port = disWithServer.readUTF();
@@ -280,58 +283,58 @@ public class ChatClient{
                     java.util.List<String> listname = Arrays.asList(name_and_port.split(DELIMITER));
                     String rname = data_split.get(3);
                     String rport = data_split.get(1);
-                    if(data_split.get(2).equals("")){
+                    if (data_split.get(2).equals("")) {
                         clientInfo.clear();
                         clientList.removeAll();
                         clientList.add("群聊");
-                        for(int j =0;j<listname.size();j++){
+                        for (int j = 0; j < listname.size(); j++) {
                             clientList.add(listname.get(j).split(SEPARATOR)[0]);
-                            clientInfo.put(listname.get(j).split(SEPARATOR)[0],listname.get(j).split(SEPARATOR)[1]);
+                            clientInfo.put(listname.get(j).split(SEPARATOR)[0], listname.get(j).split(SEPARATOR)[1]);
                         }
                         System.out.println(clientInfo.size());
 
-                        onlineCount.setText("在线人数" + ": " + (clientList.getItemCount()-1));
+                        onlineCount.setText("在线人数" + ": " + (clientList.getItemCount() - 1));
                     }
 
-                } catch (SocketException e1){
-                    System.out.println("Server closed" );
+                } catch (SocketException e1) {
+                    System.out.println("Server closed");
                     System.exit(0);
-                }catch (EOFException e2){
+                } catch (EOFException e2) {
                     System.exit(0);
-                }
-                catch (IOException e) {
-                    System.out.println("Server closed" );
+                } catch (IOException e) {
+                    System.out.println("Server closed");
 
                 }
                 String str = data_split.get(2);
                 try {
                     //str = b.get(2);
                     System.out.println(str);
-                    if(!str.split("：")[1].equals("")){
+                    if (!str.split("：")[1].equals("")) {
                         ta.setText(ta.getText() + str + "\n");
                     }
                 } catch (Exception e) {
-                    System.out.println("client closed" );
+                    System.out.println("client closed");
                 }
             }
         }
     }
-    private class okListener implements ActionListener{
-        public void actionPerformed(ActionEvent e){
+
+    private class okListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
             SendThread();
         }
     }
 
-    private class clearListener implements ActionListener{
-        public void actionPerformed(ActionEvent e){
+    private class clearListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
             content.getText().trim();
             content.setText(null);
 
         }
     }
 
-    private class clientloginListener implements ActionListener{
-        public void actionPerformed(ActionEvent e){
+    private class clientloginListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
             login.setEnabled(false);
             clientName.setEnabled(false);
             connect();
@@ -347,10 +350,9 @@ public class ChatClient{
             for (Map.Entry<String, String> entry : clientInfo.entrySet()) {
                 System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
             }
-            if(!peer.equals("群聊")){
+            if (!peer.equals("群聊")) {
                 connectpeer(Integer.parseInt(clientInfo.get(peer)));
-            }
-            else{
+            } else {
                 disconnectpeer();
             }
         }

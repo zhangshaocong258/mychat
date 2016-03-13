@@ -20,10 +20,10 @@ public class ChatServer {
     //    Frame f = new Frame();
     Socket socket = null;
     boolean bconnected = false;
-//    Map<String,String> clientInfo= new HashMap<>();
+    //    Map<String,String> clientInfo= new HashMap<>();
 //    java.util.List<UserClient> clients = new ArrayList<UserClient>();
-    String DELIMITER ="\f";
-    String SEPARATOR ="\r";
+    String DELIMITER = "\f";
+    String SEPARATOR = "\r";
 
 
 //    Button login = new Button("启动");
@@ -37,14 +37,16 @@ public class ChatServer {
         new ChatServer().init();
     }
 
-    private void init(){
+    private void init() {
         serverFrame.init();
     }
+
     //启动服务端
     class Server implements Runnable {
         private ServerSocket serverSocket = null;
         private UserClient userClient;
         boolean start = false;
+
         public void run() {
             try {
                 serverSocket = new ServerSocket(8888);
@@ -76,20 +78,20 @@ public class ChatServer {
             }
         }
     }
+
     //接受客户端连接
-    class ReceiveMsg implements Runnable{
-        private Socket s;
+    class ReceiveMsg implements Runnable {
         private UserClient userClient;
         private UserClientMsg userClientMsg;
-        private Map<String,String> clientInfomation= new HashMap<String,String>();
+        private Map<String, String> clientInfomation = new HashMap<String, String>();
         private String name_port;
-        String name = "";
-        String port = "";
-//        String str = "";
-        String peer = "";
+        private String name = "";
+        private String port = "";
+        //        private String str = "";
+        private String peer = "";
 
-        ReceiveMsg(UserClient userClient){
-            this.userClient=userClient;
+        ReceiveMsg(UserClient userClient) {
+            this.userClient = userClient;
             bconnected = true;
         }
         //发送信息
@@ -119,9 +121,9 @@ public class ChatServer {
 //            return name_and_port;
 //        }
 
-        public void run(){
+        public void run() {
             try {
-                while(bconnected) {
+                while (bconnected) {
                     String data_from_client = userClient.receiveData();
 //                    StringBuilder name_port = new StringBuilder();
 //                    java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
@@ -133,12 +135,10 @@ public class ChatServer {
                     name = userClientMsg.getName();
                     port = userClientMsg.getPort();
                     peer = userClientMsg.getPeer();
-                    System.out.println("nnnnnnnnn" + name);
-                    System.out.println("pppppppppp" + peer);
 
                     name_port = userClientMsg.buildNamePort(clientInfomation);
                     boolean flag = false;
-                    System.out.println("DDDDDD" + userClientMsg.getClientInfo().size());
+                    System.out.println("用户数" + userClientMsg.getClientInfo().size());
 
                     for (int j = 0; j < serverFrame.getClientList().getItemCount(); j++) {
                         if (serverFrame.getClientList().getItem(j).equals(name)) flag = true;
@@ -157,24 +157,18 @@ public class ChatServer {
 //                    for(int k =0;k<serverFrame.getClientList().getItemCount();k++){
 //                        System.out.println("信息list" + serverFrame.getClientList().getItem(k));
 //                    }
-
-//                    str = data_from_client_split.get(2);
-//                    peer = data_from_client_split.get(3);
-//                    System.out.println(str + "aaaaa");
                     userClientList.sendMsg(data_from_client, name_port);
                     serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());
                     System.out.println("no1");
                 }
-            }
-            catch (SocketException e){
+            } catch (SocketException e) {
                 userClientList.removeClients(this.userClient);//List删除下线用户
                 serverFrame.getClientList().remove(this.name);//Frame中删除下线用户
                 serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());//在线人数减一
                 clientInfomation = userClientMsg.removeClientInfo(this.name);//Map中删除name_port，向其他用户发送信息
                 name_port = userClientMsg.buildNamePort(clientInfomation);//建立name_port,发送
                 serverFrame.getChatList().add(name + "已下线");
-                //StringBuilder name_port = new StringBuilder();
-                String without_str = name + DELIMITER + port + DELIMITER + "" + DELIMITER + peer;
+                String without_str = userClientMsg.buildMsg(name, port, "", peer);
 //                for(int k =0;k<clientList.getItemCount();k++){
 //                    name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
 //                }
@@ -185,7 +179,7 @@ public class ChatServer {
 //                        System.out.println("no Client");
 //                    }
 //                }
-                if(serverFrame.getClientList().getItemCount()!=0){
+                if (serverFrame.getClientList().getItemCount() != 0) {
                     try {
                         userClientList.sendMsg(without_str, name_port);
                     } catch (IOException e1) {
@@ -193,14 +187,13 @@ public class ChatServer {
                     }
                 }
                 System.out.println("Client closed0");
-            }
-            catch (EOFException e){
+            } catch (EOFException e) {
                 userClientList.removeClients(this.userClient);
                 serverFrame.getClientList().remove(this.name);
                 System.out.println("Client closed1");
-            }catch (IOException e){
+            } catch (IOException e) {
                 System.out.println("Client closed2");
-            }finally {
+            } finally {
                 try {
                     userClient.close();
                 } catch (IOException e1) {
@@ -211,8 +204,8 @@ public class ChatServer {
     }
 
 
-
 }
+
 //启动socket连接，定义发送和接受信息
 class UserClient {
     private Socket socket = null;
@@ -231,9 +224,9 @@ class UserClient {
 
     public void close() throws IOException {
         try {
-            if(disWithClient !=null) disWithClient.close();
-            if(socket !=null) socket.close();
-            if(dosWithClient !=null) dosWithClient.close();
+            if (disWithClient != null) disWithClient.close();
+            if (socket != null) socket.close();
+            if (dosWithClient != null) dosWithClient.close();
         } catch (IOException e1) {
             e1.printStackTrace();
         }
@@ -248,24 +241,25 @@ class UserClient {
         return msg;
     }
 }
-//用户的封装
-class UserClientList{
+
+//用户List的封装
+class UserClientList {
     private static java.util.List<UserClient> clients = new ArrayList<UserClient>();
 
-    public void addClients(UserClient userClient){
+    public void addClients(UserClient userClient) {
         clients.add(userClient);
     }
 
-    public void removeClients(UserClient userClient){
+    public void removeClients(UserClient userClient) {
         clients.remove(userClient);
     }
 
-    public java.util.List<UserClient> getClients(){
+    public java.util.List<UserClient> getClients() {
         return clients;
     }
 
-    public void sendMsg(String data,String NamePort) throws IOException{
-        for(int i=0;i<clients.size();i++){
+    public void sendMsg(String data, String NamePort) throws IOException {
+        for (int i = 0; i < clients.size(); i++) {
             UserClient client = clients.get(i);
             try {
                 client.sendData(data);
@@ -277,17 +271,18 @@ class UserClientList{
         }
     }
 }
+
 //用户信息类
-class UserClientMsg{
+class UserClientMsg {
     private String name = "";
     private String port = "";
     private String str = "";
     private String peer = "";
-    private static Map<String,String> clientInfo= new HashMap<String,String>();
-    private String DELIMITER ="\f";
-    private String SEPARATOR ="\r";
+    private static Map<String, String> clientInfo = new HashMap<String, String>();
+    private String DELIMITER = "\f";
+    private String SEPARATOR = "\r";
 
-    UserClientMsg(String data_from_client){
+    UserClientMsg(String data_from_client) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         this.name = data_from_client_split.get(0);
         this.port = data_from_client_split.get(1);
@@ -295,72 +290,74 @@ class UserClientMsg{
         this.peer = data_from_client_split.get(3);
     }
 
-    public String getName(){
+    public String getName() {
         return name;
     }
 
-    public String getPort(){
+    public String getPort() {
         return port;
     }
 
-    public String getPeer(){
+    public String getPeer() {
         return peer;
     }
 
-    public Map<String,String> putClientInfo(){
-        clientInfo.put(getName(),getPort());
+    public Map<String, String> putClientInfo() {
+        clientInfo.put(getName(), getPort());
         return clientInfo;
     }
 
-    public Map<String,String> removeClientInfo(String name){
+    public Map<String, String> removeClientInfo(String name) {
         clientInfo.remove(name);
         return clientInfo;
     }
 
-    public Map<String,String> getClientInfo(){
+    public Map<String, String> getClientInfo() {
         return clientInfo;
     }
 
-
-    public String buildNamePort(Map<String,String> clientInfo) {
+    public String buildNamePort(Map<String, String> clientInfo) {
         StringBuilder name_port = new StringBuilder();
-        if(clientInfo.size()>0) {
+        if (clientInfo.size() > 0) {
             for (Map.Entry<String, String> entry : clientInfo.entrySet()) {
                 name_port = name_port.append(entry.getKey()).append(SEPARATOR).append(entry.getValue()).append(DELIMITER);
             }
             String NamePort = name_port.deleteCharAt(name_port.length() - 1).toString();
             return NamePort;
-        }
-        else return null;
+        } else return null;
+    }
+
+    public String buildMsg(String name, String port, String str, String peer) {
+        String buildMsg = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
+        return buildMsg;
     }
 }
 
-
-
-class ServerFrame{
+//界面显示
+class ServerFrame {
     private Frame f = new Frame();
 
-    private static java.awt.List chatList = new java.awt.List(20,false);
+    private static java.awt.List chatList = new java.awt.List(20, false);
     private static TextField onlineCount = new TextField("在线人数");
-    private static java.awt.List clientList = new java.awt.List(20,false);
+    private static java.awt.List clientList = new java.awt.List(20, false);
 
     private Button login = new Button("启动");
     private Label chat = new Label("记录");
     private Label online = new Label("在线用户列表");
 
-    public java.awt.List getChatList(){
+    public java.awt.List getChatList() {
         return chatList;
     }
 
-    public TextField getOnlienCount(){
+    public TextField getOnlienCount() {
         return onlineCount;
     }
 
-    public java.awt.List getClientList(){
+    public java.awt.List getClientList() {
         return clientList;
     }
 
-    public void init(){
+    public void init() {
         f.setTitle("服务端");
         //用户
         Box client = Box.createHorizontalBox();
@@ -410,6 +407,7 @@ class ServerFrame{
         f.setVisible(true);
 
     }
+
     private class loginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             new Thread(new ChatServer().new Server()).start();
