@@ -25,7 +25,6 @@ public class ChatServer {
     String DELIMITER = "\f";
     String SEPARATOR = "\r";
 
-
 //    Button login = new Button("Æô¶¯");
 //    Label chat = new Label("¼ÇÂ¼");
 //    java.awt.List chatList = new java.awt.List(20,false);

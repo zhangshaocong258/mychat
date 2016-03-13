@@ -13,7 +13,6 @@ import java.util.*;
  * Created by zsc on 2015/3/9.
  */
 public class ChatClient {
-
     Frame f = new Frame();
     Socket s = null;
     Socket socketWithPeer = null;
