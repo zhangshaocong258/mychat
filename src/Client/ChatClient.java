@@ -13,6 +13,8 @@ import java.util.*;
  * Created by zsc on 2015/3/9.
  */
 public class ChatClient {
+    ConnectServer connectServer = new ConnectServer();
+    ClientMsg clientMsg = new ClientMsg();
     Frame f = new Frame();
     Socket s = null;
     Socket socketWithPeer = null;
@@ -336,7 +338,7 @@ public class ChatClient {
         public void actionPerformed(ActionEvent e) {
             login.setEnabled(false);
             clientName.setEnabled(false);
-            connect();
+            connectServer.connect();
             new Thread(new ClientServer()).start();
             new Thread(new RecvThread()).start();
         }
@@ -355,6 +357,122 @@ public class ChatClient {
                 disconnectpeer();
             }
         }
+    }
+}
+
+class PeerClient{
+    private Socket peerSocket = null;
+    private DataInputStream disWithPeer;
+    private DataOutputStream dosWithPeer;
+
+    public PeerClient(Socket peerSocket) {
+        this.peerSocket = peerSocket;
+        try {
+            disWithPeer = new DataInputStream(peerSocket.getInputStream());
+            dosWithPeer = new DataOutputStream(peerSocket.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void close() throws IOException {
+        try {
+            if (disWithPeer != null) disWithPeer.close();
+            if (peerSocket != null) peerSocket.close();
+            if (dosWithPeer != null) dosWithPeer.close();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+    }
+}
+
+class ConnectServer{
+    Socket clientSocket = null;//Client×Ô¼ºµÄscoket
+    private DataOutputStream dosWithServer = null;
+    private DataInputStream disWithServer = null;
+    private String name = "";
+    private String port = "";
+    private String str = "";
+    private String peer = "";
+
+    public void connect() {
+        try {
+            clientSocket = new Socket("127.0.0.1", 8888);
+            dosWithServer = new DataOutputStream(clientSocket.getOutputStream());
+            disWithServer = new DataInputStream(clientSocket.getInputStream());
+            System.out.println("connected");
+        } catch (UnknownHostException e) {
+            System.out.println("sever not start");
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("sever not start");
+            System.exit(1);
+            e.printStackTrace();
+        }
+    }
+}
+
+class ClientMsg {
+    private String name = "";
+    private String port = "";
+    private String str = "";
+    private String peer = "";
+    private static Map<String, String> clientInfo = new HashMap<String, String>();
+    private String DELIMITER = "\f";
+    private String SEPARATOR = "\r";
+    private DataInputStream dataInputStream = null;
+    private DataOutputStream dataOutputStream = null;
+
+//    ClientMsg(String data_from_client) {
+//        java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
+//        this.name = data_from_client_split.get(0);
+//        this.port = data_from_client_split.get(1);
+//        this.str = data_from_client_split.get(2);
+//        this.peer = data_from_client_split.get(3);
+//    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public String getStr(){
+        return str;
+    }
+
+    public String getPeer() {
+        return peer;
+    }
+
+    public Map<String, String> putClientInfo() {
+        clientInfo.put(getName(), getPort());
+        return clientInfo;
+    }
+
+    public Map<String, String> removeClientInfo(String name) {
+        clientInfo.remove(name);
+        return clientInfo;
+    }
+
+    public Map<String, String> getClientInfo() {
+        return clientInfo;
+    }
+
+    public String buildMsg(String name, String port, String str, String peer) {
+        String buildMsg = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
+        return buildMsg;
+    }
+
+    public void sendData(DataOutputStream dataOutputStream, String Data) throws IOException{
+        dataOutputStream.writeUTF(Data);
+    }
+
+    public String receiveData(DataInputStream dataInputStream) throws IOException{
+        String msg = dataInputStream.readUTF();
+        return msg;
     }
 }
 

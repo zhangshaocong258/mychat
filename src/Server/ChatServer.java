@@ -17,13 +17,11 @@ public class ChatServer {
     private ServerFrame serverFrame = new ServerFrame();
     private UserClientList userClientList = new UserClientList();
 
-    //    Frame f = new Frame();
+//    Frame f = new Frame();
     Socket socket = null;
     boolean bconnected = false;
-    //    Map<String,String> clientInfo= new HashMap<>();
+//    Map<String,String> clientInfo= new HashMap<>();
 //    java.util.List<UserClient> clients = new ArrayList<UserClient>();
-    String DELIMITER = "\f";
-    String SEPARATOR = "\r";
 
 //    Button login = new Button("启动");
 //    Label chat = new Label("记录");
@@ -78,7 +76,7 @@ public class ChatServer {
         }
     }
 
-    //接受客户端连接
+    //接受客户端信息
     class ReceiveMsg implements Runnable {
         private UserClient userClient;
         private UserClientMsg userClientMsg;
@@ -86,7 +84,7 @@ public class ChatServer {
         private String name_port;
         private String name = "";
         private String port = "";
-        //        private String str = "";
+//        private String str = "";
         private String peer = "";
 
         ReceiveMsg(UserClient userClient) {
@@ -233,6 +231,7 @@ class UserClient {
 
     public void sendData(String str) throws IOException {
         dosWithClient.writeUTF(str);
+        dosWithClient.flush();
     }
 
     public String receiveData() throws IOException {
