@@ -19,8 +19,8 @@ public class ChatClient {
     Socket s = null;
     Socket socketWithPeer = null;
     ServerSocket clientServerSocket = null;
-    DataOutputStream dosWithServer = null;
-    DataInputStream disWithServer = null;
+//    DataOutputStream dosWithServer = null;
+//    DataInputStream disWithServer = null;
     DataOutputStream peerDos = null;
     DataInputStream peerDis = null;
     Map<String, String> clientInfo = new HashMap<>();
@@ -31,7 +31,7 @@ public class ChatClient {
     String all = "";
     String DELIMITER = "\f";
     String SEPARATOR = "\r";
-    boolean bconnected = false;
+//    boolean bconnected = false;
     boolean cClient = false;
 
     Label clientLabel = new Label("用户名");
@@ -117,12 +117,13 @@ public class ChatClient {
 
     //客户端服务
     class ClientServer implements Runnable {
+        private PeerClient peerClient;
         boolean start = false;
 
         public void run() {
             try {
-                clientServerSocket = new ServerSocket(s.getLocalPort() + 1);
-                System.out.println(s.getLocalPort());
+                clientServerSocket = new ServerSocket(connectServer.clientSocket.getLocalPort() + 1);
+                System.out.println(connectServer.clientSocket.getLocalPort());
                 start = true;
             } catch (BindException e) {
                 System.out.println("端口使用中");
@@ -133,9 +134,10 @@ public class ChatClient {
             try {
                 while (start) {
                     Socket sss = clientServerSocket.accept();
-                    cClient c = new cClient(sss);
+                    peerClient = new PeerClient(sss);
+                    ReceivePeerMsg receivePeerMsg = new ReceivePeerMsg(peerClient);
                     System.out.println("a client connected!");
-                    new Thread(c).start();
+                    new Thread(receivePeerMsg).start();
                     //dis.close();
                 }
             } catch (IOException e) {
@@ -151,23 +153,18 @@ public class ChatClient {
     }
 
     //客户端接收客户端
-    class cClient implements Runnable {
-        private Socket s;
-
-        public cClient(Socket s) {
-            this.s = s;
-            try {
-                peerDis = new DataInputStream(s.getInputStream());
+    class ReceivePeerMsg implements Runnable {
+//        private Socket s;
+        private PeerClient peerClient;
+        public ReceivePeerMsg(PeerClient peerClient) {
+            this.peerClient = peerClient;
                 cClient = true;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         public void run() {
             try {
                 while (cClient) {
-                    String str = peerDis.readUTF();
+                    String str = peerClient.disWithPeer.readUTF();
                     ta.setText(ta.getText() + str + "\n");
                     System.out.println(str);
                 }
@@ -181,7 +178,7 @@ public class ChatClient {
 
             } finally {
                 try {
-                    if (peerDis != null) peerDis.close();
+                    if (peerClient.disWithPeer != null) peerClient.disWithPeer.close();
                     if (s != null) s.close();
 
                 } catch (IOException e1) {
@@ -193,39 +190,39 @@ public class ChatClient {
     }
 
     //客户端连接服务端
-    public void connect() {
-        try {
-            s = new Socket("127.0.0.1", 8888);
-            dosWithServer = new DataOutputStream(s.getOutputStream());
-            disWithServer = new DataInputStream(s.getInputStream());
+//    public void connect() {
+//        try {
+//            s = new Socket("127.0.0.1", 8888);
+//            dosWithServer = new DataOutputStream(s.getOutputStream());
+//            disWithServer = new DataInputStream(s.getInputStream());
+//
+//            name = clientName.getText();
+//            port = String.valueOf(s.getLocalPort() + 1);
+//            peer = name;
+//            all = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
+//            dosWithServer.writeUTF(all);
+//
+//            System.out.println("connected");
+//            bconnected = true;
+//        } catch (UnknownHostException e) {
+//            System.out.println("sever not start");
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            System.out.println("sever not start");
+//            System.exit(1);
+//            e.printStackTrace();
+//        }
+//    }
 
-            name = clientName.getText();
-            port = String.valueOf(s.getLocalPort() + 1);
-            peer = name;
-            all = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
-            dosWithServer.writeUTF(all);
-
-            System.out.println("connected");
-            bconnected = true;
-        } catch (UnknownHostException e) {
-            System.out.println("sever not start");
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("sever not start");
-            System.exit(1);
-            e.printStackTrace();
-        }
-    }
-
-    public void disconnect() {
-        try {
-            dosWithServer.close();
-            s.close();
-            bconnected = false;
-        } catch (IOException e) {
-            System.exit(0);
-        }
-    }
+//    public void disconnect() {
+//        try {
+//            dosWithServer.close();
+//            s.close();
+//            bconnected = false;
+//        } catch (IOException e) {
+//            System.exit(0);
+//        }
+//    }
 
     //客户端连接客户端
     public void connectpeer(int peerport) {
@@ -246,20 +243,20 @@ public class ChatClient {
 
     //发送信息
     private void SendThread() {
-        str = name + "说：" + content.getText().trim();
-        all = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
+        clientMsg.setStr(clientMsg.getName() + "说：" + content.getText().trim());
+        String all = clientMsg.buildMsg(clientMsg.getName(), clientMsg.getPort(),clientMsg.getStr(),clientMsg.getPeer());
         //ta.setText(str);
         content.setText(null);
         try {
             if (!cClient) {
-                dosWithServer.writeUTF(all);
-                dosWithServer.flush();
+                clientMsg.sendData(connectServer.dosWithServer, all);
+                connectServer.dosWithServer.flush();
             } else {
-                peerDos.writeUTF(str);
-                System.out.println("CCCCCCC" + str);
+                peerDos.writeUTF(clientMsg.getStr());
+                System.out.println("CCCCCCC" + clientMsg.getStr());
                 peerDos.flush();
-                if (!str.split("：")[1].equals(""))
-                    ta.setText(ta.getText() + str + "\n");
+                if (!clientMsg.getStr().split("：")[1].equals(""))
+                    ta.setText(ta.getText() + clientMsg.getStr() + "\n");
             }
             //dos.close();
         } catch (IOException e1) {
@@ -267,17 +264,17 @@ public class ChatClient {
         }
     }
 
-    //接收信息
-    private class RecvThread implements Runnable {
+    //接收服务端信息
+    private class ReceiveServerMsg implements Runnable {
         String data = null;
         java.util.List<String> data_split = null;
         String name_and_port = null;
 
         public void run() {
-            while (bconnected) {
+            while (connectServer.bconnected) {
                 try {
-                    data = disWithServer.readUTF();
-                    name_and_port = disWithServer.readUTF();
+                    data = clientMsg.receiveData(connectServer.disWithServer);
+                    name_and_port = clientMsg.receiveData(connectServer.disWithServer);
                     System.out.println(name_and_port);
 
                     data_split = Arrays.asList(data.split(DELIMITER));
@@ -335,12 +332,23 @@ public class ChatClient {
     }
 
     private class clientloginListener implements ActionListener {
+
+
         public void actionPerformed(ActionEvent e) {
             login.setEnabled(false);
             clientName.setEnabled(false);
             connectServer.connect();
+            clientMsg.setName(clientName.getText());
+            clientMsg.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
+            clientMsg.setPeer(clientMsg.getName());
+            String all = clientMsg.buildMsg(clientMsg.getName(), clientMsg.getPort(),"",clientMsg.getPeer());
+            try {
+                clientMsg.sendData(connectServer.dosWithServer, all);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
             new Thread(new ClientServer()).start();
-            new Thread(new RecvThread()).start();
+            new Thread(new ReceiveServerMsg()).start();
         }
     }
 
@@ -362,14 +370,13 @@ public class ChatClient {
 
 class PeerClient{
     private Socket peerSocket = null;
-    private DataInputStream disWithPeer;
+    DataInputStream disWithPeer;
     private DataOutputStream dosWithPeer;
 
     public PeerClient(Socket peerSocket) {
         this.peerSocket = peerSocket;
         try {
             disWithPeer = new DataInputStream(peerSocket.getInputStream());
-            dosWithPeer = new DataOutputStream(peerSocket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -388,8 +395,9 @@ class PeerClient{
 
 class ConnectServer{
     Socket clientSocket = null;//Client自己的scoket
-    private DataOutputStream dosWithServer = null;
-    private DataInputStream disWithServer = null;
+    DataOutputStream dosWithServer = null;
+    DataInputStream disWithServer = null;
+    boolean bconnected = false;
     private String name = "";
     private String port = "";
     private String str = "";
@@ -400,6 +408,7 @@ class ConnectServer{
             clientSocket = new Socket("127.0.0.1", 8888);
             dosWithServer = new DataOutputStream(clientSocket.getOutputStream());
             disWithServer = new DataInputStream(clientSocket.getInputStream());
+            bconnected = true;
             System.out.println("connected");
         } catch (UnknownHostException e) {
             System.out.println("sever not start");
@@ -420,8 +429,6 @@ class ClientMsg {
     private static Map<String, String> clientInfo = new HashMap<String, String>();
     private String DELIMITER = "\f";
     private String SEPARATOR = "\r";
-    private DataInputStream dataInputStream = null;
-    private DataOutputStream dataOutputStream = null;
 
 //    ClientMsg(String data_from_client) {
 //        java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
@@ -430,6 +437,22 @@ class ClientMsg {
 //        this.str = data_from_client_split.get(2);
 //        this.peer = data_from_client_split.get(3);
 //    }
+
+    public void setName(String name){
+        this.name = name;
+    }
+
+    public void setPort(String port){
+        this.port = port;
+    }
+
+    public void setStr(String str){
+        this.str = str;
+    }
+
+    public void setPeer(String peer){
+        this.peer = peer;
+    }
 
     public String getName() {
         return name;

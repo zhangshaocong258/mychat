@@ -18,8 +18,8 @@ public class ChatServer {
     private UserClientList userClientList = new UserClientList();
 
 //    Frame f = new Frame();
-    Socket socket = null;
-    boolean bconnected = false;
+//    Socket socket = null;
+//    boolean bconnected = false;
 //    Map<String,String> clientInfo= new HashMap<>();
 //    java.util.List<UserClient> clients = new ArrayList<UserClient>();
 
@@ -56,7 +56,7 @@ public class ChatServer {
             }
             try {
                 while (start) {
-                    socket = serverSocket.accept();
+                    Socket socket = serverSocket.accept();
                     userClient = new UserClient(socket);
                     ReceiveMsg client = new ReceiveMsg(userClient);
                     userClientList.addClients(userClient);
@@ -78,6 +78,7 @@ public class ChatServer {
 
     //接受客户端信息
     class ReceiveMsg implements Runnable {
+        private boolean bconnected;
         private UserClient userClient;
         private UserClientMsg userClientMsg;
         private Map<String, String> clientInfomation = new HashMap<String, String>();
