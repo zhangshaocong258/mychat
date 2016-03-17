@@ -33,6 +33,7 @@ public class ChatClient {
     String DELIMITER = "\f";
     String SEPARATOR = "\r";
 //    boolean bconnected = false;
+
     boolean cClient = false;
 
     Label clientLabel = new Label("ÓÃ»§Ãû");
