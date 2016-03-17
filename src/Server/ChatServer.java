@@ -200,8 +200,6 @@ public class ChatServer {
             }
         }
     }
-
-
 }
 
 //启动socket连接，定义发送和接受信息
