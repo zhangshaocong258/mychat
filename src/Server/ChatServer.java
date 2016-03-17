@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Created by zsc on 2015/3/9.
  */
-public class ChatServer {
+public class ChatServer { 
 
     private ServerFrame serverFrame = new ServerFrame();
     private UserClientList userClientList = new UserClientList();
