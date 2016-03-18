@@ -285,12 +285,12 @@ public class ChatClient {
                     String rname = data_split.get(3);
                     String rport = data_split.get(1);
                     if (peerData.getStr().equals("")) {
-                        peerData.getClientInfo().clear();
+                        peerData.clearClientInfo();
                         clientList.removeAll();
                         clientList.add("群聊");
                         for (int j = 0; j < listname.size(); j++) {
                             clientList.add(listname.get(j).split(SEPARATOR)[0]);
-                            clientInfo.put(listname.get(j).split(SEPARATOR)[0], listname.get(j).split(SEPARATOR)[1]);
+                            peerData.putClientInfo(listname.get(j).split(SEPARATOR)[0], listname.get(j).split(SEPARATOR)[1]);
                         }
                         System.out.println(clientInfo.size());
 
@@ -358,11 +358,11 @@ public class ChatClient {
     private class peerListener implements ItemListener {
         public void itemStateChanged(ItemEvent e) {
             clientData.setPeer(clientList.getSelectedItem());
-//            for (Map.Entry<String, String> entry : clientInfo.entrySet()) {
-//                System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
-//            }
+            for (Map.Entry<String, String> entry : PeerData.getClientInfo().entrySet()) {
+                System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
+            }
             if (!clientData.getPeer().equals("群聊")) {
-                connectPeerClient.connectpeer(Integer.parseInt(clientInfo.get(peer)));
+                connectPeerClient.connectpeer(Integer.parseInt(PeerData.getClientInfo().get(clientData.getPeer())));
             } else {
                 connectPeerClient.disconnectpeer();
             }
@@ -476,9 +476,13 @@ class PeerData{
         return peer;
     }
 
-    public Map<String, String> putClientInfo() {
-        clientInfo.put(getName(), getPort());
+    public Map<String, String> putClientInfo(String name, String port) {
+        clientInfo.put(name, port);
         return clientInfo;
+    }
+
+    public void clearClientInfo(){
+        clientInfo.clear();
     }
 
     public Map<String, String> removeClientInfo(String name) {
@@ -486,7 +490,7 @@ class PeerData{
         return clientInfo;
     }
 
-    public Map<String, String> getClientInfo() {
+    public static Map<String, String> getClientInfo() {
         return clientInfo;
     }
 
