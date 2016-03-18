@@ -14,22 +14,22 @@ import java.util.*;
  */
 public class ChatClient {
     ConnectServer connectServer = new ConnectServer();
-    ClientData clientData = new ClientData();
+    SendData sendData = new SendData();
     ConnectPeerClient connectPeerClient = new ConnectPeerClient();
     Frame f = new Frame();
-    Socket s = null;
-    Socket socketWithPeer = null;
+//    Socket s = null;
+//    Socket socketWithPeer = null;
     ServerSocket clientServerSocket = null;
 //    DataOutputStream dosWithServer = null;
 //    DataInputStream disWithServer = null;
-    DataOutputStream peerDos = null;
-    DataInputStream peerDis = null;
-    Map<String, String> clientInfo = new HashMap<>();
-    String name = "";
-    String port = "";
-    String str = "";
-    String peer = "群聊";
-    String all = "";
+//    DataOutputStream peerDos = null;
+//    DataInputStream peerDis = null;
+//    Map<String, String> clientInfo = new HashMap<>();
+//    String name = "";
+//    String port = "";
+//    String str = "";
+//    String peer = "群聊";
+//    String all = "";
     String DELIMITER = "\f";
     String SEPARATOR = "\r";
 //    boolean bconnected = false;
@@ -45,7 +45,7 @@ public class ChatClient {
     TextArea content = new TextArea(2, 20);
 
     Label onlineLabel = new Label("在线好友列表");
-    TextField onlineCount = new TextField("在线人数");
+    static TextField onlineCount = new TextField("在线人数");
     static List clientList = new List(30, false);
 
     Button ok = new Button("发送");
@@ -165,7 +165,7 @@ public class ChatClient {
         public void run() {
             try {
                 while (connectPeerClient.cClient) {
-                    String str = clientData.receiveData(peerClient.disWithPeer);
+                    String str = sendData.receiveData(peerClient.disWithPeer);
 //                    String str = peerClient.disWithPeer.readUTF();
                     ta.setText(ta.getText() + str + "\n");
                     System.out.println(str);
@@ -247,19 +247,19 @@ public class ChatClient {
 
     //发送信息
     private void SendThread() {
-        clientData.setStr(clientData.getName() + "说：" + content.getText().trim());
-        String all = clientData.buildMsg(clientData.getName(), clientData.getPort(),clientData.getStr(),clientData.getPeer());
+        sendData.setStr(sendData.getName() + "说：" + content.getText().trim());
+        String all = sendData.buildMsg(sendData.getName(), sendData.getPort(),sendData.getStr(),sendData.getPeer());
         //ta.setText(str);
         content.setText(null);
         try {
             if (!connectPeerClient.cClient) {
-                clientData.sendData(connectServer.dosWithServer, all);
+                sendData.sendData(connectServer.dosWithServer, all);
                 connectServer.dosWithServer.flush();
             } else {
-                clientData.sendData(connectPeerClient.dosWithPeer, clientData.getStr());
-                System.out.println("发送的信息" + clientData.getStr());
-                if (!clientData.getStr().split("：")[1].equals(""))
-                    ta.setText(ta.getText() + clientData.getStr() + "\n");
+                sendData.sendData(connectPeerClient.dosWithPeer, sendData.getStr());
+                System.out.println("发送的信息" + sendData.getStr());
+                if (!sendData.getStr().split("：")[1].equals(""))
+                    ta.setText(ta.getText() + sendData.getStr() + "\n");
             }
             //dos.close();
         } catch (IOException e1) {
@@ -269,33 +269,33 @@ public class ChatClient {
 
     //接收服务端信息
     private class ReceiveServerMsg implements Runnable {
-        PeerData peerData;
+        ReceiveData receiveData;
         String data = null;
-        java.util.List<String> data_split = null;
+//        java.util.List<String> data_split = null;
         String name_and_port = null;
 
         public void run() {
             while (connectServer.bconnected) {
                 try {
-                    data = clientData.receiveData(connectServer.disWithServer);
-                    name_and_port = clientData.receiveData(connectServer.disWithServer);
-                    peerData = new PeerData(data, name_and_port);
-                    data_split = Arrays.asList(data.split(DELIMITER));
-                    java.util.List<String> listname = Arrays.asList(name_and_port.split(DELIMITER));
-                    String rname = data_split.get(3);
-                    String rport = data_split.get(1);
-                    if (peerData.getStr().equals("")) {
-                        peerData.clearClientInfo();
-                        clientList.removeAll();
-                        clientList.add("群聊");
-                        for (int j = 0; j < listname.size(); j++) {
-                            clientList.add(listname.get(j).split(SEPARATOR)[0]);
-                            peerData.putClientInfo(listname.get(j).split(SEPARATOR)[0], listname.get(j).split(SEPARATOR)[1]);
-                        }
-                        System.out.println(clientInfo.size());
-
-                        onlineCount.setText("在线人数" + ": " + (clientList.getItemCount() - 1));
-                    }
+                    data = sendData.receiveData(connectServer.disWithServer);
+                    name_and_port = sendData.receiveData(connectServer.disWithServer);
+                    receiveData = new ReceiveData(data, name_and_port);
+//                    data_split = Arrays.asList(data.split(DELIMITER));
+//                    java.util.List<String> listname = Arrays.asList(name_and_port.split(DELIMITER));
+//                    String rname = data_split.get(3);
+//                    String rport = data_split.get(1);
+//                    if (receiveData.getStr().equals("")) {
+//                        receiveData.clearClientInfo();
+//                        clientList.removeAll();
+//                        clientList.add("群聊");
+//                        for (int j = 0; j < listname.size(); j++) {
+//                            clientList.add(listname.get(j).split(SEPARATOR)[0]);
+//                            receiveData.putClientInfo(listname.get(j).split(SEPARATOR)[0], listname.get(j).split(SEPARATOR)[1]);
+//                        }
+//                        System.out.println(clientInfo.size());
+//
+//                        onlineCount.setText("在线人数" + ": " + (clientList.getItemCount() - 1));
+//                    }
 
                 } catch (SocketException e1) {
                     System.out.println("Server closed");
@@ -306,12 +306,12 @@ public class ChatClient {
                     System.out.println("Server closed");
 
                 }
-                String str = data_split.get(2);
+//                String str = data_split.get(2);
                 try {
                     //str = b.get(2);
-                    System.out.println(str);
-                    if (!str.split("：")[1].equals("")) {
-                        ta.setText(ta.getText() + str + "\n");
+//                    System.out.println(str);
+                    if (!receiveData.getStr().split("：")[1].equals("")) {
+                        ta.setText(ta.getText() + receiveData.getStr() + "\n");
                     }
                 } catch (Exception e) {
                     System.out.println("client closed");
@@ -341,12 +341,12 @@ public class ChatClient {
             login.setEnabled(false);
             clientName.setEnabled(false);
             connectServer.connect();//客户端连接服务端
-            clientData.setName(clientName.getText());
-            clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
-            clientData.setPeer(clientData.getName());
-            String all = clientData.buildMsg(clientData.getName(), clientData.getPort(),"",clientData.getPeer());
+            sendData.setName(clientName.getText());
+            sendData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
+            sendData.setPeer(sendData.getName());
+            String all = sendData.buildMsg(sendData.getName(), sendData.getPort(),"",sendData.getPeer());
             try {
-                clientData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
+                sendData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
@@ -357,12 +357,12 @@ public class ChatClient {
 
     private class peerListener implements ItemListener {
         public void itemStateChanged(ItemEvent e) {
-            clientData.setPeer(clientList.getSelectedItem());
-            for (Map.Entry<String, String> entry : PeerData.getClientInfo().entrySet()) {
-                System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
-            }
-            if (!clientData.getPeer().equals("群聊")) {
-                connectPeerClient.connectpeer(Integer.parseInt(PeerData.getClientInfo().get(clientData.getPeer())));
+            sendData.setPeer(clientList.getSelectedItem());
+//            for (Map.Entry<String, String> entry : ReceiveData.getClientInfo().entrySet()) {
+//                System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
+//            }
+            if (!sendData.getPeer().equals("群聊")) {
+                connectPeerClient.connectpeer(Integer.parseInt(ReceiveData.getClientInfo().get(sendData.getPeer())));
             } else {
                 connectPeerClient.disconnectpeer();
             }
@@ -441,23 +441,36 @@ class ConnectServer{
 }
 
 //接收信息类
-class PeerData{
+class ReceiveData{
     private String name = "";
     private String port = "";
     private String str = "";
     private String peer = "";
-    private String name_port = "";
     private static Map<String, String> clientInfo = new HashMap<String, String>();
 
     private String DELIMITER = "\f";
+    private String SEPARATOR = "\r";
 
-    PeerData(String data_from_client, String name_and_port ){
+    ReceiveData(String data_from_client, String name_and_port ){
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         java.util.List<String> listname = Arrays.asList(name_and_port.split(DELIMITER));
         this.name = data_from_client_split.get(0);
         this.port = data_from_client_split.get(1);
         this.str = data_from_client_split.get(2);
         this.peer = data_from_client_split.get(3);
+
+        if (str.equals("")) {
+            clearClientInfo();
+            ChatClient.clientList.removeAll();
+            ChatClient.clientList.add("群聊");
+            for (int j = 0; j < listname.size(); j++) {
+                ChatClient.clientList.add(listname.get(j).split(SEPARATOR)[0]);
+                putClientInfo(listname.get(j).split(SEPARATOR)[0], listname.get(j).split(SEPARATOR)[1]);
+            }
+            System.out.println(clientInfo.size());
+
+            ChatClient.onlineCount.setText("在线人数" + ": " + ( ChatClient.clientList.getItemCount() - 1));
+        }
     }
 
     public String getName() {
@@ -485,33 +498,24 @@ class PeerData{
         clientInfo.clear();
     }
 
-    public Map<String, String> removeClientInfo(String name) {
-        clientInfo.remove(name);
-        return clientInfo;
-    }
+//    public Map<String, String> removeClientInfo(String name) {
+//        clientInfo.remove(name);
+//        return clientInfo;
+//    }
 
     public static Map<String, String> getClientInfo() {
         return clientInfo;
     }
 
 }
-//基础信息类
-class ClientData {
+//发送信息类
+class SendData {
     private String name = "";
     private String port = "";
     private String str = "";
     private String peer = "";
-//    private static Map<String, String> clientInfo = new HashMap<String, String>();
     private String DELIMITER = "\f";
     private String SEPARATOR = "\r";
-
-//    ClientMsg(String data_from_client) {
-//        java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
-//        this.name = data_from_client_split.get(0);
-//        this.port = data_from_client_split.get(1);
-//        this.str = data_from_client_split.get(2);
-//        this.peer = data_from_client_split.get(3);
-//    }
 
     public void setName(String name){
         this.name = name;
@@ -544,20 +548,6 @@ class ClientData {
     public String getPeer() {
         return peer;
     }
-
-//    public Map<String, String> putClientInfo() {
-//        clientInfo.put(getName(), getPort());
-//        return clientInfo;
-//    }
-//
-//    public Map<String, String> removeClientInfo(String name) {
-//        clientInfo.remove(name);
-//        return clientInfo;
-//    }
-//
-//    public Map<String, String> getClientInfo() {
-//        return clientInfo;
-//    }
 
     public String buildMsg(String name, String port, String str, String peer) {
         String buildMsg = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
