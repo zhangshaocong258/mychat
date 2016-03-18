@@ -81,12 +81,13 @@ public class ChatServer {
         private boolean bconnected;
         private UserClient userClient;
         private UserClientMsg userClientMsg;
-        private Map<String, String> clientInfomation = new HashMap<String, String>();
+        private Map<String, String> clientInfo = new HashMap<String, String>();
+        private String data_from_client;
         private String name_port;
         private String name = "";
         private String port = "";
 //        private String str = "";
-        private String peer = "";
+//        private String peer = "";
 
         ReceiveMsg(UserClient userClient) {
             this.userClient = userClient;
@@ -122,19 +123,19 @@ public class ChatServer {
         public void run() {
             try {
                 while (bconnected) {
-                    String data_from_client = userClient.receiveData();
+                    data_from_client = userClient.receiveData();
 //                    StringBuilder name_port = new StringBuilder();
 //                    java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
 //                    name = data_from_client_split.get(0);
 //                    port = data_from_client_split.get(1);
 //                    clientInfo.put(name,port);
                     userClientMsg = new UserClientMsg(data_from_client);
-                    clientInfomation = userClientMsg.putClientInfo();//
+                    clientInfo = userClientMsg.putClientInfo();//
                     name = userClientMsg.getName();
                     port = userClientMsg.getPort();
-                    peer = userClientMsg.getPeer();
+//                    peer = userClientMsg.getPeer();
 
-                    name_port = userClientMsg.buildNamePort(clientInfomation);
+                    name_port = userClientMsg.buildNamePort(clientInfo);
                     boolean flag = false;
                     System.out.println("用户数" + userClientMsg.getClientInfo().size());
 
@@ -157,16 +158,16 @@ public class ChatServer {
 //                    }
                     userClientList.sendMsg(data_from_client, name_port);
                     serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());
-                    System.out.println("no1");
+                    System.out.println("接收到了吗" + data_from_client);
                 }
             } catch (SocketException e) {
                 userClientList.removeClients(this.userClient);//List删除下线用户
                 serverFrame.getClientList().remove(this.name);//Frame中删除下线用户
                 serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());//在线人数减一
-                clientInfomation = userClientMsg.removeClientInfo(this.name);//Map中删除name_port，向其他用户发送信息
-                name_port = userClientMsg.buildNamePort(clientInfomation);//建立name_port,发送
+                clientInfo = userClientMsg.removeClientInfo(this.name);//Map中删除name_port，向其他用户发送信息
+                name_port = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
                 serverFrame.getChatList().add(name + "已下线");
-                String without_str = userClientMsg.buildMsg(name, port, "", peer);
+//                String without_str = userClientMsg.buildMsg(name, port, "");
 //                for(int k =0;k<clientList.getItemCount();k++){
 //                    name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
 //                }
@@ -179,7 +180,7 @@ public class ChatServer {
 //                }
                 if (serverFrame.getClientList().getItemCount() != 0) {
                     try {
-                        userClientList.sendMsg(without_str, name_port);
+                        userClientList.sendMsg(data_from_client, name_port);
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -274,7 +275,7 @@ class UserClientMsg {
     private String name = "";
     private String port = "";
     private String str = "";
-    private String peer = "";
+//    private String peer = "";
     private static Map<String, String> clientInfo = new HashMap<String, String>();
     private String DELIMITER = "\f";
     private String SEPARATOR = "\r";
@@ -283,8 +284,8 @@ class UserClientMsg {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         this.name = data_from_client_split.get(0);
         this.port = data_from_client_split.get(1);
-        this.str = data_from_client_split.get(2);
-        this.peer = data_from_client_split.get(3);
+//        this.str = data_from_client_split.get(2);
+//        this.peer = data_from_client_split.get(3);
     }
 
     public String getName() {
@@ -295,9 +296,9 @@ class UserClientMsg {
         return port;
     }
 
-    public String getPeer() {
-        return peer;
-    }
+//    public String getPeer() {
+//        return peer;
+//    }
 
     public Map<String, String> putClientInfo() {
         clientInfo.put(getName(), getPort());
@@ -324,8 +325,8 @@ class UserClientMsg {
         } else return null;
     }
 
-    public String buildMsg(String name, String port, String str, String peer) {
-        String buildMsg = name + DELIMITER + port + DELIMITER + str + DELIMITER + peer;
+    public String buildMsg(String name, String port, String str) {
+        String buildMsg = name + DELIMITER + port + DELIMITER + str;
         return buildMsg;
     }
 }
