@@ -13,9 +13,9 @@ import java.util.*;
  * Created by zsc on 2015/3/9.
  */
 public class ChatClient {
-    ConnectServer connectServer = new ConnectServer();
-    SendData sendData = new SendData();
-    ConnectPeerClient connectPeerClient = new ConnectPeerClient();
+    ConnectServer connectServer = new ConnectServer();//客户端连接服务端
+    ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
+    ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端作为服务端
     Frame f = new Frame();
 //    Socket s = null;
 //    Socket socketWithPeer = null;
@@ -117,7 +117,7 @@ public class ChatClient {
         f.setVisible(true);
     }
 
-    //客户端服务
+    //客户端作为服务端
     class ClientServer implements Runnable {
         private PeerClient peerClient;
         private ServerSocket clientServerSocket = null;
@@ -168,9 +168,10 @@ public class ChatClient {
         public void run() {
             try {
                 while (connectPeerClient.cClient) {
-                    String data = sendData.receiveData(peerClient.disWithPeer);
+                    String data = clientData.receiveData(peerClient.disWithPeer);
                     receiveData = new ReceiveData(data);
 //                    String str = peerClient.disWithPeer.readUTF();
+                    //判断消息为空，以及“：”的存在
                     if (receiveData.getStr() != "") {
                         if (receiveData.getStr().split("：").length != 1)
                             ta.setText(ta.getText() + receiveData.getStr() + "\n");
@@ -254,21 +255,21 @@ public class ChatClient {
 
     //发送信息
     private void SendThread() {
-        sendData.setStr(sendData.getName() + "说：" + content.getText().trim());
-        String all = sendData.buildMsg(sendData.getName(), sendData.getPort(), sendData.getStr());
+        clientData.setStr(clientData.getName() + "说：" + content.getText().trim());
+        String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), clientData.getStr());
         //ta.setText(str);
-        System.out.println("发出去了吗" + sendData.getStr());
+        System.out.println("发出去了吗" + clientData.getStr());
         content.setText(null);
         try {
-            if (sendData.getStr().length() != sendData.getName().length() + 2) {
+            if (clientData.getStr().length() != clientData.getName().length() + 2) {
                 if (!connectPeerClient.cClient) {
-                    sendData.sendData(connectServer.dosWithServer, all);
+                    clientData.sendData(connectServer.dosWithServer, all);
                     connectServer.dosWithServer.flush();
                 } else {
-                    sendData.sendData(connectPeerClient.dosWithPeer, all);
-                    System.out.println("发送的信息" + sendData.getStr());
-                    if (sendData.getStr().length() != sendData.getName().length() + 2)
-                        ta.setText(ta.getText() + sendData.getStr() + "\n");
+                    clientData.sendData(connectPeerClient.dosWithPeer, all);
+                    System.out.println("发送的信息" + clientData.getStr());
+                    if (clientData.getStr().length() != clientData.getName().length() + 2)
+                        ta.setText(ta.getText() + clientData.getStr() + "\n");
                 }
             }
 
@@ -282,14 +283,13 @@ public class ChatClient {
     private class ReceiveServerMsg implements Runnable {
         ReceiveData receiveData;
         String data = null;
-        //        java.util.List<String> data_split = null;
         String name_and_port = null;
 
         public void run() {
             while (connectServer.bconnected) {
                 try {
-                    data = sendData.receiveData(connectServer.disWithServer);
-                    name_and_port = sendData.receiveData(connectServer.disWithServer);
+                    data = clientData.receiveData(connectServer.disWithServer);
+                    name_and_port = clientData.receiveData(connectServer.disWithServer);
                     receiveData = new ReceiveData(data, name_and_port);
 //                    data_split = Arrays.asList(data.split(DELIMITER));
 //                    java.util.List<String> listname = Arrays.asList(name_and_port.split(DELIMITER));
@@ -307,7 +307,6 @@ public class ChatClient {
 //
 //                        onlineCount.setText("在线人数" + ": " + (clientList.getItemCount() - 1));
 //                    }
-
                 } catch (SocketException e1) {
                     System.out.println("Server closed");
                     System.exit(0);
@@ -317,10 +316,7 @@ public class ChatClient {
                     System.out.println("Server closed");
 
                 }
-//                String str = data_split.get(2);
                 try {
-                    //str = b.get(2);
-//                    System.out.println(str);
                     if (receiveData.getStr() != "") {
                         if (receiveData.getStr().length() != receiveData.getName().length() + 2) {
                             ta.setText(ta.getText() + receiveData.getStr() + "\n");
@@ -348,17 +344,15 @@ public class ChatClient {
     }
 
     private class clientloginListener implements ActionListener {
-
-
         public void actionPerformed(ActionEvent e) {
             login.setEnabled(false);
             clientName.setEnabled(false);
             connectServer.connect();//客户端连接服务端
-            sendData.setName(clientName.getText());
-            sendData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
-            String all = sendData.buildMsg(sendData.getName(), sendData.getPort(), "");
+            clientData.setName(clientName.getText());
+            clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
+            String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
             try {
-                sendData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
+                clientData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
@@ -385,7 +379,6 @@ public class ChatClient {
 //客户端的客户端类
 class PeerClient {
     private Socket peerSocket = null;//客户端的服务端
-    //    boolean cClient = false;
     DataInputStream disWithPeer;
 
     public PeerClient(Socket peerSocket) {
@@ -466,9 +459,9 @@ class ReceiveData {
     private String DELIMITER = "\f";
     private String SEPARATOR = "\r";
 
+    //客户端之间通信构造器初始化
     ReceiveData(String data_from_client) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
-
         this.name = data_from_client_split.get(0);
         this.port = data_from_client_split.get(1);
         if (data_from_client_split.size() == 3) {
@@ -478,6 +471,7 @@ class ReceiveData {
         }
     }
 
+    //客户端接收服务端信息构造器初始化
     ReceiveData(String data_from_client, String name_and_port) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         java.util.List<String> listname = Arrays.asList(name_and_port.split(DELIMITER));
@@ -543,8 +537,8 @@ class ReceiveData {
 
 }
 
-//发送信息类
-class SendData {
+//用户登录信息封装类，包含发送接收信息方法
+class ClientData {
     private String name = "";
     private String port = "";
     private String str = "";
