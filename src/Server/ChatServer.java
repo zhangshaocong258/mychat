@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Created by zsc on 2015/3/9.
  */
-public class ChatServer { 
+public class ChatServer {
 
     private ServerFrame serverFrame = new ServerFrame();
     private UserClientList userClientList = new UserClientList();
@@ -274,8 +274,6 @@ class UserClientList {
 class UserClientMsg {
     private String name = "";
     private String port = "";
-    private String str = "";
-//    private String peer = "";
     private static Map<String, String> clientInfo = new HashMap<String, String>();
     private String DELIMITER = "\f";
     private String SEPARATOR = "\r";
