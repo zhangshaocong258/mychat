@@ -345,19 +345,21 @@ public class ChatClient {
 
     private class clientloginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            login.setEnabled(false);
-            clientName.setEnabled(false);
-            connectServer.connect();//客户端连接服务端
-            clientData.setName(clientName.getText());
-            clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
-            String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
-            try {
-                clientData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
-            } catch (IOException e1) {
-                e1.printStackTrace();
+            if(clientName.getText().trim().length() > 1) {
+                login.setEnabled(false);
+                clientName.setEnabled(false);
+                connectServer.connect();//客户端连接服务端
+                clientData.setName(clientName.getText());
+                clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
+                String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
+                try {
+                    clientData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
+                new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
             }
-            new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
-            new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
         }
     }
 
