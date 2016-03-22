@@ -331,7 +331,9 @@ public class ChatClient {
 
     private class okListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            SendThread();
+            if(!connectPeerClient.cSelf){
+                SendThread();
+            }
         }
     }
 
@@ -367,9 +369,17 @@ public class ChatClient {
 //            for (Map.Entry<String, String> entry : ReceiveData.getClientInfo().entrySet()) {
 //                System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
 //            }
-            if (!peer.equals("群聊")) {
+            if (!peer.equals("群聊") && !peer.equals(clientData.getName())) {
+                System.out.println("连接了本人，错误");
+                connectPeerClient.cSelf = false;
                 connectPeerClient.connectpeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
-            } else {
+            } else if(peer.equals(clientData.getName())){
+                System.out.println("不能给本人");
+                connectPeerClient.cSelf = true;
+                ta.setText(ta.getText() + "不能给本人" + "\n");
+            }
+            else {
+                connectPeerClient.cSelf = false;
                 connectPeerClient.disconnectpeer();
             }
         }
@@ -404,6 +414,7 @@ class PeerClient {
 class ConnectPeerClient {
     private Socket socketWithPeer = null;//客户端的客户端
     boolean cClient;
+    boolean cSelf = false;
     DataOutputStream dosWithPeer;
 
     //客户端连接客户端
