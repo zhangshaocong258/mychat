@@ -48,7 +48,7 @@ public class ChatClient {
     static TextField onlineCount = new TextField("在线人数");
     static List clientList = new List(30, false);
 
-    Button ok = new Button("发送");
+    Button send = new Button("发送");
     Button clear = new Button("清除");
 
     public static void main(String[] args) {
@@ -70,7 +70,7 @@ public class ChatClient {
 
         //发送清除
         Box bottom = Box.createHorizontalBox();
-        bottom.add(ok);
+        bottom.add(send);
         bottom.add(Box.createHorizontalGlue());
         bottom.add(clear);
 
@@ -110,10 +110,10 @@ public class ChatClient {
                     }
                 }
         );
-        ok.addActionListener(new okListener());
+        send.addActionListener(new sendListener());
         clear.addActionListener(new clearListener());
         login.addActionListener(new clientloginListener());
-        clientList.addItemListener(new peerListener());
+        clientList.addItemListener(new p2pListener());
         f.setVisible(true);
     }
 
@@ -330,7 +330,7 @@ public class ChatClient {
         }
     }
 
-    private class okListener implements ActionListener {
+    private class sendListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             SendThread();
         }
@@ -346,23 +346,27 @@ public class ChatClient {
 
     private class clientloginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            login.setEnabled(false);
-            clientName.setEnabled(false);
-            connectServer.connect();//客户端连接服务端
-            clientData.setName(clientName.getText());
-            clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
-            String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
-            try {
-                clientData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
-            } catch (IOException e1) {
-                e1.printStackTrace();
+            if(!clientName.getText().equals("")){
+                login.setEnabled(false);
+                clientName.setEnabled(false);
+                connectServer.connect();//客户端连接服务端
+                clientData.setName(clientName.getText());
+                clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
+                String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
+                try {
+                    clientData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
+                new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
+            }else {
+                clientName.setText(null);
             }
-            new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
-            new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
         }
     }
 
-    private class peerListener implements ItemListener {
+    private class p2pListener implements ItemListener {
         public void itemStateChanged(ItemEvent e) {
             String peer = clientList.getSelectedItem();
 //            for (Map.Entry<String, String> entry : ReceiveData.getClientInfo().entrySet()) {
