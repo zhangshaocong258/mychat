@@ -155,31 +155,32 @@ public class ChatClient {
         }
     }
 
-    //客户端接收客户端
+    //客户端接收客户端信息
     class ReceivePeerMsg implements Runnable {
         private ReceiveData receiveData;
         private PeerClient peerClient;
 
         public ReceivePeerMsg(PeerClient peerClient) {
             this.peerClient = peerClient;
-            connectPeerClient.cClient = true;
+            connectPeerClient.setcClientTrue();
+            System.out.println("cClient是什么" + connectPeerClient.getcCLient());
         }
 
         public void run() {
             try {
-                while (connectPeerClient.cClient) {
+                while (connectPeerClient.getcCLient()) {
                     String data = clientData.receiveData(peerClient.disWithPeer);
                     receiveData = new ReceiveData(data);
 //                    String str = peerClient.disWithPeer.readUTF();
-                    //判断消息为空，以及“：”的存在
-                    if (receiveData.getStr() != "") {
+                    //判断消息是否为空，“：”是否存在，是否是给本人发送信息
+                    if ((receiveData.getStr() != "") && !(receiveData.getName().equals(clientData.getName()))) {
                         if (receiveData.getStr().split("：").length != 1)
                             ta.setText(ta.getText() + receiveData.getStr() + "\n");
                     }
                     System.out.println(data);
                 }
             } catch (SocketException e) {
-                connectPeerClient.cClient = false;
+                connectPeerClient.setcClientFalse();
                 System.out.println("Client closed0");
             } catch (EOFException e) {
                 System.out.println("Client closed1");
@@ -262,7 +263,7 @@ public class ChatClient {
         content.setText(null);
         try {
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
-                if (!connectPeerClient.cClient) {
+                if (!connectPeerClient.getcCLient()) {
                     clientData.sendData(connectServer.dosWithServer, all);
                     connectServer.dosWithServer.flush();
                 } else {
@@ -331,9 +332,7 @@ public class ChatClient {
 
     private class okListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            if(!connectPeerClient.cSelf){
-                SendThread();
-            }
+            SendThread();
         }
     }
 
@@ -369,18 +368,10 @@ public class ChatClient {
 //            for (Map.Entry<String, String> entry : ReceiveData.getClientInfo().entrySet()) {
 //                System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
 //            }
-            if (!peer.equals("群聊") && !peer.equals(clientData.getName())) {
-                System.out.println("连接了本人，错误");
-                connectPeerClient.cSelf = false;
+            if (!peer.equals("群聊")) {
                 connectPeerClient.connectpeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
-            } else if(peer.equals(clientData.getName())){
-                System.out.println("不能给本人");
-                connectPeerClient.cSelf = true;
-                ta.setText(ta.getText() + "不能给本人" + "\n");
-            }
-            else {
-                connectPeerClient.cSelf = false;
-                connectPeerClient.disconnectpeer();
+            } else {
+                connectPeerClient.setcClientFalse();
             }
         }
     }
@@ -413,8 +404,8 @@ class PeerClient {
 //客户端的客户端连接客户端的服务端类
 class ConnectPeerClient {
     private Socket socketWithPeer = null;//客户端的客户端
-    boolean cClient;
-    boolean cSelf = false;
+    private static boolean cClient;
+    //    boolean cSelf = false;
     DataOutputStream dosWithPeer;
 
     //客户端连接客户端
@@ -428,9 +419,20 @@ class ConnectPeerClient {
         }
     }
 
-    public void disconnectpeer() {
+    public boolean setcClientTrue() {
+        this.cClient = true;
+        System.out.println("peer disconnected");
+        return cClient;
+    }
+
+    public boolean setcClientFalse() {
         this.cClient = false;
         System.out.println("peer disconnected");
+        return cClient;
+    }
+
+    public boolean getcCLient() {
+        return cClient;
     }
 }
 
