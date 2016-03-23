@@ -48,7 +48,7 @@ public class ChatClient {
     static TextField onlineCount = new TextField("在线人数");
     static List clientList = new List(30, false);
 
-    Button ok = new Button("发送");
+    Button send = new Button("发送");
     Button clear = new Button("清除");
 
     public static void main(String[] args) {
@@ -70,7 +70,7 @@ public class ChatClient {
 
         //发送清除
         Box bottom = Box.createHorizontalBox();
-        bottom.add(ok);
+        bottom.add(send);
         bottom.add(Box.createHorizontalGlue());
         bottom.add(clear);
 
@@ -110,10 +110,10 @@ public class ChatClient {
                     }
                 }
         );
-        ok.addActionListener(new okListener());
+        send.addActionListener(new sendListener());
         clear.addActionListener(new clearListener());
         login.addActionListener(new clientloginListener());
-        clientList.addItemListener(new peerListener());
+        clientList.addItemListener(new p2pListener());
         f.setVisible(true);
     }
 
@@ -155,31 +155,32 @@ public class ChatClient {
         }
     }
 
-    //客户端接收客户端
+    //客户端接收客户端信息
     class ReceivePeerMsg implements Runnable {
         private ReceiveData receiveData;
         private PeerClient peerClient;
 
         public ReceivePeerMsg(PeerClient peerClient) {
             this.peerClient = peerClient;
-            connectPeerClient.cClient = true;
+            connectPeerClient.setcClientTrue();
+            System.out.println("cClient是什么" + connectPeerClient.getcCLient());
         }
 
         public void run() {
             try {
-                while (connectPeerClient.cClient) {
+                while (connectPeerClient.getcCLient()) {
                     String data = clientData.receiveData(peerClient.disWithPeer);
                     receiveData = new ReceiveData(data);
 //                    String str = peerClient.disWithPeer.readUTF();
-                    //判断消息为空，以及“：”的存在
-                    if (receiveData.getStr() != "") {
+                    //判断消息是否为空，“：”是否存在，是否是给本人发送信息
+                    if ((receiveData.getStr() != "") && !(receiveData.getName().equals(clientData.getName()))) {
                         if (receiveData.getStr().split("：").length != 1)
                             ta.setText(ta.getText() + receiveData.getStr() + "\n");
                     }
                     System.out.println(data);
                 }
             } catch (SocketException e) {
-                connectPeerClient.cClient = false;
+                connectPeerClient.setcClientFalse();
                 System.out.println("Client closed0");
             } catch (EOFException e) {
                 System.out.println("Client closed1");
@@ -262,7 +263,7 @@ public class ChatClient {
         content.setText(null);
         try {
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
-                if (!connectPeerClient.cClient) {
+                if (!connectPeerClient.getcCLient()) {
                     clientData.sendData(connectServer.dosWithServer, all);
                     connectServer.dosWithServer.flush();
                 } else {
@@ -329,7 +330,7 @@ public class ChatClient {
         }
     }
 
-    private class okListener implements ActionListener {
+    private class sendListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             SendThread();
         }
@@ -359,11 +360,13 @@ public class ChatClient {
                 }
                 new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
                 new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
+            }else {
+                clientName.setText(null);
             }
         }
     }
 
-    private class peerListener implements ItemListener {
+    private class p2pListener implements ItemListener {
         public void itemStateChanged(ItemEvent e) {
             String peer = clientList.getSelectedItem();
 //            for (Map.Entry<String, String> entry : ReceiveData.getClientInfo().entrySet()) {
@@ -372,7 +375,7 @@ public class ChatClient {
             if (!peer.equals("群聊")) {
                 connectPeerClient.connectpeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
             } else {
-                connectPeerClient.disconnectpeer();
+                connectPeerClient.setcClientFalse();
             }
         }
     }
@@ -405,7 +408,8 @@ class PeerClient {
 //客户端的客户端连接客户端的服务端类
 class ConnectPeerClient {
     private Socket socketWithPeer = null;//客户端的客户端
-    boolean cClient;
+    private static boolean cClient;
+    //    boolean cSelf = false;
     DataOutputStream dosWithPeer;
 
     //客户端连接客户端
@@ -419,9 +423,20 @@ class ConnectPeerClient {
         }
     }
 
-    public void disconnectpeer() {
+    public boolean setcClientTrue() {
+        this.cClient = true;
+        System.out.println("peer disconnected");
+        return cClient;
+    }
+
+    public boolean setcClientFalse() {
         this.cClient = false;
         System.out.println("peer disconnected");
+        return cClient;
+    }
+
+    public boolean getcCLient() {
+        return cClient;
     }
 }
 

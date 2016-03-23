@@ -15,7 +15,7 @@ import java.util.List;
 public class ChatServer {
 
     private ServerFrame serverFrame = new ServerFrame();
-    private UserClientList userClientList = new UserClientList();
+    private UserClientList userClientList = new UserClientList();//用户List,用于维护当前用户，给他们发送信息
 
 //    Frame f = new Frame();
 //    Socket socket = null;
@@ -133,7 +133,6 @@ public class ChatServer {
                     clientInfo = userClientMsg.putClientInfo();//
                     name = userClientMsg.getName();
                     port = userClientMsg.getPort();
-//                    peer = userClientMsg.getPeer();
 
                     name_port = userClientMsg.buildNamePort(clientInfo);
                     boolean flag = false;
@@ -156,7 +155,7 @@ public class ChatServer {
 //                    for(int k =0;k<serverFrame.getClientList().getItemCount();k++){
 //                        System.out.println("信息list" + serverFrame.getClientList().getItem(k));
 //                    }
-                    userClientList.sendMsg(data_from_client, name_port);
+                    userClientList.sendMsg(data_from_client, name_port);//发送从客户端发来的信息，以及封装的用户名_端口
                     serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());
                     System.out.println("接收到了吗" + data_from_client);
                 }
@@ -240,7 +239,7 @@ class UserClient {
     }
 }
 
-//用户List的封装
+//用户List的封装，封装了发送信息方法
 class UserClientList {
     private static java.util.List<UserClient> clients = new ArrayList<UserClient>();
 
