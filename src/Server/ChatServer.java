@@ -138,12 +138,12 @@ public class ChatServer {
                     boolean flag = false;
                     System.out.println("用户数" + userClientMsg.getClientInfo().size());
 
-                    for (int j = 0; j < serverFrame.getClientList().getItemCount(); j++) {
-                        if (serverFrame.getClientList().getItem(j).equals(name)) flag = true;
+                    for (int j = 0; j < serverFrame.getClientListModel().getSize(); j++) {
+                        if (serverFrame. getClientListModel().getElementAt(j).equals(name)) flag = true;
                     }
                     if (!flag) {
-                        serverFrame.getClientList().add(name);
-                        serverFrame.getChatList().add(name + "已上线");
+                        serverFrame.addClientListModelElement(name);
+                        serverFrame.addListModelElement(name + "已上线");
                     }
 //                    for(int k =0;k<clientList.getItemCount();k++){
 //                        name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
@@ -156,16 +156,16 @@ public class ChatServer {
 //                        System.out.println("信息list" + serverFrame.getClientList().getItem(k));
 //                    }
                     userClientList.sendMsg(data_from_client, name_port);//发送从客户端发来的信息，以及封装的用户名_端口
-                    serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());
+                    serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());
                     System.out.println("接收到了吗" + data_from_client);
                 }
             } catch (SocketException e) {
                 userClientList.removeClients(this.userClient);//List删除下线用户
-                serverFrame.getClientList().remove(this.name);//Frame中删除下线用户
-                serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientList().getItemCount());//在线人数减一
+                serverFrame.removeClientListModelElement(this.name);//Frame中删除下线用户
+                serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());//在线人数减一
                 clientInfo = userClientMsg.removeClientInfo(this.name);//Map中删除name_port，向其他用户发送信息
                 name_port = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
-                serverFrame.getChatList().add(name + "已下线");
+                serverFrame.addListModelElement(name + "已下线");
 //                String without_str = userClientMsg.buildMsg(name, port, "");
 //                for(int k =0;k<clientList.getItemCount();k++){
 //                    name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
@@ -177,7 +177,7 @@ public class ChatServer {
 //                        System.out.println("no Client");
 //                    }
 //                }
-                if (serverFrame.getClientList().getItemCount() != 0) {
+                if (serverFrame.getClientListModel().getSize() != 0) {
                     try {
                         userClientList.sendMsg(data_from_client, name_port);
                     } catch (IOException e1) {
@@ -187,7 +187,7 @@ public class ChatServer {
                 System.out.println("Client closed0");
             } catch (EOFException e) {
                 userClientList.removeClients(this.userClient);
-                serverFrame.getClientList().remove(this.name);
+                serverFrame.removeClientListModelElement(this.name);
                 System.out.println("Client closed1");
             } catch (IOException e) {
                 System.out.println("Client closed2");
@@ -330,26 +330,43 @@ class UserClientMsg {
 
 //界面显示
 class ServerFrame {
-    private Frame f = new Frame();
+    private JFrame f = new JFrame();
 
-    private static java.awt.List chatList = new java.awt.List(20, false);
-    private static TextField onlineCount = new TextField("在线人数");
-    private static java.awt.List clientList = new java.awt.List(20, false);
+    //上下线记录
+    private static DefaultListModel listModel = new DefaultListModel();
+    private JList chatList = new JList(listModel);
+    private JScrollPane jScrollPane = new JScrollPane(chatList);
 
-    private Button login = new Button("启动");
-    private Label chat = new Label("记录");
-    private Label online = new Label("在线用户列表");
+    //在线人数
+    private static JTextField onlineCount = new JTextField("在线人数");
 
-    public java.awt.List getChatList() {
-        return chatList;
-    }
+    private static DefaultListModel clientListModel = new DefaultListModel();
+    private JList clientList = new JList(clientListModel);
+    private JScrollPane clientJScrollPane = new JScrollPane(clientList);
 
-    public TextField getOnlienCount() {
+    //固定的
+    private JButton login = new JButton("启动");
+    private JLabel chat = new JLabel("记录");
+    private JLabel online = new JLabel("在线用户列表");
+
+    public JTextField getOnlienCount() {
         return onlineCount;
     }
 
-    public java.awt.List getClientList() {
-        return clientList;
+    public DefaultListModel getClientListModel(){
+        return clientListModel;
+    }
+
+    public void addClientListModelElement(String str) {
+        clientListModel.addElement(str);
+    }
+
+    public void removeClientListModelElement(String str){
+        clientListModel.removeElement(str);
+    }
+
+    public void addListModelElement(String str){
+        listModel.addElement(str);
     }
 
     public void init() {
@@ -370,7 +387,7 @@ class ServerFrame {
         left.add(client);
         left.add(chat);
         //left.add(Box.createVerticalStrut(5));
-        left.add(chatList);
+        left.add(jScrollPane);
         left.add(Box.createVerticalStrut(5));
 //        left.add(content);
 //        left.add(bottom);
@@ -381,7 +398,7 @@ class ServerFrame {
         right.add(Box.createVerticalStrut(0));
         right.add(onlineCount);
         right.add(Box.createVerticalStrut(5));
-        right.add(clientList);
+        right.add(clientJScrollPane);
         right.add(Box.createVerticalStrut(5));
         //合并
         Box all = Box.createHorizontalBox();
@@ -389,18 +406,11 @@ class ServerFrame {
         all.add(Box.createHorizontalStrut(10));
         all.add(right);
         f.add(all);
-        f.pack();
-
-        f.addWindowListener(
-                new WindowAdapter() {
-                    public void windowClosing(WindowEvent e) {
-                        System.exit(0);
-                    }
-                }
-        );
-        login.addActionListener(new loginListener());
+        f.setSize(300,250);
+        f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         f.setVisible(true);
 
+        login.addActionListener(new loginListener());
     }
 
     private class loginListener implements ActionListener {
