@@ -109,13 +109,13 @@ public class ChatServer {
 //                        System.out.println("信息list" + serverFrame.getClientList().getItem(k));
 //                    }
                     userClientList.sendMsg(data_from_client, name_port);//发送从客户端发来的信息，以及封装的用户名_端口
-                    serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());
+                    serverFrame.getOnlineCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());
                     System.out.println("接收到了吗" + data_from_client);
                 }
             } catch (SocketException e) {
                 userClientList.removeClients(this.userClient);//List删除下线用户
                 serverFrame.removeClientListModelElement(this.name);//Frame中删除下线用户
-                serverFrame.getOnlienCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());//在线人数减一
+                serverFrame.getOnlineCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());//在线人数减一
                 clientInfo = userClientMsg.removeClientInfo(this.name);//Map中删除name_port，向其他用户发送信息
                 name_port = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
                 serverFrame.addListModelElement(name + "已下线");
@@ -268,7 +268,7 @@ class UserClientMsg {
 
 //界面显示
 class ServerFrame {
-    private JFrame f = new JFrame();
+    private JFrame jFrame = new JFrame();
 
     //上下线记录
     private static DefaultListModel listModel = new DefaultListModel();
@@ -284,10 +284,10 @@ class ServerFrame {
 
     //固定的
     private JButton login = new JButton("启动");
-    private JLabel chat = new JLabel("记录");
+    private JLabel record = new JLabel("记录");
     private JLabel online = new JLabel("在线用户列表");
 
-    public JTextField getOnlienCount() {
+    public JTextField getOnlineCount() {
         return onlineCount;
     }
 
@@ -308,45 +308,45 @@ class ServerFrame {
     }
 
     public void init() {
-        f.setTitle("服务端");
-        //用户
-        Box client = Box.createHorizontalBox();
-//        client.add(clientname);
-//        client.add(Box.createHorizontalGlue());
-//        client.add(clienttf);
-        client.add(Box.createHorizontalStrut(20));
-        client.add(login);
-        client.add(Box.createHorizontalGlue());
-        //client.add(cancel);
+        jFrame.setTitle("服务端");
 
-        //左边
-        Box left = Box.createVerticalBox();
-        left.add(Box.createVerticalStrut(10));
-        left.add(client);
-        left.add(chat);
-        //left.add(Box.createVerticalStrut(5));
-        left.add(jScrollPane);
-        left.add(Box.createVerticalStrut(5));
-//        left.add(content);
-//        left.add(bottom);
-        //右边
-        Box right = Box.createVerticalBox();
-        right.add(Box.createVerticalStrut(5));
-        right.add(online);
-        right.add(Box.createVerticalStrut(0));
-        right.add(onlineCount);
-        right.add(Box.createVerticalStrut(5));
-        right.add(clientJScrollPane);
-        right.add(Box.createVerticalStrut(5));
-        //合并
-        Box all = Box.createHorizontalBox();
-        all.add(left);
-        all.add(Box.createHorizontalStrut(10));
-        all.add(right);
-        f.add(all);
-        f.setSize(300,250);
-        f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        f.setVisible(true);
+        JPanel jPanel = new JPanel();
+        jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
+
+        JPanel leftPanel = new JPanel();
+        jScrollPane.setSize(new Dimension(30,220));
+
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        leftPanel.add(login);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        leftPanel.add(record);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        leftPanel.add(jScrollPane);
+
+
+        JPanel rightPanel = new JPanel();
+        clientJScrollPane.setPreferredSize(new Dimension(30,220));
+
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.add(Box.createRigidArea(new Dimension(10, 10)));
+        rightPanel.add(online);
+        rightPanel.add(Box.createRigidArea(new Dimension(10, 5)));
+        rightPanel.add(onlineCount);
+        rightPanel.add(Box.createRigidArea(new Dimension(10, 5)));
+        rightPanel.add(clientJScrollPane);
+
+        jPanel.add(leftPanel);
+        jPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        jPanel.add(rightPanel);
+
+
+        jFrame = new JFrame("服务器");
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jFrame.setSize(new Dimension(220, 320));
+        jFrame.add(jPanel);
+        jFrame.setResizable(false);
+        jFrame.setVisible(true);
 
         login.addActionListener(new loginListener());
     }
