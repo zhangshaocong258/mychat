@@ -4,7 +4,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.List;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
@@ -46,51 +45,90 @@ public class ChatClient {
     public void init() {
         jFrame.setTitle("客户端");
 
-        //用户
-        Box client = Box.createHorizontalBox();
-        client.add(clientLabel);
-        //client.add(Box.createHorizontalGlue());
-        client.add(clientName);
-        client.add(Box.createHorizontalGlue());
-        client.add(login);
-        client.add(Box.createHorizontalGlue());
-        //client.add(cancel);
+        JPanel jPanel = new JPanel();
+        jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
 
-        //发送清除
-        Box bottom = Box.createHorizontalBox();
-        bottom.add(send);
-        bottom.add(Box.createHorizontalGlue());
-        bottom.add(clear);
+        JPanel leftPanel = new JPanel();
 
-        //左边
-        Box left = Box.createVerticalBox();
-        left.add(Box.createVerticalStrut(10));
-        left.add(client);
-        left.add(chatLabel);
-        left.add(chatRecord);
-        left.add(Box.createVerticalStrut(5));
-        left.add(chatBox);
-        left.add(bottom);
-        left.add(Box.createVerticalStrut(5));
-        //右边
-        Box right = Box.createVerticalBox();
-        right.add(Box.createVerticalStrut(10));
-        right.add(onlineLabel);
-        right.add(Box.createVerticalStrut(5));
-        right.add(onlineCount);
-        right.add(Box.createVerticalStrut(5));
-        right.add(jScrollPane);
-        right.add(Box.createVerticalStrut(5));
-        //合并
-        Box all = Box.createHorizontalBox();
-        all.add(left);
-        all.add(Box.createHorizontalStrut(10));
-        all.add(right);
-        jFrame.add(all);
+        JPanel leftTop = new JPanel();
+        leftTop.add(Box.createRigidArea(new Dimension(5, 0)));
+        leftTop.setLayout(new BoxLayout(leftTop, BoxLayout.X_AXIS));
+        leftTop.add(clientLabel);
+        leftTop.add(clientName);
+        leftTop.add(login);
+
+        JPanel leftMiddleTop = new JPanel();
+        leftMiddleTop.add(Box.createRigidArea(new Dimension(5, 0)));
+        leftMiddleTop.setLayout(new BoxLayout(leftMiddleTop, BoxLayout.X_AXIS));
+        chatRecord.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+        leftMiddleTop.add(chatRecord);
+
+        JPanel leftMiddle = new JPanel();
+        leftMiddle.add(Box.createRigidArea(new Dimension(5, 0)));
+        leftMiddle.setLayout(new BoxLayout(leftMiddle, BoxLayout.X_AXIS));
+        leftMiddle.add(chatLabel);
+        leftMiddle.add(Box.createGlue());
+
+        JPanel leftMiddleBottom = new JPanel();
+        leftMiddleBottom.add(Box.createRigidArea(new Dimension(5, 0)));
+        leftMiddleBottom.setLayout(new BoxLayout(leftMiddleBottom, BoxLayout.X_AXIS));
+        chatBox.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+        leftMiddleBottom.add(chatBox);
+
+
+        JPanel leftBottom = new JPanel();
+        leftBottom.add(Box.createRigidArea(new Dimension(5, 0)));
+        leftBottom.setLayout(new BoxLayout(leftBottom, BoxLayout.X_AXIS));
+        leftBottom.add(send);
+        leftBottom.add(Box.createGlue());
+        leftBottom.add(clear);
+
+
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        leftPanel.add(leftTop);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        leftPanel.add(leftMiddle);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        leftPanel.add(leftMiddleTop);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        leftPanel.add(leftMiddleBottom);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        leftPanel.add(leftBottom);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+
+        JPanel rightPanel = new JPanel();
+        jScrollPane.setPreferredSize(new Dimension(30, 420));
+
+        JPanel rightTop = new JPanel();
+        rightTop.setLayout(new BoxLayout(rightTop, BoxLayout.X_AXIS));
+        rightTop.add(onlineLabel);
+        rightTop.add(Box.createGlue());
+
+
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.add(Box.createRigidArea(new Dimension(10, 10)));
+        rightPanel.add(rightTop);
+        rightPanel.add(Box.createRigidArea(new Dimension(10, 5)));
+        rightPanel.add(onlineCount);
+        rightPanel.add(Box.createRigidArea(new Dimension(10, 5)));
+        rightPanel.add(jScrollPane);
+        rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+
+        jPanel.add(leftPanel);
+        jPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        jPanel.add(rightPanel);
+
         listModel.addElement("群聊");
-        jFrame.pack();
 
+        jFrame = new JFrame("客户端");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jFrame.setSize(new Dimension(400, 500));
+        jFrame.add(jPanel);
+        jFrame.setResizable(true);
+        jFrame.setVisible(true);
 
         send.addActionListener(new sendListener());
         clear.addActionListener(new clearListener());
@@ -453,10 +491,6 @@ class ReceiveData {
         return str;
     }
 
-//    public String getPeer() {
-//        return peer;
-//    }
-
     public Map<String, String> putClientInfo(String name, String port) {
         clientInfo.put(name, port);
         return clientInfo;
@@ -465,11 +499,6 @@ class ReceiveData {
     public void clearClientInfo() {
         clientInfo.clear();
     }
-
-//    public Map<String, String> removeClientInfo(String name) {
-//        clientInfo.remove(name);
-//        return clientInfo;
-//    }
 
     public static Map<String, String> getClientInfo() {
         return clientInfo;
@@ -498,10 +527,6 @@ class ClientData {
         this.str = str;
     }
 
-//    public void setPeer(String peer){
-//        this.peer = peer;
-//    }
-
     public String getName() {
         return name;
     }
@@ -513,10 +538,6 @@ class ClientData {
     public String getStr() {
         return str;
     }
-
-//    public String getPeer() {
-//        return peer;
-//    }
 
     public String buildMsg(String name, String port, String str) {
         String buildMsg = name + DELIMITER + port + DELIMITER + str;
