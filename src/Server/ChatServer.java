@@ -67,7 +67,7 @@ public class ChatServer {
         private boolean bconnected;
         private UserClient userClient;
         private UserClientMsg userClientMsg;
-        private Map<String, String> clientInfo = new HashMap<String, String>();
+        private Map<String, String> clientInfo = new HashMap<>();
         private String dataFromClient;
         private String namePort;
         private String name;
@@ -315,27 +315,53 @@ class ServerFrame {
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
 
         JPanel leftPanel = new JPanel();
-        jScrollPane.setSize(new Dimension(30, 220));
+        jScrollPane.setPreferredSize(new Dimension(85, 300));
+
+        JPanel leftTop = new JPanel();
+        leftTop.setLayout(new BoxLayout(leftTop, BoxLayout.X_AXIS));
+        leftTop.add(Box.createRigidArea(new Dimension(5, 0)));
+        leftTop.add(login);
+        leftTop.add(Box.createGlue());
+
+        JPanel leftMiddle = new JPanel();
+        leftMiddle.setLayout(new BoxLayout(leftMiddle, BoxLayout.X_AXIS));
+        leftMiddle.add(Box.createRigidArea(new Dimension(5, 0)));
+        leftMiddle.add(record);
+        leftMiddle.add(Box.createGlue());
+
+        JPanel leftBottom = new JPanel();
+        leftBottom.setLayout(new BoxLayout(leftBottom, BoxLayout.X_AXIS));
+        leftBottom.add(Box.createRigidArea(new Dimension(5, 0)));
+        leftBottom.add(jScrollPane);
+        leftBottom.add(Box.createGlue());
 
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(login);
+        leftPanel.add(leftTop);
         leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(record);
+        leftPanel.add(leftMiddle);
         leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        leftPanel.add(jScrollPane);
+        leftPanel.add(leftBottom);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
 
         JPanel rightPanel = new JPanel();
-        clientJScrollPane.setPreferredSize(new Dimension(30, 220));
+        clientJScrollPane.setPreferredSize(new Dimension(30, 300));
+
+
+        JPanel rightTop = new JPanel();
+        rightTop.setLayout(new BoxLayout(rightTop, BoxLayout.X_AXIS));
+        rightTop.add(online);
+        rightTop.add(Box.createGlue());
 
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        rightPanel.add(Box.createRigidArea(new Dimension(10, 10)));
-        rightPanel.add(online);
-        rightPanel.add(Box.createRigidArea(new Dimension(10, 5)));
+        rightPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        rightPanel.add(rightTop);
+        rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         rightPanel.add(onlineCount);
-        rightPanel.add(Box.createRigidArea(new Dimension(10, 5)));
+        rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         rightPanel.add(clientJScrollPane);
+        rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
         jPanel.add(leftPanel);
         jPanel.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -344,7 +370,7 @@ class ServerFrame {
 
         jFrame = new JFrame("·þÎñÆ÷");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jFrame.setSize(new Dimension(220, 320));
+        jFrame.setSize(new Dimension(250, 350));
         jFrame.add(jPanel);
         jFrame.setResizable(false);
         jFrame.setVisible(true);
