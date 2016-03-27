@@ -71,7 +71,6 @@ public class ChatServer {
         private String dataFromClient;
         private String namePort;
         private String name;
-        private String port;
 
         ReceiveMsg(UserClient userClient) {
             this.userClient = userClient;
@@ -85,7 +84,6 @@ public class ChatServer {
                     userClientMsg = new UserClientMsg(dataFromClient);
                     clientInfo = userClientMsg.putClientInfo();//
                     name = userClientMsg.getName();
-                    port = userClientMsg.getPort();
 
                     namePort = userClientMsg.buildNamePort(clientInfo);
                     boolean flag = false;
@@ -178,14 +176,13 @@ class UserClient {
     }
 
     public String receiveData() throws IOException {
-        String msg = disWithClient.readUTF();
-        return msg;
+        return disWithClient.readUTF();
     }
 }
 
 //用户List的封装，封装了发送信息方法
 class UserClientList {
-    private static java.util.List<UserClient> clients = new ArrayList<UserClient>();
+    private static java.util.List<UserClient> clients = new ArrayList<>();
 
     public void addClients(UserClient userClient) {
         clients.add(userClient);
@@ -195,13 +192,8 @@ class UserClientList {
         clients.remove(userClient);
     }
 
-    public java.util.List<UserClient> getClients() {
-        return clients;
-    }
-
     public void sendMsg(String data, String NamePort) throws IOException {
-        for (int i = 0; i < clients.size(); i++) {
-            UserClient client = clients.get(i);
+        for (UserClient client : clients) {
             try {
                 client.sendData(data);
                 client.sendData(NamePort);
@@ -217,9 +209,8 @@ class UserClientList {
 class UserClientMsg {
     private String name = "";
     private String port = "";
-    private static Map<String, String> clientInfo = new HashMap<String, String>();
+    private static Map<String, String> clientInfo = new HashMap<>();
     private String DELIMITER = "\f";
-    private String SEPARATOR = "\r";
 
     UserClientMsg(String data_from_client) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
@@ -254,16 +245,15 @@ class UserClientMsg {
         StringBuilder name_port = new StringBuilder();
         if (clientInfo.size() > 0) {
             for (Map.Entry<String, String> entry : clientInfo.entrySet()) {
+                String SEPARATOR = "\r";
                 name_port = name_port.append(entry.getKey()).append(SEPARATOR).append(entry.getValue()).append(DELIMITER);
             }
-            String NamePort = name_port.deleteCharAt(name_port.length() - 1).toString();
-            return NamePort;
+            return name_port.deleteCharAt(name_port.length() - 1).toString();
         } else return null;
     }
 
     public String buildMsg(String name, String port, String str) {
-        String buildMsg = name + DELIMITER + port + DELIMITER + str;
-        return buildMsg;
+        return name + DELIMITER + port + DELIMITER + str;
     }
 }
 
@@ -272,15 +262,15 @@ class ServerFrame {
     private JFrame jFrame = new JFrame();
 
     //上下线记录
-    private static DefaultListModel listModel = new DefaultListModel();
-    private JList chatList = new JList(listModel);
+    private static DefaultListModel<String> listModel = new DefaultListModel<>();
+    private JList<String> chatList = new JList<>(listModel);
     private JScrollPane jScrollPane = new JScrollPane(chatList);
 
     //在线人数
     private static JTextField onlineCount = new JTextField("在线人数");
 
-    private static DefaultListModel clientListModel = new DefaultListModel();
-    private JList clientList = new JList(clientListModel);
+    private static DefaultListModel<String> clientListModel = new DefaultListModel<>();
+    private JList<String> clientList = new JList<>(clientListModel);
     private JScrollPane clientJScrollPane = new JScrollPane(clientList);
 
     //固定的
@@ -292,7 +282,7 @@ class ServerFrame {
         return onlineCount;
     }
 
-    public DefaultListModel getClientListModel() {
+    public DefaultListModel<String> getClientListModel() {
         return clientListModel;
     }
 
