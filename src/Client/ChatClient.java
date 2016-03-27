@@ -30,8 +30,8 @@ public class ChatClient {
 
     JLabel onlineLabel = new JLabel("在线好友列表");
     static JTextField onlineCount = new JTextField("在线人数");
-    static DefaultListModel listModel = new DefaultListModel();
-    JList clientList = new JList(listModel);
+    static DefaultListModel<String> listModel = new DefaultListModel<>();
+    JList<String> clientList = new JList<>(listModel);
     JScrollPane jScrollPane = new JScrollPane(clientList);
 
 
@@ -193,7 +193,7 @@ public class ChatClient {
                     receiveData = new ReceiveData(data);
 //                    String str = peerClient.disWithPeer.readUTF();
                     //判断消息是否为空，“：”是否存在，是否是给本人发送信息
-                    if ((receiveData.getStr() != "") && !(receiveData.getName().equals(clientData.getName()))) {
+                    if ((!receiveData.getStr().equals("")) && !(receiveData.getName().equals(clientData.getName()))) {
                         if (receiveData.getStr().split("：").length != 1)
                             chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
                     }
@@ -252,7 +252,7 @@ public class ChatClient {
         String name_and_port = null;
 
         public void run() {
-            while (connectServer.connectedWithServer) {
+            while (ConnectServer.connectedWithServer) {
                 try {
                     data = clientData.receiveData(connectServer.disWithServer);
                     name_and_port = clientData.receiveData(connectServer.disWithServer);
@@ -268,7 +268,7 @@ public class ChatClient {
 
                 }
                 try {
-                    if (receiveData.getStr() != "") {
+                    if (!receiveData.getStr().equals("")) {
                         if (receiveData.getStr().length() != receiveData.getName().length() + 2) {
                             chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
                         }
@@ -361,7 +361,6 @@ class PeerClient {
 
 //客户端的客户端连接客户端的服务端类
 class ConnectPeerClient {
-    private Socket socketWithPeer = null;//客户端的客户端
     //两个标志位
     private static boolean sendClient;
     private static boolean receiveClient;
@@ -370,26 +369,26 @@ class ConnectPeerClient {
     //客户端连接客户端
     public void connectpeer(int peerport) {
         try {
-            socketWithPeer = new Socket("127.0.0.1", peerport);
+            Socket socketWithPeer = new Socket("127.0.0.1", peerport);
             dosWithPeer = new DataOutputStream(socketWithPeer.getOutputStream());
-            this.sendClient = true;
+            sendClient = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void setReceiveClientTrue() {
-        this.receiveClient = true;
+        receiveClient = true;
         System.out.println("peer disconnected");
     }
 
     public void setReceiveClientFalse() {
-        this.receiveClient = false;
+        receiveClient = false;
         System.out.println("peer disconnected");
     }
 
     public void setSendClientFalse() {
-        this.sendClient = false;
+        sendClient = false;
     }
 
     public boolean getsendCLient() {
@@ -429,19 +428,16 @@ class ConnectServer {
 //接收信息类
 class ReceiveData {
     private String name = "";
-    private String port = "";
     private String str = "";
     //    private String peer = "";
-    private static Map<String, String> clientInfo = new HashMap<String, String>();
+    private static Map<String, String> clientInfo = new HashMap<>();
 
     private String DELIMITER = "\f";
-    private String SEPARATOR = "\r";
 
     //客户端之间通信构造器初始化
     ReceiveData(String data_from_client) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         this.name = data_from_client_split.get(0);
-        this.port = data_from_client_split.get(1);
         if (data_from_client_split.size() == 3) {
             this.str = data_from_client_split.get(2);
         } else {
@@ -452,10 +448,9 @@ class ReceiveData {
     //客户端接收服务端信息构造器初始化
     ReceiveData(String data_from_client, String name_and_port) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
-        java.util.List<String> listname = Arrays.asList(name_and_port.split(DELIMITER));
+        java.util.List<String> listnames = Arrays.asList(name_and_port.split(DELIMITER));
         this.name = data_from_client_split.get(0);
-        this.port = data_from_client_split.get(1);
-//        this.str = data_from_client_split.get(2);
+        //        this.str = data_from_client_split.get(2);
 //        this.peer = data_from_client_split.get(3);
 
         if (data_from_client_split.size() == 3) {
@@ -469,9 +464,10 @@ class ReceiveData {
             clearClientInfo();
             ChatClient.listModel.removeAllElements();
             ChatClient.listModel.addElement("群聊");
-            for (int j = 0; j < listname.size(); j++) {
-                ChatClient.listModel.addElement(listname.get(j).split(SEPARATOR)[0]);
-                putClientInfo(listname.get(j).split(SEPARATOR)[0], listname.get(j).split(SEPARATOR)[1]);
+            for (String Listname : listnames) {
+                String SEPARATOR = "\r";
+                ChatClient.listModel.addElement(Listname.split(SEPARATOR)[0]);
+                putClientInfo(Listname.split(SEPARATOR)[0], Listname.split(SEPARATOR)[1]);
             }
             System.out.println("列表人数" + clientInfo.size());
             ChatClient.onlineCount.setText("在线人数" + ": " + (ChatClient.listModel.getSize() - 1));
@@ -481,10 +477,6 @@ class ReceiveData {
 
     public String getName() {
         return name;
-    }
-
-    public String getPort() {
-        return port;
     }
 
     public String getStr() {
@@ -511,9 +503,6 @@ class ClientData {
     private String name = "";
     private String port = "";
     private String str = "";
-    //    private String peer = "";
-    private String DELIMITER = "\f";
-    private String SEPARATOR = "\r";
 
     public void setName(String name) {
         this.name = name;
@@ -540,8 +529,8 @@ class ClientData {
     }
 
     public String buildMsg(String name, String port, String str) {
-        String buildMsg = name + DELIMITER + port + DELIMITER + str;
-        return buildMsg;
+        String DELIMITER = "\f";
+        return name + DELIMITER + port + DELIMITER + str;
     }
 
     public void sendData(DataOutputStream dataOutputStream, String Data) throws IOException {
@@ -549,7 +538,6 @@ class ClientData {
     }
 
     public String receiveData(DataInputStream dataInputStream) throws IOException {
-        String msg = dataInputStream.readUTF();
-        return msg;
+        return dataInputStream.readUTF();
     }
 }
