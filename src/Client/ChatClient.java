@@ -1,6 +1,8 @@
 package Client;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.List;
 import java.awt.event.*;
@@ -13,32 +15,36 @@ import java.util.*;
  * Created by zsc on 2015/3/9.
  */
 public class ChatClient {
+    static boolean listener = false;
     ConnectServer connectServer = new ConnectServer();//客户端连接服务端
     ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
     ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端作为服务端
-    Frame f = new Frame();
+    JFrame jFrame = new JFrame();
 
-    Label clientLabel = new Label("用户名");
-    TextField clientName = new TextField(10);
-    Button login = new Button("登录");
+    JLabel clientLabel = new JLabel("用户名");
+    JTextField clientName = new JTextField(10);
+    JButton login = new JButton("登录");
 
-    Label chatLabel = new Label("聊天记录");
-    TextArea ta = new TextArea(25, 20);
-    TextArea content = new TextArea(2, 20);
+    JLabel chatLabel = new JLabel("聊天记录");
+    JTextArea chatRecord = new JTextArea(25, 20);
+    JTextArea chatBox = new JTextArea(2, 20);
 
-    Label onlineLabel = new Label("在线好友列表");
-    static TextField onlineCount = new TextField("在线人数");
-    static List clientList = new List(30, false);
+    JLabel onlineLabel = new JLabel("在线好友列表");
+    static JTextField onlineCount = new JTextField("在线人数");
+    static DefaultListModel listModel = new DefaultListModel();
+    JList clientList = new JList(listModel);
+    JScrollPane jScrollPane = new JScrollPane(clientList);
 
-    Button send = new Button("发送");
-    Button clear = new Button("清除");
+
+    JButton send = new JButton("发送");
+    JButton clear = new JButton("清除");
 
     public static void main(String[] args) {
         new ChatClient().init();
     }
 
     public void init() {
-        f.setTitle("客户端");
+        jFrame.setTitle("客户端");
 
         //用户
         Box client = Box.createHorizontalBox();
@@ -61,9 +67,9 @@ public class ChatClient {
         left.add(Box.createVerticalStrut(10));
         left.add(client);
         left.add(chatLabel);
-        left.add(ta);
+        left.add(chatRecord);
         left.add(Box.createVerticalStrut(5));
-        left.add(content);
+        left.add(chatBox);
         left.add(bottom);
         left.add(Box.createVerticalStrut(5));
         //右边
@@ -73,30 +79,24 @@ public class ChatClient {
         right.add(Box.createVerticalStrut(5));
         right.add(onlineCount);
         right.add(Box.createVerticalStrut(5));
-        right.add(clientList);
+        right.add(jScrollPane);
         right.add(Box.createVerticalStrut(5));
         //合并
         Box all = Box.createHorizontalBox();
         all.add(left);
         all.add(Box.createHorizontalStrut(10));
         all.add(right);
-        f.add(all);
-        clientList.add("群聊");
-        f.pack();
+        jFrame.add(all);
+        listModel.addElement("群聊");
+        jFrame.pack();
 
-        f.addWindowListener(
-                new WindowAdapter() {
-                    public void windowClosing(WindowEvent e) {
-                        //disconnect();
-                        System.exit(0);
-                    }
-                }
-        );
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         send.addActionListener(new sendListener());
         clear.addActionListener(new clearListener());
-        login.addActionListener(new clientloginListener());
-        clientList.addItemListener(new p2pListener());
-        f.setVisible(true);
+        login.addActionListener(new clientLoginListener());
+        clientList.addListSelectionListener(new p2pListener());
+        jFrame.setVisible(true);
     }
 
     //客户端作为服务端
@@ -144,25 +144,25 @@ public class ChatClient {
 
         public ReceivePeerMsg(PeerClient peerClient) {
             this.peerClient = peerClient;
-            connectPeerClient.setcClientTrue();
-            System.out.println("cClient是什么" + connectPeerClient.getcCLient());
+            connectPeerClient.setReceiveClientTrue();//接收标志位，有别于发送标志位
+            System.out.println("cClient是什么" + connectPeerClient.getReceiveClient());
         }
 
         public void run() {
             try {
-                while (connectPeerClient.getcCLient()) {
+                while (connectPeerClient.getReceiveClient()) {
                     String data = clientData.receiveData(peerClient.disWithPeer);
                     receiveData = new ReceiveData(data);
 //                    String str = peerClient.disWithPeer.readUTF();
                     //判断消息是否为空，“：”是否存在，是否是给本人发送信息
                     if ((receiveData.getStr() != "") && !(receiveData.getName().equals(clientData.getName()))) {
                         if (receiveData.getStr().split("：").length != 1)
-                            ta.setText(ta.getText() + receiveData.getStr() + "\n");
+                            chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
                     }
                     System.out.println(data);
                 }
             } catch (SocketException e) {
-                connectPeerClient.setcClientFalse();
+                connectPeerClient.setReceiveClientFalse();//接收置位false
                 System.out.println("Client closed0");
             } catch (EOFException e) {
                 System.out.println("Client closed1");
@@ -183,24 +183,24 @@ public class ChatClient {
 
     //发送信息
     private void SendThread() {
-        clientData.setStr(clientData.getName() + "说：" + content.getText().trim());
+        clientData.setStr(clientData.getName() + "说：" + chatBox.getText().trim());
         String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), clientData.getStr());
         //ta.setText(str);
         System.out.println("发出去了吗" + clientData.getStr());
-        content.setText(null);
+        chatBox.setText(null);
+        //发送时需要进行各种判断，先判断为空，在判断给服务端还是客户端发送，服务端应该设为默认
         try {
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
-                if (!connectPeerClient.getcCLient()) {
+                if (!connectPeerClient.getsendCLient()) {
                     clientData.sendData(connectServer.dosWithServer, all);
                     connectServer.dosWithServer.flush();
                 } else {
                     clientData.sendData(connectPeerClient.dosWithPeer, all);
                     System.out.println("发送的信息" + clientData.getStr());
                     if (clientData.getStr().length() != clientData.getName().length() + 2)
-                        ta.setText(ta.getText() + clientData.getStr() + "\n");
+                        chatRecord.setText(chatRecord.getText() + clientData.getStr() + "\n");
                 }
             }
-
             //dos.close();
         } catch (IOException e1) {
             e1.printStackTrace();
@@ -214,12 +214,12 @@ public class ChatClient {
         String name_and_port = null;
 
         public void run() {
-            while (connectServer.bconnected) {
+            while (connectServer.connectedWithServer) {
                 try {
                     data = clientData.receiveData(connectServer.disWithServer);
                     name_and_port = clientData.receiveData(connectServer.disWithServer);
                     receiveData = new ReceiveData(data, name_and_port);
-
+                    connectPeerClient.setSendClientFalse();//下线后JList全部清空，默认群聊
                 } catch (SocketException e1) {
                     System.out.println("Server closed");
                     System.exit(0);
@@ -232,7 +232,7 @@ public class ChatClient {
                 try {
                     if (receiveData.getStr() != "") {
                         if (receiveData.getStr().length() != receiveData.getName().length() + 2) {
-                            ta.setText(ta.getText() + receiveData.getStr() + "\n");
+                            chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
                         }
                     }
                 } catch (Exception e) {
@@ -250,15 +250,15 @@ public class ChatClient {
 
     private class clearListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            content.getText().trim();
-            content.setText(null);
+            chatBox.getText().trim();
+            chatBox.setText(null);
 
         }
     }
 
-    private class clientloginListener implements ActionListener {
+    private class clientLoginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            if(clientName.getText().trim().length() > 1) {
+            if (clientName.getText().trim().length() > 1) {
                 login.setEnabled(false);
                 clientName.setEnabled(false);
                 connectServer.connect();//客户端连接服务端
@@ -272,22 +272,26 @@ public class ChatClient {
                 }
                 new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
                 new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
-            }else {
+            } else {
                 clientName.setText(null);
             }
         }
     }
 
-    private class p2pListener implements ItemListener {
-        public void itemStateChanged(ItemEvent e) {
-            String peer = clientList.getSelectedItem();
+    private class p2pListener implements ListSelectionListener {
+        public void valueChanged(ListSelectionEvent e) {
+            //设置一个listener标志位，下线后JList会有监听，不采取任何动作
+            if (!listener) {
+                String peer = String.valueOf(clientList.getSelectedValue());
 //            for (Map.Entry<String, String> entry : ReceiveData.getClientInfo().entrySet()) {
 //                System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
 //            }
-            if (!peer.equals("群聊")) {
-                connectPeerClient.connectpeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
-            } else {
-                connectPeerClient.setcClientFalse();
+                System.out.println("peeeeeer" + peer);
+                if (peer != null && !peer.equals("群聊")) {
+                    connectPeerClient.connectpeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
+                } else {
+                    connectPeerClient.setSendClientFalse();
+                }
             }
         }
     }
@@ -320,8 +324,9 @@ class PeerClient {
 //客户端的客户端连接客户端的服务端类
 class ConnectPeerClient {
     private Socket socketWithPeer = null;//客户端的客户端
-    private static boolean cClient;
-    //    boolean cSelf = false;
+    //两个标志位
+    private static boolean sendClient;
+    private static boolean receiveClient;
     DataOutputStream dosWithPeer;
 
     //客户端连接客户端
@@ -329,26 +334,32 @@ class ConnectPeerClient {
         try {
             socketWithPeer = new Socket("127.0.0.1", peerport);
             dosWithPeer = new DataOutputStream(socketWithPeer.getOutputStream());
-            this.cClient = true;
+            this.sendClient = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public boolean setcClientTrue() {
-        this.cClient = true;
+    public void setReceiveClientTrue() {
+        this.receiveClient = true;
         System.out.println("peer disconnected");
-        return cClient;
     }
 
-    public boolean setcClientFalse() {
-        this.cClient = false;
+    public void setReceiveClientFalse() {
+        this.receiveClient = false;
         System.out.println("peer disconnected");
-        return cClient;
     }
 
-    public boolean getcCLient() {
-        return cClient;
+    public void setSendClientFalse() {
+        this.sendClient = false;
+    }
+
+    public boolean getsendCLient() {
+        return sendClient;
+    }
+
+    public boolean getReceiveClient() {
+        return receiveClient;
     }
 }
 
@@ -357,14 +368,14 @@ class ConnectServer {
     Socket clientSocket = null;//Client自己的scoket
     DataOutputStream dosWithServer = null;
     DataInputStream disWithServer = null;
-    static boolean bconnected = false;
+    static boolean connectedWithServer = false;
 
     public void connect() {
         try {
             clientSocket = new Socket("127.0.0.1", 8888);
             dosWithServer = new DataOutputStream(clientSocket.getOutputStream());
             disWithServer = new DataInputStream(clientSocket.getInputStream());
-            bconnected = true;
+            connectedWithServer = true;
             System.out.println("connected");
         } catch (UnknownHostException e) {
             System.out.println("sever not start");
@@ -411,22 +422,22 @@ class ReceiveData {
 
         if (data_from_client_split.size() == 3) {
             this.str = data_from_client_split.get(2);
-        } else {
-            this.str = "";
         }
         System.out.println("str是什么" + data_from_client.length());
         System.out.println("群发的内容" + str);
+        //添加listener标志，最后解除
         if (str.equals("")) {
+            ChatClient.listener = true;
             clearClientInfo();
-            ChatClient.clientList.removeAll();
-            ChatClient.clientList.add("群聊");
+            ChatClient.listModel.removeAllElements();
+            ChatClient.listModel.addElement("群聊");
             for (int j = 0; j < listname.size(); j++) {
-                ChatClient.clientList.add(listname.get(j).split(SEPARATOR)[0]);
+                ChatClient.listModel.addElement(listname.get(j).split(SEPARATOR)[0]);
                 putClientInfo(listname.get(j).split(SEPARATOR)[0], listname.get(j).split(SEPARATOR)[1]);
             }
             System.out.println("列表人数" + clientInfo.size());
-
-            ChatClient.onlineCount.setText("在线人数" + ": " + (ChatClient.clientList.getItemCount() - 1));
+            ChatClient.onlineCount.setText("在线人数" + ": " + (ChatClient.listModel.getSize() - 1));
+            ChatClient.listener = false;
         }
     }
 

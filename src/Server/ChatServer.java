@@ -68,8 +68,8 @@ public class ChatServer {
         private UserClient userClient;
         private UserClientMsg userClientMsg;
         private Map<String, String> clientInfo = new HashMap<String, String>();
-        private String data_from_client;
-        private String name_port;
+        private String dataFromClient;
+        private String namePort;
         private String name;
         private String port;
 
@@ -81,18 +81,18 @@ public class ChatServer {
         public void run() {
             try {
                 while (bconnected) {
-                    data_from_client = userClient.receiveData();
-                    userClientMsg = new UserClientMsg(data_from_client);
+                    dataFromClient = userClient.receiveData();
+                    userClientMsg = new UserClientMsg(dataFromClient);
                     clientInfo = userClientMsg.putClientInfo();//
                     name = userClientMsg.getName();
                     port = userClientMsg.getPort();
 
-                    name_port = userClientMsg.buildNamePort(clientInfo);
+                    namePort = userClientMsg.buildNamePort(clientInfo);
                     boolean flag = false;
                     System.out.println("用户数" + userClientMsg.getClientInfo().size());
 
                     for (int j = 0; j < serverFrame.getClientListModel().getSize(); j++) {
-                        if (serverFrame. getClientListModel().getElementAt(j).equals(name)) flag = true;
+                        if (serverFrame.getClientListModel().getElementAt(j).equals(name)) flag = true;
                     }
                     if (!flag) {
                         serverFrame.addClientListModelElement(name);
@@ -108,21 +108,22 @@ public class ChatServer {
 //                    for(int k =0;k<serverFrame.getClientList().getItemCount();k++){
 //                        System.out.println("信息list" + serverFrame.getClientList().getItem(k));
 //                    }
-                    userClientList.sendMsg(data_from_client, name_port);//发送从客户端发来的信息，以及封装的用户名_端口
+                    userClientList.sendMsg(dataFromClient, namePort);//发送从客户端发来的信息，以及封装的用户名_端口
                     serverFrame.getOnlineCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());
-                    System.out.println("接收到了吗" + data_from_client);
+                    System.out.println("接收到了吗" + dataFromClient);
                 }
             } catch (SocketException e) {
                 userClientList.removeClients(this.userClient);//List删除下线用户
                 serverFrame.removeClientListModelElement(this.name);//Frame中删除下线用户
                 serverFrame.getOnlineCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());//在线人数减一
                 clientInfo = userClientMsg.removeClientInfo(this.name);//Map中删除name_port，向其他用户发送信息
-                name_port = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
+                namePort = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
                 serverFrame.addListModelElement(name + "已下线");
 
                 if (serverFrame.getClientListModel().getSize() != 0) {
                     try {
-                        userClientList.sendMsg(data_from_client, name_port);
+                        String dataFromClientWithoutStr = userClientMsg.buildMsg(userClientMsg.getName(), userClientMsg.getPort(), "");
+                        userClientList.sendMsg(dataFromClientWithoutStr, namePort);//发送的str为"",客户端进行判断
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -291,7 +292,7 @@ class ServerFrame {
         return onlineCount;
     }
 
-    public DefaultListModel getClientListModel(){
+    public DefaultListModel getClientListModel() {
         return clientListModel;
     }
 
@@ -299,11 +300,11 @@ class ServerFrame {
         clientListModel.addElement(str);
     }
 
-    public void removeClientListModelElement(String str){
+    public void removeClientListModelElement(String str) {
         clientListModel.removeElement(str);
     }
 
-    public void addListModelElement(String str){
+    public void addListModelElement(String str) {
         listModel.addElement(str);
     }
 
@@ -314,7 +315,7 @@ class ServerFrame {
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
 
         JPanel leftPanel = new JPanel();
-        jScrollPane.setSize(new Dimension(30,220));
+        jScrollPane.setSize(new Dimension(30, 220));
 
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -326,7 +327,7 @@ class ServerFrame {
 
 
         JPanel rightPanel = new JPanel();
-        clientJScrollPane.setPreferredSize(new Dimension(30,220));
+        clientJScrollPane.setPreferredSize(new Dimension(30, 220));
 
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
         rightPanel.add(Box.createRigidArea(new Dimension(10, 10)));
