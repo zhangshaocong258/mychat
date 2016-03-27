@@ -305,7 +305,7 @@ class ServerFrame {
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
 
         JPanel leftPanel = new JPanel();
-        jScrollPane.setPreferredSize(new Dimension(85, 300));
+        jScrollPane.setPreferredSize(new Dimension(150, 300));
 
         JPanel leftTop = new JPanel();
         leftTop.setLayout(new BoxLayout(leftTop, BoxLayout.X_AXIS));
@@ -336,7 +336,7 @@ class ServerFrame {
 
 
         JPanel rightPanel = new JPanel();
-        clientJScrollPane.setPreferredSize(new Dimension(30, 300));
+        clientJScrollPane.setPreferredSize(new Dimension(100, 300));
 
 
         JPanel rightTop = new JPanel();
@@ -360,7 +360,7 @@ class ServerFrame {
 
         jFrame = new JFrame("·þÎñÆ÷");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jFrame.setSize(new Dimension(250, 350));
+        jFrame.setSize(new Dimension(280, 350));
         jFrame.add(jPanel);
         jFrame.setResizable(false);
         jFrame.setVisible(true);
