@@ -31,8 +31,8 @@ public class ChatClient {
     JLabel onlineLabel = new JLabel("在线好友列表");
     static JTextField onlineCount = new JTextField("在线人数");
     static DefaultListModel<String> listModel = new DefaultListModel<>();
-    JList<String> clientList = new JList<>(listModel);
-    JScrollPane jScrollPane = new JScrollPane(clientList);
+    static JList<String> clientList = new JList<>(listModel);
+    static JScrollPane jScrollPane = new JScrollPane(clientList);
 
 
     JButton send = new JButton("发送");
@@ -146,7 +146,7 @@ public class ChatClient {
         public void run() {
             try {
                 clientServerSocket = new ServerSocket(connectServer.clientSocket.getLocalPort() + 1);
-                System.out.println(connectServer.clientSocket.getLocalPort());
+                System.out.println("自己的端口" + connectServer.clientSocket.getLocalPort());
                 start = true;
             } catch (BindException e) {
                 System.out.println("端口使用中");
@@ -296,7 +296,7 @@ public class ChatClient {
 
     private class clientLoginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            if (clientName.getText().trim().length() > 1) {
+            if (clientName.getText().trim().length() >= 1) {
                 login.setEnabled(false);
                 clientName.setEnabled(false);
                 connectServer.connect();//客户端连接服务端
@@ -308,6 +308,11 @@ public class ChatClient {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
+//                try {
+//                    Thread.sleep(100);
+//                } catch (InterruptedException e1) {
+//                    e1.printStackTrace();
+//                }
                 new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
                 new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
             } else {
@@ -467,8 +472,9 @@ class ReceiveData {
                 String SEPARATOR = "\r";
                 ChatClient.listModel.addElement(listName.split(SEPARATOR)[0]);
                 putClientInfo(listName.split(SEPARATOR)[0], listName.split(SEPARATOR)[1]);
-                System.out.println("名字是什么" + listName);
             }
+            ChatClient.clientList.setModel(ChatClient.listModel);
+            ChatClient.jScrollPane = new JScrollPane( ChatClient.clientList);
             System.out.println("列表人数" + clientInfo.size());
             ChatClient.onlineCount.setText("在线人数" + ": " + (ChatClient.listModel.getSize() - 1));
             ChatClient.listener = false;
