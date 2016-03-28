@@ -448,26 +448,26 @@ class ReceiveData {
     //客户端接收服务端信息构造器初始化
     ReceiveData(String data_from_client, String name_and_port) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
-        java.util.List<String> listnames = Arrays.asList(name_and_port.split(DELIMITER));
+        java.util.List<String> listNames = Arrays.asList(name_and_port.split(DELIMITER));
         this.name = data_from_client_split.get(0);
-        //        this.str = data_from_client_split.get(2);
-//        this.peer = data_from_client_split.get(3);
+//        this.str = data_from_client_split.get(2);
 
         if (data_from_client_split.size() == 3) {
             this.str = data_from_client_split.get(2);
         }
         System.out.println("str是什么" + data_from_client.length());
-        System.out.println("群发的内容" + str);
+        System.out.println("群发的内容" + str + "tail");
         //添加listener标志，最后解除
         if (str.equals("")) {
             ChatClient.listener = true;
             clearClientInfo();
             ChatClient.listModel.removeAllElements();
             ChatClient.listModel.addElement("群聊");
-            for (String Listname : listnames) {
+            for (String listName : listNames) {
                 String SEPARATOR = "\r";
-                ChatClient.listModel.addElement(Listname.split(SEPARATOR)[0]);
-                putClientInfo(Listname.split(SEPARATOR)[0], Listname.split(SEPARATOR)[1]);
+                ChatClient.listModel.addElement(listName.split(SEPARATOR)[0]);
+                putClientInfo(listName.split(SEPARATOR)[0], listName.split(SEPARATOR)[1]);
+                System.out.println("名字是什么" + listName);
             }
             System.out.println("列表人数" + clientInfo.size());
             ChatClient.onlineCount.setText("在线人数" + ": " + (ChatClient.listModel.getSize() - 1));
