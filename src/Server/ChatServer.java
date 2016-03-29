@@ -28,12 +28,10 @@ public class ChatServer {
     class Server implements Runnable {
         private ServerSocket serverSocket = null;
         private UserClient userClient;
-        boolean start = false;
 
         public void run() {
             try {
                 serverSocket = new ServerSocket(8888);
-                start = true;
             } catch (BindException e) {
                 System.out.println("端口使用中");
                 System.exit(0);
@@ -41,7 +39,7 @@ public class ChatServer {
                 e.printStackTrace();
             }
             try {
-                while (start) {
+                while (true) {
                     Socket socket = serverSocket.accept();
                     userClient = new UserClient(socket);
                     ReceiveMsg client = new ReceiveMsg(userClient);
@@ -51,6 +49,7 @@ public class ChatServer {
                     //dis.close();
                 }
             } catch (IOException e) {
+                System.out.println("服务端错误位置");
                 e.printStackTrace();
             } finally {
                 try {
@@ -111,6 +110,8 @@ public class ChatServer {
                     System.out.println("接收到了吗" + dataFromClient);
                 }
             } catch (SocketException e) {
+                System.out.println("cuowucuowucuowu");
+                e.printStackTrace();
                 userClientList.removeClients(this.userClient);//List删除下线用户
                 serverFrame.removeClientListModelElement(this.name);//Frame中删除下线用户
                 serverFrame.getOnlineCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());//在线人数减一
@@ -135,7 +136,7 @@ public class ChatServer {
                 System.out.println("Client closed2");
             } finally {
                 try {
-                    userClient.close();
+                    this.userClient.close();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }

@@ -32,7 +32,7 @@ public class ChatClient {
     static JTextField onlineCount = new JTextField("在线人数");
     static DefaultListModel<String> listModel = new DefaultListModel<>();
     static JList<String> clientList = new JList<>(listModel);
-    static JScrollPane jScrollPane = new JScrollPane(clientList);
+    JScrollPane jScrollPane = new JScrollPane(clientList);
 
 
     JButton send = new JButton("发送");
@@ -125,7 +125,7 @@ public class ChatClient {
 
         jFrame = new JFrame("客户端");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jFrame.setSize(new Dimension(400, 500));
+        jFrame.setSize(new Dimension(200, 500));
         jFrame.add(jPanel);
         jFrame.setResizable(true);
         jFrame.setVisible(true);
@@ -474,7 +474,6 @@ class ReceiveData {
                 putClientInfo(listName.split(SEPARATOR)[0], listName.split(SEPARATOR)[1]);
             }
             ChatClient.clientList.setModel(ChatClient.listModel);
-            ChatClient.jScrollPane = new JScrollPane( ChatClient.clientList);
             System.out.println("列表人数" + clientInfo.size());
             ChatClient.onlineCount.setText("在线人数" + ": " + (ChatClient.listModel.getSize() - 1));
             ChatClient.listener = false;
