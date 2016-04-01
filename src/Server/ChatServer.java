@@ -134,7 +134,8 @@ public class ChatServer {
                 System.out.println("Client closed1");
             } catch (IOException e) {
                 System.out.println("Client closed2");
-            } finally {
+            }
+            finally {
                 try {
                     this.userClient.close();
                 } catch (IOException e1) {
@@ -173,7 +174,7 @@ class UserClient {
 
     public void sendData(String str) throws IOException {
         dosWithClient.writeUTF(str);
-        dosWithClient.flush();
+//        dosWithClient.flush();
     }
 
     public String receiveData() throws IOException {

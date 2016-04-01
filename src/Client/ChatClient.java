@@ -1,5 +1,6 @@
 package Client;
 
+import javax.print.DocFlavor;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -231,7 +232,7 @@ public class ChatClient {
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
                 if (!connectPeerClient.getsendCLient()) {
                     clientData.sendData(connectServer.dosWithServer, all);
-                    connectServer.dosWithServer.flush();
+//                    connectServer.dosWithServer.flush();
                 } else {
                     clientData.sendData(connectPeerClient.dosWithPeer, all);
                     System.out.println("发送的信息" + clientData.getStr());
@@ -257,6 +258,11 @@ public class ChatClient {
                     data = clientData.receiveData(connectServer.disWithServer);
                     name_and_port = clientData.receiveData(connectServer.disWithServer);
                     receiveData = new ReceiveData(data, name_and_port);
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run(){
+                            receiveData.addLists();
+                        }
+                    });
                     connectPeerClient.setSendClientFalse();//下线后JList全部清空，默认群聊
                 } catch (SocketException e1) {
                     System.out.println("Server closed");
@@ -436,6 +442,7 @@ class ReceiveData {
     private String str = "";
     //    private String peer = "";
     private static Map<String, String> clientInfo = new HashMap<>();
+    private java.util.List<String> listNames;
 
     private String DELIMITER = "\f";
 
@@ -453,7 +460,7 @@ class ReceiveData {
     //客户端接收服务端信息构造器初始化
     ReceiveData(String data_from_client, String name_and_port) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
-        java.util.List<String> listNames = Arrays.asList(name_and_port.split(DELIMITER));
+        listNames = Arrays.asList(name_and_port.split(DELIMITER));
         this.name = data_from_client_split.get(0);
 //        this.str = data_from_client_split.get(2);
 
@@ -463,6 +470,10 @@ class ReceiveData {
         System.out.println("str是什么" + data_from_client.length());
         System.out.println("群发的内容" + str + "tail");
         //添加listener标志，最后解除
+
+    }
+
+    public void addLists(){
         if (str.equals("")) {
             ChatClient.listener = true;
             clearClientInfo();
@@ -479,7 +490,6 @@ class ReceiveData {
             ChatClient.listener = false;
         }
     }
-
     public String getName() {
         return name;
     }
