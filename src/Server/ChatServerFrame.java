@@ -213,8 +213,8 @@ class UserClientMsg {
         } else return null;
     }
 
-    public String buildMsg(String name, String port, String str) {
-        return name + DELIMITER + port + DELIMITER + str;
+    public String buildMsg(String name, String port) {
+        return name + DELIMITER + port;
     }
 }
 
@@ -352,9 +352,10 @@ class ChatServer{
                 namePort = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
                 addListModelElement(name + "已下线");
 
+                //掉线后模仿登录时发送的信息格式
                 if (clientListModel.getSize() != 0) {
                     try {
-                        String dataFromClientWithoutStr = userClientMsg.buildMsg(userClientMsg.getName(), userClientMsg.getPort(), "");
+                        String dataFromClientWithoutStr = userClientMsg.buildMsg(userClientMsg.getName(), userClientMsg.getPort());
                         userClientList.sendMsg(dataFromClientWithoutStr, namePort);//发送的str为"",客户端进行判断
                     } catch (IOException e1) {
                         e1.printStackTrace();

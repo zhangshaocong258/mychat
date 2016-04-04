@@ -266,21 +266,20 @@ class ConnectServer {
 class ReceiveData {
     private String name = "";
     private String str = "";
-    //    private String peer = "";
     private static Map<String, String> clientInfo = new HashMap<>();
     private java.util.List<String> listNames;
 
     private String DELIMITER = "\f";
 
-    //客户端之间通信构造器初始化
+    //客户端之间通信构造器初始化，客户peer接收的信息不可能为空
     ReceiveData(String data_from_client) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         this.name = data_from_client_split.get(0);
-        if (data_from_client_split.size() == 3) {
-            this.str = data_from_client_split.get(2);
-        } else {
-            this.str = "";
-        }
+//        if (data_from_client_split.size() == 3) {
+        this.str = data_from_client_split.get(2);
+//        } else {
+//            this.str = "";
+//        }
     }
 
     //客户端接收服务端信息构造器初始化
@@ -293,7 +292,7 @@ class ReceiveData {
         if (data_from_client_split.size() == 3) {
             this.str = data_from_client_split.get(2);
         }
-        System.out.println("群发的内容" + str + "tail");
+        System.out.println("群发的内容" + str);
     }
 
     public String getName() {
@@ -423,7 +422,7 @@ class ChatClient {
         String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), clientData.getStr());
         //ta.setText(str);
         chatBox.setText(null);
-        //发送时需要进行各种判断，先判断为空，在判断给服务端还是客户端发送，服务端应该设为默认
+        //发送时先判断是否为空，在判断给服务端还是客户端发送，服务端应该设为默认
         try {
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
                 if (!connectPeerClient.getSendClient()) {
@@ -431,8 +430,8 @@ class ChatClient {
                 } else {
                     clientData.sendData(connectPeerClient.getDosWithPeer(), all);
                     System.out.println("发送的信息" + clientData.getStr());
-                    if (clientData.getStr().length() != clientData.getName().length() + 2)
-                        chatRecord.setText(chatRecord.getText() + clientData.getStr() + "\n");
+//                    if (clientData.getStr().length() != clientData.getName().length() + 2)
+                    chatRecord.setText(chatRecord.getText() + clientData.getStr() + "\n");
                 }
             }
         } catch (IOException e1) {
@@ -531,10 +530,10 @@ class ChatClient {
                 while (connectPeerClient.getReceiveClient()) {
                     String data = clientData.receiveData(peerClient.getDisWithPeer());
                     receiveData = new ReceiveData(data);
-                    //判断消息是否为空，“：”是否存在，是否是给本人发送信息
-                    if ((!receiveData.getStr().equals("")) && !(receiveData.getName().equals(clientData.getName()))) {
-                        if (receiveData.getStr().split("：").length != 1)
-                            chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
+                    //只需判断是否是给本人发送信息，内容不可能为空
+                    if (!(receiveData.getName().equals(clientData.getName()))) {
+//                        if (receiveData.getStr().split("：").length != 1)
+                        chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
                     }
                     System.out.println(data);
                 }
@@ -588,8 +587,8 @@ class ChatClient {
                     data = clientData.receiveData(connectServer.getDisWithServer());
                     name_and_port = clientData.receiveData(connectServer.getDisWithServer());
                     receiveData = new ReceiveData(data, name_and_port);
-                    //Swing多线程
-                    if (receiveData.getStr().equals("")){
+                    //Swing多线程，判断str长度是否为空
+                    if (receiveData.getStr().length() == 0){
                         EventQueue.invokeLater(this::addLists);
 //                    EventQueue.invokeLater(new Runnable() {
 //                        public void run(){
@@ -607,11 +606,12 @@ class ChatClient {
                     System.out.println("服务端关闭");
 
                 }
+                //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
                 try {
-                    if (!receiveData.getStr().equals("")) {
-                        if (receiveData.getStr().length() != receiveData.getName().length() + 2) {
-                            chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
-                        }
+                    if (receiveData.getStr().length() != 0) {
+//                        if (receiveData.getStr().length() != receiveData.getName().length() + 2) {
+                        chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
+//                        }
                     }
                 } catch (Exception e) {
                     System.out.println("客户端关闭");
