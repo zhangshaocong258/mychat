@@ -33,7 +33,7 @@ public class ChatServer {
             try {
                 serverSocket = new ServerSocket(8888);
             } catch (BindException e) {
-                System.out.println("端口使用中");
+                System.out.println("端口使用中...");
                 System.exit(0);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -44,9 +44,8 @@ public class ChatServer {
                     userClient = new UserClient(socket);
                     ReceiveMsg client = new ReceiveMsg(userClient);
                     userClientList.addClients(userClient);
-                    System.out.println("a client connected!");
+                    System.out.println("一个客户端已连接！");
                     new Thread(client).start();
-                    //dis.close();
                 }
             } catch (IOException e) {
                 System.out.println("服务端错误位置");
@@ -63,27 +62,26 @@ public class ChatServer {
 
     //接受客户端信息
     class ReceiveMsg implements Runnable {
-        private boolean bconnected;
+        private boolean beConnected = false;
         private UserClient userClient;
         private UserClientMsg userClientMsg;
         private Map<String, String> clientInfo = new HashMap<>();
-        private String dataFromClient;
-        private String namePort;
-        private String name;
+        private String dataFromClient = "";
+        private String namePort = "";
+        private String name = "";
 
         ReceiveMsg(UserClient userClient) {
             this.userClient = userClient;
-            bconnected = true;
+            beConnected = true;
         }
 
         public void run() {
             try {
-                while (bconnected) {
+                while (beConnected) {
                     dataFromClient = userClient.receiveData();
                     userClientMsg = new UserClientMsg(dataFromClient);
-                    clientInfo = userClientMsg.putClientInfo();//
+                    clientInfo = userClientMsg.putClientInfo();//客户端名字端口信息
                     name = userClientMsg.getName();
-
                     namePort = userClientMsg.buildNamePort(clientInfo);
                     boolean flag = false;
                     System.out.println("用户数" + userClientMsg.getClientInfo().size());
@@ -107,11 +105,10 @@ public class ChatServer {
 //                    }
                     userClientList.sendMsg(dataFromClient, namePort);//发送从客户端发来的信息，以及封装的用户名_端口
                     serverFrame.getOnlineCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());
-                    System.out.println("接收到了吗" + dataFromClient);
+                    System.out.println("接收到的数据" + dataFromClient);
                 }
             } catch (SocketException e) {
-                System.out.println("cuowucuowucuowu");
-                e.printStackTrace();
+//                e.printStackTrace();
                 userClientList.removeClients(this.userClient);//List删除下线用户
                 serverFrame.removeClientListModelElement(this.name);//Frame中删除下线用户
                 serverFrame.getOnlineCount().setText("在线人数" + ": " + serverFrame.getClientListModel().getSize());//在线人数减一
@@ -127,15 +124,14 @@ public class ChatServer {
                         e1.printStackTrace();
                     }
                 }
-                System.out.println("Client closed0");
+                System.out.println("客户端关闭1");
             } catch (EOFException e) {
                 userClientList.removeClients(this.userClient);
                 serverFrame.removeClientListModelElement(this.name);
-                System.out.println("Client closed1");
+                System.out.println("客户端关闭2");
             } catch (IOException e) {
-                System.out.println("Client closed2");
-            }
-            finally {
+                System.out.println("客户端关闭3");
+            } finally {
                 try {
                     this.userClient.close();
                 } catch (IOException e1) {
@@ -174,7 +170,6 @@ class UserClient {
 
     public void sendData(String str) throws IOException {
         dosWithClient.writeUTF(str);
-//        dosWithClient.flush();
     }
 
     public String receiveData() throws IOException {

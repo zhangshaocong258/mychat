@@ -15,7 +15,7 @@ import java.util.*;
  * Created by zsc on 2015/3/9.
  */
 public class ChatClient {
-    static boolean listener = false;
+    static boolean listener = false;//Jlist事件设置一个标志位，用来区别是否建立连接
     ConnectServer connectServer = new ConnectServer();//客户端连接服务端
     ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
     ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端作为服务端
@@ -126,7 +126,7 @@ public class ChatClient {
 
         jFrame = new JFrame("客户端");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jFrame.setSize(new Dimension(200, 500));
+        jFrame.setSize(new Dimension(380, 500));
         jFrame.add(jPanel);
         jFrame.setResizable(true);
         jFrame.setVisible(true);
@@ -160,9 +160,8 @@ public class ChatClient {
                     Socket socket = clientServerSocket.accept();
                     peerClient = new PeerClient(socket);
                     ReceivePeerMsg receivePeerMsg = new ReceivePeerMsg(peerClient);
-                    System.out.println("a client connected!");
+                    System.out.println("客户端已连接");
                     new Thread(receivePeerMsg).start();
-                    //dis.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -184,15 +183,13 @@ public class ChatClient {
         public ReceivePeerMsg(PeerClient peerClient) {
             this.peerClient = peerClient;
             connectPeerClient.setReceiveClientTrue();//接收标志位，有别于发送标志位
-            System.out.println("cClient是什么" + connectPeerClient.getReceiveClient());
         }
 
         public void run() {
             try {
                 while (connectPeerClient.getReceiveClient()) {
-                    String data = clientData.receiveData(peerClient.disWithPeer);
+                    String data = clientData.receiveData(peerClient.getDisWithPeer());
                     receiveData = new ReceiveData(data);
-//                    String str = peerClient.disWithPeer.readUTF();
                     //判断消息是否为空，“：”是否存在，是否是给本人发送信息
                     if ((!receiveData.getStr().equals("")) && !(receiveData.getName().equals(clientData.getName()))) {
                         if (receiveData.getStr().split("：").length != 1)
@@ -225,22 +222,19 @@ public class ChatClient {
         clientData.setStr(clientData.getName() + "说：" + chatBox.getText().trim());
         String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), clientData.getStr());
         //ta.setText(str);
-        System.out.println("发出去了吗" + clientData.getStr());
         chatBox.setText(null);
         //发送时需要进行各种判断，先判断为空，在判断给服务端还是客户端发送，服务端应该设为默认
         try {
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
                 if (!connectPeerClient.getsendCLient()) {
-                    clientData.sendData(connectServer.dosWithServer, all);
-//                    connectServer.dosWithServer.flush();
+                    clientData.sendData(connectServer.getDosWithServer(), all);
                 } else {
-                    clientData.sendData(connectPeerClient.dosWithPeer, all);
+                    clientData.sendData(connectPeerClient.getDosWithPeer(), all);
                     System.out.println("发送的信息" + clientData.getStr());
                     if (clientData.getStr().length() != clientData.getName().length() + 2)
                         chatRecord.setText(chatRecord.getText() + clientData.getStr() + "\n");
                 }
             }
-            //dos.close();
         } catch (IOException e1) {
             e1.printStackTrace();
         }
@@ -255,22 +249,24 @@ public class ChatClient {
         public void run() {
             while (ConnectServer.connectedWithServer) {
                 try {
-                    data = clientData.receiveData(connectServer.disWithServer);
-                    name_and_port = clientData.receiveData(connectServer.disWithServer);
+                    data = clientData.receiveData(connectServer.getDisWithServer());
+                    name_and_port = clientData.receiveData(connectServer.getDisWithServer());
                     receiveData = new ReceiveData(data, name_and_port);
-                    EventQueue.invokeLater(new Runnable() {
-                        public void run(){
-                            receiveData.addLists();
-                        }
-                    });
+                    //Swing多线程
+                    EventQueue.invokeLater(() -> receiveData.addLists());
+//                    EventQueue.invokeLater(new Runnable() {
+//                        public void run(){
+//                            receiveData.addLists();
+//                        }
+//                    });
                     connectPeerClient.setSendClientFalse();//下线后JList全部清空，默认群聊
                 } catch (SocketException e1) {
-                    System.out.println("Server closed");
+                    System.out.println("服务端关闭");
                     System.exit(0);
                 } catch (EOFException e2) {
                     System.exit(0);
                 } catch (IOException e) {
-                    System.out.println("Server closed");
+                    System.out.println("服务端关闭");
 
                 }
                 try {
@@ -280,7 +276,7 @@ public class ChatClient {
                         }
                     }
                 } catch (Exception e) {
-                    System.out.println("client closed");
+                    System.out.println("客户端关闭");
                 }
             }
         }
@@ -310,15 +306,10 @@ public class ChatClient {
                 clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
                 String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
                 try {
-                    clientData.sendData(connectServer.dosWithServer, all);//客户端向服务端发送登录信息
+                    clientData.sendData(connectServer.getDosWithServer(), all);//客户端向服务端发送登录信息
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-//                try {
-//                    Thread.sleep(100);
-//                } catch (InterruptedException e1) {
-//                    e1.printStackTrace();
-//                }
                 new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
                 new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
             } else {
@@ -335,9 +326,9 @@ public class ChatClient {
 //            for (Map.Entry<String, String> entry : ReceiveData.getClientInfo().entrySet()) {
 //                System.out.println("Map内容  " + entry.getKey() + "    " + entry.getValue());
 //            }
-                System.out.println("peeeeeer" + peer);
+                System.out.println("选中项" + peer);
                 if (peer != null && !peer.equals("群聊")) {
-                    connectPeerClient.connectpeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
+                    connectPeerClient.connectPeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
                 } else {
                     connectPeerClient.setSendClientFalse();
                 }
@@ -349,7 +340,7 @@ public class ChatClient {
 //客户端的客户端类
 class PeerClient {
     private Socket peerSocket = null;//客户端的服务端
-    DataInputStream disWithPeer;
+    private DataInputStream disWithPeer = null;
 
     public PeerClient(Socket peerSocket) {
         this.peerSocket = peerSocket;
@@ -358,6 +349,10 @@ class PeerClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public DataInputStream getDisWithPeer() {
+        return disWithPeer;
     }
 
     public void close() throws IOException {
@@ -373,14 +368,14 @@ class PeerClient {
 //客户端的客户端连接客户端的服务端类
 class ConnectPeerClient {
     //两个标志位
-    private static boolean sendClient;
-    private static boolean receiveClient;
-    DataOutputStream dosWithPeer;
+    private static boolean sendClient = false;
+    private static boolean receiveClient = false;
+    private DataOutputStream dosWithPeer;
 
     //客户端连接客户端
-    public void connectpeer(int peerport) {
+    public void connectPeer(int peerPort) {
         try {
-            Socket socketWithPeer = new Socket("127.0.0.1", peerport);
+            Socket socketWithPeer = new Socket("127.0.0.1", peerPort);
             dosWithPeer = new DataOutputStream(socketWithPeer.getOutputStream());
             sendClient = true;
         } catch (IOException e) {
@@ -390,12 +385,10 @@ class ConnectPeerClient {
 
     public void setReceiveClientTrue() {
         receiveClient = true;
-        System.out.println("peer disconnected");
     }
 
     public void setReceiveClientFalse() {
         receiveClient = false;
-        System.out.println("peer disconnected");
     }
 
     public void setSendClientFalse() {
@@ -409,14 +402,26 @@ class ConnectPeerClient {
     public boolean getReceiveClient() {
         return receiveClient;
     }
+
+    public DataOutputStream getDosWithPeer() {
+        return dosWithPeer;
+    }
 }
 
 //客户端连接服务端类
 class ConnectServer {
     Socket clientSocket = null;//Client自己的scoket
-    DataOutputStream dosWithServer = null;
-    DataInputStream disWithServer = null;
+    private DataOutputStream dosWithServer = null;
+    private DataInputStream disWithServer = null;
     static boolean connectedWithServer = false;
+
+    public DataInputStream getDisWithServer() {
+        return disWithServer;
+    }
+
+    public DataOutputStream getDosWithServer() {
+        return dosWithServer;
+    }
 
     public void connect() {
         try {
@@ -424,12 +429,12 @@ class ConnectServer {
             dosWithServer = new DataOutputStream(clientSocket.getOutputStream());
             disWithServer = new DataInputStream(clientSocket.getInputStream());
             connectedWithServer = true;
-            System.out.println("connected");
+            System.out.println("客户端已连接");
         } catch (UnknownHostException e) {
-            System.out.println("sever not start");
+            System.out.println("服务端未启动");
             e.printStackTrace();
         } catch (IOException e) {
-            System.out.println("sever not start");
+            System.out.println("服务端未启动");
             System.exit(1);
             e.printStackTrace();
         }
@@ -467,13 +472,10 @@ class ReceiveData {
         if (data_from_client_split.size() == 3) {
             this.str = data_from_client_split.get(2);
         }
-        System.out.println("str是什么" + data_from_client.length());
         System.out.println("群发的内容" + str + "tail");
-        //添加listener标志，最后解除
-
     }
 
-    public void addLists(){
+    public void addLists() {
         if (str.equals("")) {
             ChatClient.listener = true;
             clearClientInfo();
@@ -490,6 +492,7 @@ class ReceiveData {
             ChatClient.listener = false;
         }
     }
+
     public String getName() {
         return name;
     }
