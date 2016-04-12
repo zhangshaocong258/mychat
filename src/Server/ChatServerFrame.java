@@ -28,17 +28,17 @@ public class ChatServerFrame {
 
     private JFrame jFrame = new JFrame();
 
-    //¹Ì¶¨µÄ
-    private JButton login = new JButton("Æô¶¯");
-    private JLabel record = new JLabel("¼ÇÂ¼");
-    private JLabel online = new JLabel("ÔÚÏßÓÃ»§ÁĞ±í");
+    //å›ºå®šçš„
+    private JButton login = new JButton("å¯åŠ¨");
+    private JLabel record = new JLabel("è®°å½•");
+    private JLabel online = new JLabel("åœ¨çº¿ç”¨æˆ·åˆ—è¡¨");
 
     public static void main(String[] args) {
         new ChatServerFrame().init();
     }
 
     public void init() {
-        jFrame.setTitle("·şÎñ¶Ë");
+        jFrame.setTitle("æœåŠ¡ç«¯");
 
         JPanel jPanel = new JPanel();
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
@@ -97,7 +97,7 @@ public class ChatServerFrame {
         jPanel.add(rightPanel);
 
 
-        jFrame = new JFrame("·şÎñÆ÷");
+        jFrame = new JFrame("æœåŠ¡å™¨");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setSize(new Dimension(280, 350));
         jFrame.add(jPanel);
@@ -115,7 +115,7 @@ public class ChatServerFrame {
     }
 }
 
-//Æô¶¯socketÁ¬½Ó£¬¶¨Òå·¢ËÍºÍ½ÓÊÜĞÅÏ¢
+//å¯åŠ¨socketè¿æ¥ï¼Œå®šä¹‰å‘é€å’Œæ¥å—ä¿¡æ¯
 class UserClient {
     private Socket socket = null;
     private DataInputStream disWithClient;
@@ -150,7 +150,7 @@ class UserClient {
     }
 }
 
-//ÓÃ»§ListµÄ·â×°£¬·â×°ÁË·¢ËÍĞÅÏ¢·½·¨
+//ç”¨æˆ·Listçš„å°è£…ï¼Œå°è£…äº†å‘é€ä¿¡æ¯æ–¹æ³•
 class UserClientList {
     private static java.util.List<UserClient> clients = new ArrayList<>();
 
@@ -175,7 +175,7 @@ class UserClientList {
     }
 }
 
-//ÓÃ»§ĞÅÏ¢Àà
+//ç”¨æˆ·ä¿¡æ¯ç±»
 class UserClientMsg {
     private String name = "";
     private String port = "";
@@ -227,17 +227,17 @@ class UserClientMsg {
     }
 }
 
-//Ö÷·şÎñ
+//ä¸»æœåŠ¡
 class ChatServer {
-    private UserClientList userClientList = new UserClientList();//ÓÃ»§List,ÓÃÓÚÎ¬»¤µ±Ç°ÓÃ»§£¬¸øËûÃÇ·¢ËÍĞÅÏ¢
+    private UserClientList userClientList = new UserClientList();//ç”¨æˆ·List,ç”¨äºç»´æŠ¤å½“å‰ç”¨æˆ·ï¼Œç»™ä»–ä»¬å‘é€ä¿¡æ¯
 
-    //ÉÏÏÂÏß¼ÇÂ¼
+    //ä¸Šä¸‹çº¿è®°å½•
     private static DefaultListModel<String> listModel = new DefaultListModel<>();
     private JList<String> chatList = new JList<>(listModel);
     private JScrollPane jScrollPane = new JScrollPane(chatList);
 
-    //ÔÚÏßÈËÊı
-    private static JTextField onlineCount = new JTextField("ÔÚÏßÈËÊı");
+    //åœ¨çº¿äººæ•°
+    private static JTextField onlineCount = new JTextField("åœ¨çº¿äººæ•°");
 
     private static DefaultListModel<String> clientListModel = new DefaultListModel<>();
     private JList<String> clientList = new JList<>(clientListModel);
@@ -271,7 +271,7 @@ class ChatServer {
     private OperateXML operateXML = new OperateXML();
 
 
-    //Æô¶¯·şÎñ¶Ë
+    //å¯åŠ¨æœåŠ¡ç«¯
     class Server implements Runnable {
         private ServerSocket serverSocket = null;
         private UserClient userClient;
@@ -280,7 +280,7 @@ class ChatServer {
             try {
                 serverSocket = new ServerSocket(8888);
             } catch (BindException e) {
-                System.out.println("¶Ë¿ÚÊ¹ÓÃÖĞ...");
+                System.out.println("ç«¯å£ä½¿ç”¨ä¸­...");
                 System.exit(0);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -291,11 +291,11 @@ class ChatServer {
                     userClient = new UserClient(socket);
                     ReceiveMsg client = new ReceiveMsg(userClient);
                     userClientList.addClients(userClient);
-                    System.out.println("Ò»¸ö¿Í»§¶ËÒÑÁ¬½Ó£¡");
+                    System.out.println("ä¸€ä¸ªå®¢æˆ·ç«¯å·²è¿æ¥ï¼");
                     new Thread(client).start();
                 }
             } catch (IOException e) {
-                System.out.println("·şÎñ¶Ë´íÎóÎ»ÖÃ");
+                System.out.println("æœåŠ¡ç«¯é”™è¯¯ä½ç½®");
                 e.printStackTrace();
             } finally {
                 try {
@@ -307,7 +307,7 @@ class ChatServer {
         }
     }
 
-    //½ÓÊÜ¿Í»§¶ËĞÅÏ¢
+    //æ¥å—å®¢æˆ·ç«¯ä¿¡æ¯
     class ReceiveMsg implements Runnable {
         private boolean beConnected = false;
         private UserClient userClient;
@@ -329,65 +329,65 @@ class ChatServer {
                 while (beConnected) {
                     dataFromClient = userClient.receiveData();
                     userClientMsg = new UserClientMsg(dataFromClient);
-                    clientInfo = userClientMsg.putClientInfo();//¿Í»§¶ËÃû×Ö¶Ë¿ÚĞÅÏ¢
+                    clientInfo = userClientMsg.putClientInfo();//å®¢æˆ·ç«¯åå­—ç«¯å£ä¿¡æ¯
                     name = userClientMsg.getName();
                     port = userClientMsg.getPort();
                     namePort = userClientMsg.buildNamePort(clientInfo);
                     boolean flag = false;
-                    System.out.println("ÓÃ»§Êı" + userClientMsg.getClientInfo().size());
+                    System.out.println("ç”¨æˆ·æ•°" + userClientMsg.getClientInfo().size());
 
                     for (int j = 0; j < clientListModel.getSize(); j++) {
                         if (clientListModel.getElementAt(j).equals(name)) flag = true;
                     }
                     if (!flag) {
                         addClientListModelElement(name);
-                        addListModelElement(name + "ÒÑÉÏÏß");
+                        addListModelElement(name + "å·²ä¸Šçº¿");
 
                         operateXML.createElement(name, port);
-                        operateXML.createRecord(name + "ÒÑÉÏÏß");
+                        operateXML.createRecord(name + "å·²ä¸Šçº¿");
                     }
 //                    for(int k =0;k<clientList.getItemCount();k++){
 //                        name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
 //                    }
 //                    String name_and_port=name_port.deleteCharAt(name_port.length()-1).toString();
 //                    for(Map.Entry<String,String> entry : clientInfo.entrySet()){
-//                        System.out.println("ĞÅÏ¢list" + entry.getKey() + "    " + entry.getValue());
+//                        System.out.println("ä¿¡æ¯list" + entry.getKey() + "    " + entry.getValue());
 //                    }
 //                    for(int k =0;k<serverFrame.getClientList().getItemCount();k++){
-//                        System.out.println("ĞÅÏ¢list" + serverFrame.getClientList().getItem(k));
+//                        System.out.println("ä¿¡æ¯list" + serverFrame.getClientList().getItem(k));
 //                    }
-                    userClientList.sendMsg(dataFromClient, namePort);//·¢ËÍ´Ó¿Í»§¶Ë·¢À´µÄĞÅÏ¢£¬ÒÔ¼°·â×°µÄÓÃ»§Ãû_¶Ë¿Ú
-                    onlineCount.setText("ÔÚÏßÈËÊı" + ": " + clientListModel.getSize());
-                    System.out.println("½ÓÊÕµ½µÄÊı¾İ" + dataFromClient);
+                    userClientList.sendMsg(dataFromClient, namePort);//å‘é€ä»å®¢æˆ·ç«¯å‘æ¥çš„ä¿¡æ¯ï¼Œä»¥åŠå°è£…çš„ç”¨æˆ·å_ç«¯å£
+                    onlineCount.setText("åœ¨çº¿äººæ•°" + ": " + clientListModel.getSize());
+                    System.out.println("æ¥æ”¶åˆ°çš„æ•°æ®" + dataFromClient);
                 }
             } catch (SocketException e) {
 //                e.printStackTrace();
-                userClientList.removeClients(this.userClient);//ListÉ¾³ıÏÂÏßÓÃ»§
-                removeClientListModelElement(this.name);//FrameÖĞÉ¾³ıÏÂÏßÓÃ»§
-                onlineCount.setText("ÔÚÏßÈËÊı" + ": " + clientListModel.getSize());//ÔÚÏßÈËÊı¼õÒ»
-                clientInfo = userClientMsg.removeClientInfo(this.name);//MapÖĞÉ¾³ıname_port£¬ÏòÆäËûÓÃ»§·¢ËÍĞÅÏ¢
-                namePort = userClientMsg.buildNamePort(clientInfo);//½¨Á¢name_port,·¢ËÍ
-                addListModelElement(name + "ÒÑÏÂÏß");
+                userClientList.removeClients(this.userClient);//Liståˆ é™¤ä¸‹çº¿ç”¨æˆ·
+                removeClientListModelElement(this.name);//Frameä¸­åˆ é™¤ä¸‹çº¿ç”¨æˆ·
+                onlineCount.setText("åœ¨çº¿äººæ•°" + ": " + clientListModel.getSize());//åœ¨çº¿äººæ•°å‡ä¸€
+                clientInfo = userClientMsg.removeClientInfo(this.name);//Mapä¸­åˆ é™¤name_portï¼Œå‘å…¶ä»–ç”¨æˆ·å‘é€ä¿¡æ¯
+                namePort = userClientMsg.buildNamePort(clientInfo);//å»ºç«‹name_port,å‘é€
+                addListModelElement(name + "å·²ä¸‹çº¿");
 
                 operateXML.deleteElement(name);
-                operateXML.createRecord(name + "ÒÑÏÂÏß");
+                operateXML.createRecord(name + "å·²ä¸‹çº¿");
 
-                //µôÏßºóÄ£·ÂµÇÂ¼Ê±·¢ËÍµÄĞÅÏ¢¸ñÊ½
+                //æ‰çº¿åæ¨¡ä»¿ç™»å½•æ—¶å‘é€çš„ä¿¡æ¯æ ¼å¼
                 if (clientListModel.getSize() != 0) {
                     try {
                         String dataFromClientWithoutStr = userClientMsg.buildMsg(userClientMsg.getName(), userClientMsg.getPort());
-                        userClientList.sendMsg(dataFromClientWithoutStr, namePort);//·¢ËÍµÄstrÎª"",¿Í»§¶Ë½øĞĞÅĞ¶Ï
+                        userClientList.sendMsg(dataFromClientWithoutStr, namePort);//å‘é€çš„strä¸º"",å®¢æˆ·ç«¯è¿›è¡Œåˆ¤æ–­
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
                 }
-                System.out.println("¿Í»§¶Ë¹Ø±Õ1");
+                System.out.println("å®¢æˆ·ç«¯å…³é—­1");
             } catch (EOFException e) {
                 userClientList.removeClients(this.userClient);
                 removeClientListModelElement(this.name);
-                System.out.println("¿Í»§¶Ë¹Ø±Õ2");
+                System.out.println("å®¢æˆ·ç«¯å…³é—­2");
             } catch (IOException e) {
-                System.out.println("¿Í»§¶Ë¹Ø±Õ3");
+                System.out.println("å®¢æˆ·ç«¯å…³é—­3");
             } finally {
                 try {
                     this.userClient.close();
@@ -458,7 +458,7 @@ class OperateXML {
 
     public void deleteElement(String clientName){
         NodeList clientsList = clientDocument.getElementsByTagName("clients");
-        //ÁĞ³öÃ¿Ò»¸öclientsµÄNodeList
+        //åˆ—å‡ºæ¯ä¸€ä¸ªclientsçš„NodeList
         for(int i = 0;i< clientsList.getLength();i++){
             NodeList clientsChildList = clientsList.item(i).getChildNodes();
             if(clientsChildList.item(0).getTextContent().trim().equals(clientName)){
@@ -481,19 +481,13 @@ class OperateXML {
         try {
             Transformer transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(document);
-            transformer.setOutputProperty(OutputKeys.ENCODING, "GBK");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             PrintWriter printWriter = new PrintWriter(new FileOutputStream(path));
             StreamResult result = new StreamResult(printWriter);
-            transformer.transform(source, result);     //¹Ø¼ü×ª»»
-            System.out.println("Éú³ÉXMLÎÄ¼ş³É¹¦!");
-        } catch (TransformerConfigurationException e) {
-            System.out.println(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            System.out.println(e.getMessage());
-        } catch (FileNotFoundException e) {
-            System.out.println(e.getMessage());
-        } catch (TransformerException e) {
+            transformer.transform(source, result);     //å…³é”®è½¬æ¢
+            System.out.println("ç”ŸæˆXMLæ–‡ä»¶æˆåŠŸ!");
+        } catch (IllegalArgumentException | FileNotFoundException | TransformerException e) {
             System.out.println(e.getMessage());
         }
     }
