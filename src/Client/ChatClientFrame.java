@@ -1,10 +1,22 @@
 package Client;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import sun.plugin.javascript.JSClassLoader;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -415,6 +427,9 @@ class ChatClient {
         return jScrollPane;
     }
 
+    private OperateXML operateXML = new OperateXML();
+
+    private String path;
 
     //发送信息
     public void SendThread() {
@@ -448,6 +463,8 @@ class ChatClient {
             clientData.setName(clientName.getText());
             clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
             String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
+
+            path = "D:/" + clientData.getName() + "ChatRecord.xml";
             try {
                 clientData.sendData(connectServer.getDosWithServer(), all);//客户端向服务端发送登录信息
             } catch (IOException e1) {
@@ -534,6 +551,8 @@ class ChatClient {
                     if (!(receiveData.getName().equals(clientData.getName()))) {
 //                        if (receiveData.getStr().split("：").length != 1)
                         chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
+                        operateXML.createRecord(chatRecord.getText());
+                        operateXML.saveXML(path);
                     }
                     System.out.println(data);
                 }
@@ -612,6 +631,8 @@ class ChatClient {
 //                        if (receiveData.getStr().length() != receiveData.getName().length() + 2) {
                         chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
 //                        }
+                        operateXML.createRecord(chatRecord.getText());
+                        operateXML.saveXML(path);
                     }
                 } catch (Exception e) {
                     System.out.println("客户端关闭");
@@ -619,5 +640,52 @@ class ChatClient {
             }
         }
     }
+}
 
+class OperateXML{
+    private static Document recordDocument;
+
+    private Element recordRoot;
+    private TransformerFactory transformerFactory = TransformerFactory.newInstance();
+
+    public OperateXML(){
+        recordDocument = initDocument();
+        recordRoot = recordDocument.createElement("content");
+        recordDocument.appendChild(recordRoot);
+
+    }
+
+    public Document initDocument() {
+        Document document;
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = null;
+        try {
+            builder = factory.newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+        document = builder.newDocument();
+        return document;
+    }
+
+    public void createRecord(String chatRecord){
+        Element record = recordDocument.createElement("record");
+        record.appendChild((recordDocument.createTextNode(chatRecord)));
+        recordRoot.appendChild(record);
+    }
+
+    public void saveXML(String path) {
+        try {
+            Transformer transformer = transformerFactory.newTransformer();
+            DOMSource source = new DOMSource(recordDocument);
+            transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            PrintWriter printWriter = new PrintWriter(new FileOutputStream(path));
+            StreamResult result = new StreamResult(printWriter);
+            transformer.transform(source, result);     //关键转换
+            System.out.println("生成XML文件成功!");
+        } catch (IllegalArgumentException | FileNotFoundException | TransformerException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }
