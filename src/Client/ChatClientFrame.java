@@ -27,6 +27,10 @@ import java.util.*;
 /**
  * Created by zsc on 2015/3/9.
  */
+
+/**
+ * 创建ChatClient对象、带有监听事件的Swing、Frame初始化、监听类、main函数
+ */
 public class ChatClientFrame {
 
     private ChatClient chatClient = new ChatClient();
@@ -170,7 +174,10 @@ public class ChatClientFrame {
     }
 }
 
-//客户端的客户端类
+/**
+ * 客户端的客户端类，只用来接收信息
+ */
+
 class PeerClient {
     private Socket peerSocket = null;//客户端的服务端
     private DataInputStream disWithPeer = null;
@@ -198,7 +205,9 @@ class PeerClient {
     }
 }
 
-//客户端的客户端连接客户端的服务端类
+/**
+ * 客户端的客户端连接客户端的服务端类，只发送消息
+ */
 class ConnectPeerClient {
     //两个标志位
     private static boolean sendClient = false;
@@ -241,7 +250,9 @@ class ConnectPeerClient {
     }
 }
 
-//客户端连接服务端类
+/**
+ * 客户端连接服务端类
+ */
 class ConnectServer {
     Socket clientSocket = null;//Client自己的scoket
     private DataOutputStream dosWithServer = null;
@@ -274,12 +285,14 @@ class ConnectServer {
     }
 }
 
-//接收信息类
+/**
+ * 接收信息类，从服务端和客户端接收，重载
+ */
 class ReceiveData {
     private String name = "";
     private String str = "";
     private static Map<String, String> clientInfo = new HashMap<>();
-    private java.util.List<String> listNames;
+    private java.util.List<String> listNames = null;
 
     private String DELIMITER = "\f";
 
@@ -287,14 +300,10 @@ class ReceiveData {
     ReceiveData(String data_from_client) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         this.name = data_from_client_split.get(0);
-//        if (data_from_client_split.size() == 3) {
         this.str = data_from_client_split.get(2);
-//        } else {
-//            this.str = "";
-//        }
     }
 
-    //客户端接收服务端信息构造器初始化
+    //客户端接收服务端信息构造器初始化，信息类型为name&port（登录或退出信息格式）或者name&port&str（普通信息格式）
     ReceiveData(String data_from_client, String name_and_port) {
         java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         listNames = Arrays.asList(name_and_port.split(DELIMITER));
@@ -304,7 +313,6 @@ class ReceiveData {
         if (data_from_client_split.size() == 3) {
             this.str = data_from_client_split.get(2);
         }
-        System.out.println("群发的内容" + str);
     }
 
     public String getName() {
@@ -314,7 +322,7 @@ class ReceiveData {
     public String getStr() {
         return str;
     }
-
+    //用于刷新在线列表
     public java.util.List<String> getListNames(){
         return listNames;
     }
@@ -326,14 +334,16 @@ class ReceiveData {
     public void clearClientInfo() {
         clientInfo.clear();
     }
-
+    //map用于进行P2P连接，name对应port
     public static Map<String, String> getClientInfo() {
         return clientInfo;
     }
 
 }
 
-//用户登录信息封装类，包含发送接收信息方法
+/**
+ * 用户登录信息封装类，包含发送接收信息方法,build普通信息，登录信息直接最后加""空串
+ */
 class ClientData {
     private String name = "";
     private String port = "";
@@ -377,9 +387,13 @@ class ClientData {
     }
 }
 
+/**
+ * 主客户端，封装监听的Swing，XML的路径，发送信息方法，部分监听方法
+ */
 //主客户端
 class ChatClient {
-    private static boolean listener = false;//Jlist事件设置一个标志位，用来区别是否建立连接
+    //Jlist事件设置一个标志位listener，用来区别是否建立连接，因为刷新clientslist列表时，始终监听，所以刷新之前设为true，防止连接出错
+    private static boolean listener = false;
     private ConnectServer connectServer = new ConnectServer();//客户端连接服务端
     private ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
     private ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端作为服务端
@@ -435,17 +449,16 @@ class ChatClient {
     public void SendThread() {
         clientData.setStr(clientData.getName() + "说：" + chatBox.getText().trim());
         String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), clientData.getStr());
-        //ta.setText(str);
         chatBox.setText(null);
-        //发送时先判断是否为空，在判断给服务端还是客户端发送，服务端应该设为默认
+        //发送时先判断是否为空，再判断给服务端还是客户端发送，服务端应该设为默认，给服务端发送信息时，Record不用set，等接收服务端返回的信息时set；给peer发送信息时，需要set
         try {
+            //判断信息是否为空，利用name + "：" + "说"的长度判断
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
+                //判断给服务器还是peer端发送信息
                 if (!connectPeerClient.getSendClient()) {
                     clientData.sendData(connectServer.getDosWithServer(), all);
                 } else {
                     clientData.sendData(connectPeerClient.getDosWithPeer(), all);
-                    System.out.println("发送的信息" + clientData.getStr());
-//                    if (clientData.getStr().length() != clientData.getName().length() + 2)
                     chatRecord.setText(chatRecord.getText() + clientData.getStr() + "\n");
                 }
             }
@@ -454,8 +467,9 @@ class ChatClient {
         }
     }
 
-    //登录监听
+    //登录监听，设置XML路径
     public void ClientLogin(){
+        //登录名不能为空，为空则set null，重新输入
         if (clientName.getText().trim().length() >= 1) {
             login.setEnabled(false);
             clientName.setEnabled(false);
@@ -463,7 +477,6 @@ class ChatClient {
             clientData.setName(clientName.getText());
             clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
             String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
-
             path = "D:/" + clientData.getName() + "ChatRecord.xml";
             try {
                 clientData.sendData(connectServer.getDosWithServer(), all);//客户端向服务端发送登录信息
@@ -479,7 +492,6 @@ class ChatClient {
 
     //连接peer监听
     public void ConnectPeer(){
-
         //设置一个listener标志位，下线后JList会有监听，不采取任何动作
         if (!listener) {
             String peer = String.valueOf(clientList.getSelectedValue());
@@ -490,6 +502,7 @@ class ChatClient {
             if (peer != null && !peer.equals("群聊")) {
                 connectPeerClient.connectPeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
             } else {
+                //断开P2P连接，默认群聊
                 connectPeerClient.setSendClientFalse();
             }
         }
@@ -547,9 +560,8 @@ class ChatClient {
                 while (connectPeerClient.getReceiveClient()) {
                     String data = clientData.receiveData(peerClient.getDisWithPeer());
                     receiveData = new ReceiveData(data);
-                    //只需判断是否是给本人发送信息，内容不可能为空
+                    //只需判断是否是给本人发送信息，内容不可能为空，因为发送时以判定内容不能为空，如果是给本人发送的，Record不set信息
                     if (!(receiveData.getName().equals(clientData.getName()))) {
-//                        if (receiveData.getStr().split("：").length != 1)
                         chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
                         operateXML.createRecord(chatRecord.getText());
                         operateXML.saveXML(path);
@@ -557,7 +569,7 @@ class ChatClient {
                     System.out.println(data);
                 }
             } catch (SocketException e) {
-                connectPeerClient.setReceiveClientFalse();//接收置位false
+                connectPeerClient.setReceiveClientFalse();//接收置位false，停止接收
                 System.out.println("客户端关闭1");
             } catch (EOFException e) {
                 System.out.println("客户端关闭2");
@@ -606,7 +618,7 @@ class ChatClient {
                     data = clientData.receiveData(connectServer.getDisWithServer());
                     name_and_port = clientData.receiveData(connectServer.getDisWithServer());
                     receiveData = new ReceiveData(data, name_and_port);
-                    //Swing多线程，判断str长度是否为空
+                    //Swing多线程，判断str长度是否为空，invokeLater，解决窗口没有反应，重新登录或下线才可能恢复正常的bug
                     if (receiveData.getStr().length() == 0){
                         EventQueue.invokeLater(this::addLists);
 //                    EventQueue.invokeLater(new Runnable() {
@@ -628,9 +640,8 @@ class ChatClient {
                 //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
                 try {
                     if (receiveData.getStr().length() != 0) {
-//                        if (receiveData.getStr().length() != receiveData.getName().length() + 2) {
                         chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
-//                        }
+
                         operateXML.createRecord(chatRecord.getText());
                         operateXML.saveXML(path);
                     }
@@ -641,7 +652,9 @@ class ChatClient {
         }
     }
 }
-
+/**
+ * 操作XML进行记录，创建XML文件保存Record
+ */
 class OperateXML{
     private static Document recordDocument;
 

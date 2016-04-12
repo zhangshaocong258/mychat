@@ -22,6 +22,10 @@ import org.xml.sax.SAXException;
 /**
  * Created by zsc on 2015/3/9.
  */
+
+/**
+ * 创建ChatServer对象、带有监听事件的Swing、Frame初始化、监听类、main函数
+ */
 public class ChatServerFrame {
 
     private ChatServer chatServer = new ChatServer();
@@ -115,7 +119,9 @@ public class ChatServerFrame {
     }
 }
 
-//启动socket连接，定义发送和接受信息
+/**
+ * 启动socket连接，定义发送和接受信息，定义关闭流方法close，封装发送和接受方法
+ */
 class UserClient {
     private Socket socket = null;
     private DataInputStream disWithClient;
@@ -150,7 +156,9 @@ class UserClient {
     }
 }
 
-//用户List的封装，封装了发送信息方法
+/**
+ * 用户List的封装，封装了发送信息包装方法，添加用户和删除用户
+ */
 class UserClientList {
     private static java.util.List<UserClient> clients = new ArrayList<>();
 
@@ -175,7 +183,9 @@ class UserClientList {
     }
 }
 
-//用户信息类
+/**
+ * 用户信息类，拆分从客户端接收的信息，初始化Map，用于建立name&port发送给客户端，封装buildMsg
+ */
 class UserClientMsg {
     private String name = "";
     private String port = "";
@@ -227,7 +237,9 @@ class UserClientMsg {
     }
 }
 
-//主服务
+/**
+ * 主服务，初始化监听的Swing
+ */
 class ChatServer {
     private UserClientList userClientList = new UserClientList();//用户List,用于维护当前用户，给他们发送信息
 
@@ -307,9 +319,13 @@ class ChatServer {
         }
     }
 
-    //接受客户端信息
+    /**
+     * 接受客户端信息，不管是注册信息还是普通信息，注册信息只有name&port，普通信息有name&port&str，
+     * 直接连同namePort组成的list字符串发送回去；
+     * 客户端下线时，catch Exception，发送的信息为name&port，和客户端登录时发送的信息格式一样，不能包含str
+     */
     class ReceiveMsg implements Runnable {
-        private boolean beConnected = false;
+        private boolean isConnected = false;
         private UserClient userClient;
         private UserClientMsg userClientMsg;
         private Map<String, String> clientInfo = new HashMap<>();
@@ -318,15 +334,14 @@ class ChatServer {
         private String name = "";
         private String port = "";
 
-
         ReceiveMsg(UserClient userClient) {
             this.userClient = userClient;
-            beConnected = true;
+            isConnected = true;
         }
 
         public void run() {
             try {
-                while (beConnected) {
+                while (isConnected) {
                     dataFromClient = userClient.receiveData();
                     userClientMsg = new UserClientMsg(dataFromClient);
                     clientInfo = userClientMsg.putClientInfo();//客户端名字端口信息
@@ -399,6 +414,9 @@ class ChatServer {
     }
 }
 
+/**
+ * 操作XML进行记录，创建2个XML文件分别保存Record和ClientsList
+ */
 class OperateXML {
     private static Document clientDocument;
     private static Document recordDocument;
