@@ -3,6 +3,7 @@ package Client;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import sun.plugin.javascript.JSClassLoader;
 
 import javax.swing.*;
@@ -460,6 +461,10 @@ class ChatClient {
                 } else {
                     clientData.sendData(connectPeerClient.getDosWithPeer(), all);
                     chatRecord.setText(chatRecord.getText() + clientData.getStr() + "\n");
+
+                    operateXML.deleteElement();
+                    operateXML.createRecord(chatRecord.getText());
+                    operateXML.saveXML(path);
                 }
             }
         } catch (IOException e1) {
@@ -469,8 +474,10 @@ class ChatClient {
 
     //登录监听，设置XML路径
     public void ClientLogin(){
+        boolean b = operateXML.queryElement(clientName.getText());
+        System.out.print("bbbbbb "+ b);
         //登录名不能为空，为空则set null，重新输入
-        if (clientName.getText().trim().length() >= 1) {
+        if ((clientName.getText().trim().length() >= 1) && b) {
             login.setEnabled(false);
             clientName.setEnabled(false);
             connectServer.connect();//客户端连接服务端
@@ -563,6 +570,8 @@ class ChatClient {
                     //只需判断是否是给本人发送信息，内容不可能为空，因为发送时以判定内容不能为空，如果是给本人发送的，Record不set信息
                     if (!(receiveData.getName().equals(clientData.getName()))) {
                         chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
+
+                        operateXML.deleteElement();
                         operateXML.createRecord(chatRecord.getText());
                         operateXML.saveXML(path);
                     }
@@ -641,7 +650,7 @@ class ChatClient {
                 try {
                     if (receiveData.getStr().length() != 0) {
                         chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
-
+                        operateXML.deleteElement();
                         operateXML.createRecord(chatRecord.getText());
                         operateXML.saveXML(path);
                     }
@@ -686,6 +695,54 @@ class OperateXML{
         record.appendChild((recordDocument.createTextNode(chatRecord)));
         recordRoot.appendChild(record);
     }
+
+    public void deleteElement(){
+        NodeList recordList = recordDocument.getElementsByTagName("record");
+        //列出每一个clients的NodeList
+        if(recordList.getLength() >=0){
+            for(int i = 0;i< recordList.getLength();i++){
+                recordList.item(i).getParentNode().removeChild(recordList.item(i));
+            }
+        }
+
+    }
+
+    public boolean queryElement(String name) {
+        boolean flag = true;
+        Document document;
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder;
+        try {
+            builder = factory.newDocumentBuilder();
+            document = builder.parse(new File("D:/ClientsList.xml"));
+            Element rootElement = document.getDocumentElement();
+            NodeList clientsList = document.getElementsByTagName("clients");
+            if(clientsList.getLength() >= 0){
+                for(int i = 0;i< clientsList.getLength();i++){
+                    NodeList clientsChildList = clientsList.item(i).getChildNodes();
+                    for(int j = 0;j< clientsChildList.getLength();j++){
+                        System.out.println("nnnnnnameeeee" + clientsChildList.item(i).getTextContent());
+                        if(clientsChildList.item(i).getNodeName().trim().equals("name")){
+                            if(clientsChildList.item(i).getTextContent().trim().equals(name)){
+                                flag = false;
+
+                            }
+                        }
+                    }
+
+                }
+            }
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return flag;
+
+    }
+
 
     public void saveXML(String path) {
         try {
