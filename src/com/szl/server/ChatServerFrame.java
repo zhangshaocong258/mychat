@@ -1,5 +1,6 @@
 package com.szl.server;
 
+import com.szl.xml.OperateXML;
 
 import javax.swing.*;
 import java.awt.*;
@@ -7,14 +8,6 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.*;
 
@@ -27,7 +20,6 @@ import org.w3c.dom.*;
  * 创建ChatServer对象、带有监听事件的Swing、Frame初始化、监听类、main函数
  */
 public class ChatServerFrame {
-
     private ChatServer chatServer = new ChatServer();
 
     private JFrame jFrame = new JFrame();
@@ -244,14 +236,10 @@ class UserClientMsg {
  */
 class ChatServer {
     private UserClientList userClientList = new UserClientList();//用户List,用于维护当前用户，给他们发送信息
-    private OperateXML operateXML;//启动按钮按下时再初始化
+    private ServerOperateXML serverOperateXML;//启动按钮按下时再初始化
 
     //上下线记录
     private JTextArea clientRecord = new JTextArea(50, 20);
-
-//    private static DefaultListModel<String> listModel = new DefaultListModel<>();
-//    private JList<String> chatList = new JList<>(listModel);
-//    private JScrollPane jScrollPane = new JScrollPane(chatList);
 
     //在线人数
     private static JTextField onlineCount = new JTextField("在线人数");
@@ -264,11 +252,7 @@ class ChatServer {
         return onlineCount;
     }
 
-//    public JScrollPane getJScrollPane() {
-//        return jScrollPane;
-//    }
-
-    public JTextArea getClientRecord(){
+    public JTextArea getClientRecord() {
         return clientRecord;
     }
 
@@ -286,11 +270,7 @@ class ChatServer {
 
     public void addClientRecord(String str) {
         clientRecord.append(str);
-//        listModel.addElement(str);
-//        chatList.setModel(listModel);
     }
-
-
 
     //启动服务端
     class Server implements Runnable {
@@ -298,7 +278,7 @@ class ChatServer {
         private UserClient userClient;
 
         public void run() {
-            operateXML = new OperateXML();
+            serverOperateXML = new ServerOperateXML();
             try {
                 serverSocket = new ServerSocket(8888);
             } catch (BindException e) {
@@ -368,10 +348,10 @@ class ChatServer {
                         addClientListModelElement(name);
                         addClientRecord(name + "已上线" + "\n");
 
-                        operateXML.createElement(name, port);
-                        operateXML.saveXML(OperateXML.getClientDocument(),operateXML.getClientsListPath());
-                        operateXML.createRecord(clientRecord.getText());
-                        operateXML.saveXML(OperateXML.getRecordDocument(),operateXML.getServerRecordPath());
+                        serverOperateXML.createElement(name, port);
+                        serverOperateXML.saveXML(ServerOperateXML.getClientDocument(), serverOperateXML.getClientsListPath());
+                        serverOperateXML.createRecord(clientRecord.getText());
+                        serverOperateXML.saveXML(ServerOperateXML.getRecordDocument(), serverOperateXML.getServerRecordPath());
 
                     }
 //                    for(int k =0;k<clientList.getItemCount();k++){
@@ -397,11 +377,10 @@ class ChatServer {
                 namePort = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
                 addClientRecord(name + "已下线" + "\n");
 
-                operateXML.deleteElement(name);
-                operateXML.saveXML(OperateXML.getClientDocument(),operateXML.getClientsListPath());
-                operateXML.createRecord(clientRecord.getText());
-                operateXML.saveXML(OperateXML.getRecordDocument(),operateXML.getServerRecordPath());
-
+                serverOperateXML.deleteElement(name);
+                serverOperateXML.saveXML(ServerOperateXML.getClientDocument(), serverOperateXML.getClientsListPath());
+                serverOperateXML.createRecord(clientRecord.getText());
+                serverOperateXML.saveXML(ServerOperateXML.getRecordDocument(), serverOperateXML.getServerRecordPath());
 
                 //掉线后模仿登录时发送的信息格式
                 if (clientListModel.getSize() != 0) {
@@ -433,57 +412,26 @@ class ChatServer {
 /**
  * 操作XML进行记录，创建2个XML文件分别保存Record和ClientsList
  */
-class OperateXML {
+class ServerOperateXML extends OperateXML {
     private static Document clientDocument;
-    private static Document recordDocument;
 
     private Element clientsListRoot;
-    private Element recordRoot;
-    private TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
     private String clientsListPath;
     private String serverRecordPath;
 
-
     //初始化直接生成空文件
-    public OperateXML(){
+    public ServerOperateXML() {
         clientDocument = initDocument();
-        recordDocument = initDocument();
         clientsListRoot = clientDocument.createElement("content");
-        recordRoot = recordDocument.createElement("content");
         clientDocument.appendChild(clientsListRoot);
-        recordDocument.appendChild(recordRoot);
 
         this.clientsListPath = "D:/ClientsList.xml";
         this.serverRecordPath = "D:/ServerRecord.xml";
-        saveXML(clientDocument,clientsListPath);
-        saveXML(recordDocument, serverRecordPath);
 
-    }
+        saveXML(clientDocument, clientsListPath);
+        saveXML(getRecordDocument(), serverRecordPath);
 
-    public Document initDocument() {
-        Document document;
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = null;
-        try {
-            builder = factory.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        }
-        document = builder.newDocument();
-        return document;
-
-    }
-
-//    public Element initElement(){
-//        Element element;
-//        element = document.createElement("content");
-//        document.appendChild(element);
-//        return element;
-//    }
-
-    public static Document getRecordDocument(){
-        return recordDocument;
     }
 
     public static Document getClientDocument() {
@@ -498,7 +446,7 @@ class OperateXML {
         return clientsListPath;
     }
 
-    public void createElement(String clientName, String clientPort){
+    public void createElement(String clientName, String clientPort) {
 
         Element client = clientDocument.createElement("clients");
 
@@ -511,54 +459,16 @@ class OperateXML {
         client.appendChild(port);
 
         clientsListRoot.appendChild(client);
-
-
-//        saveXML(clientDocument,"D:/ClientsList.xml");
     }
 
-    public void deleteElement(String clientName){
+    public void deleteElement(String clientName) {
         NodeList clientsList = clientDocument.getElementsByTagName("clients");
         //列出每一个clients的NodeList
-        for(int i = 0;i< clientsList.getLength();i++){
+        for (int i = 0; i < clientsList.getLength(); i++) {
             NodeList clientsChildList = clientsList.item(i).getChildNodes();
-            if(clientsChildList.item(0).getTextContent().trim().equals(clientName)){
+            if (clientsChildList.item(0).getTextContent().trim().equals(clientName)) {
                 clientsList.item(i).getParentNode().removeChild(clientsList.item(i));
             }
         }
-
-//        saveXML(clientDocument,"D:/ClientsList.xml");
     }
-
-    public void createRecord(String chatRecord) {
-        NodeList chatRecordList = recordDocument.getElementsByTagName("record");
-        if (chatRecordList.getLength() == 0) {
-            Element record = recordDocument.createElement("record");
-            record.appendChild((recordDocument.createTextNode(chatRecord)));
-            recordRoot.appendChild(record);
-
-        } else {
-            for (int i = 0; i < chatRecordList.getLength(); i++) {
-                Node chatRecordNode = chatRecordList.item(i);
-                chatRecordNode.setTextContent(chatRecord);
-            }
-        }
-//        saveXML(recordDocument, "D:/ServerRecord.xml");
-    }
-
-
-    public void saveXML(Document document,String path) {
-        try {
-            Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource(document);
-            transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            PrintWriter printWriter = new PrintWriter(new FileOutputStream(path));
-            StreamResult result = new StreamResult(printWriter);
-            transformer.transform(source, result);     //关键转换
-            System.out.println("生成XML文件成功!");
-        } catch (IllegalArgumentException | FileNotFoundException | TransformerException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
 }

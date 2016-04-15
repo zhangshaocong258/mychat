@@ -1,8 +1,8 @@
 package com.szl.client;
 
+import com.szl.xml.OperateXML;
+
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -12,12 +12,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -36,7 +30,7 @@ public class ChatClientFrame {
 
     private ChatClient chatClient = new ChatClient();
 
-   //不变的组件
+    //不变的组件
     private JFrame jFrame = new JFrame();
 
     private JLabel clientLabel = new JLabel("用户名");
@@ -165,7 +159,7 @@ public class ChatClientFrame {
 
     private class clientLoginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-           chatClient.ClientLogin();
+            chatClient.ClientLogin();
         }
     }
 
@@ -324,10 +318,12 @@ class ReceiveData {
     public String getStr() {
         return str;
     }
+
     //用于刷新在线列表
-    public java.util.List<String> getListNames(){
+    public java.util.List<String> getListNames() {
         return listNames;
     }
+
     public Map<String, String> putClientInfo(String name, String port) {
         clientInfo.put(name, port);
         return clientInfo;
@@ -336,11 +332,11 @@ class ReceiveData {
     public void clearClientInfo() {
         clientInfo.clear();
     }
+
     //map用于进行P2P连接，name对应port
     public static Map<String, String> getClientInfo() {
         return clientInfo;
     }
-
 }
 
 /**
@@ -411,7 +407,7 @@ class ChatClient {
     private static JList<String> clientList = new JList<>(listModel);
     private JScrollPane jScrollPane = new JScrollPane(clientList);
 
-    public void initModel(){
+    public void initModel() {
         listModel.addElement("群聊");
     }
 
@@ -423,27 +419,27 @@ class ChatClient {
         return login;
     }
 
-    public JTextArea getChatRecord(){
+    public JTextArea getChatRecord() {
         return chatRecord;
     }
 
-    public JTextArea getChatBox(){
+    public JTextArea getChatBox() {
         return chatBox;
     }
 
-    public JTextField getOnlineCount(){
+    public JTextField getOnlineCount() {
         return onlineCount;
     }
 
-    public JList<String> getClientList(){
+    public JList<String> getClientList() {
         return clientList;
     }
 
-    public JScrollPane getJScrollPane(){
+    public JScrollPane getJScrollPane() {
         return jScrollPane;
     }
 
-    private OperateXML operateXML = new OperateXML();
+    private ClientOperateXML clientOperateXML = new ClientOperateXML();
 
     private String path;
 
@@ -464,8 +460,8 @@ class ChatClient {
                     chatRecord.append(clientData.getStr() + "\n");
 
 //                    operateXML.deleteElement();
-                    operateXML.createRecord(chatRecord.getText());
-                    operateXML.saveXML(operateXML.getRecordDocument(),path);
+                    clientOperateXML.createRecord(chatRecord.getText());
+                    clientOperateXML.saveXML(ClientOperateXML.getRecordDocument(), path);
                 }
             }
         } catch (IOException e1) {
@@ -474,11 +470,9 @@ class ChatClient {
     }
 
     //登录监听，设置XML路径
-    public void ClientLogin(){
-        boolean b = operateXML.queryElement(clientName.getText());
-        System.out.print("bbbbbb "+ b);
+    public void ClientLogin() {
         //登录名不能为空，为空则set null，重新输入
-        if ((clientName.getText().trim().length() >= 1) && b) {
+        if ((clientName.getText().trim().length() >= 1) && clientOperateXML.queryElement(clientName.getText())) {
             login.setEnabled(false);
             clientName.setEnabled(false);
             connectServer.connect();//客户端连接服务端
@@ -499,7 +493,7 @@ class ChatClient {
     }
 
     //连接peer监听
-    public void ConnectPeer(){
+    public void ConnectPeer() {
         //设置一个listener标志位，下线后JList会有监听，不采取任何动作
         if (!listener) {
             String peer = String.valueOf(clientList.getSelectedValue());
@@ -573,8 +567,8 @@ class ChatClient {
                         chatRecord.append(receiveData.getStr() + "\n");
 
 //                        operateXML.deleteElement();
-                        operateXML.createRecord(chatRecord.getText());
-                        operateXML.saveXML(operateXML.getRecordDocument(),path);
+                        clientOperateXML.createRecord(chatRecord.getText());
+                        clientOperateXML.saveXML(ClientOperateXML.getRecordDocument(), path);
                     }
                     System.out.println(data);
                 }
@@ -597,7 +591,6 @@ class ChatClient {
             }
         }
     }
-
 
     //接收服务端信息
     class ReceiveServerMsg implements Runnable {
@@ -629,7 +622,7 @@ class ChatClient {
                     name_and_port = clientData.receiveData(connectServer.getDisWithServer());
                     receiveData = new ReceiveData(data, name_and_port);
                     //Swing多线程，判断str长度是否为空，invokeLater，解决窗口没有反应，重新登录或下线才可能恢复正常的bug
-                    if (receiveData.getStr().length() == 0){
+                    if (receiveData.getStr().length() == 0) {
                         EventQueue.invokeLater(this::addLists);
 //                    EventQueue.invokeLater(new Runnable() {
 //                        public void run(){
@@ -652,8 +645,8 @@ class ChatClient {
                     if (receiveData.getStr().length() != 0) {
                         chatRecord.append(receiveData.getStr() + "\n");
 //                        operateXML.deleteElement();
-                        operateXML.createRecord(chatRecord.getText());
-                        operateXML.saveXML(operateXML.getRecordDocument(),path);
+                        clientOperateXML.createRecord(chatRecord.getText());
+                        clientOperateXML.saveXML(ClientOperateXML.getRecordDocument(), path);
                     }
                 } catch (Exception e) {
                     System.out.println("客户端关闭");
@@ -662,75 +655,16 @@ class ChatClient {
         }
     }
 }
+
 /**
  * 操作XML进行记录，创建XML文件保存Record
  */
-class OperateXML{
-    private static Document recordDocument;
-
-    private Element recordRoot;
-    private TransformerFactory transformerFactory = TransformerFactory.newInstance();
-
+class ClientOperateXML extends OperateXML {
     private String clientsListPath;
-    private String serverRecordPath;
 
-
-    public OperateXML(){
-        recordDocument = initDocument();
-        recordRoot = recordDocument.createElement("content");
-        recordDocument.appendChild(recordRoot);
+    public ClientOperateXML() {
         this.clientsListPath = "D:/ClientsList.xml";
-        this.serverRecordPath = "D:/ServerRecord.xml";
     }
-
-    public Document initDocument() {
-        Document document;
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = null;
-        try {
-            builder = factory.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        }
-        document = builder.newDocument();
-        return document;
-    }
-
-//    public void createRecord(String chatRecord){
-//        Element record = recordDocument.createElement("record");
-//        record.appendChild((recordDocument.createTextNode(chatRecord)));
-//        recordRoot.appendChild(record);
-//    }
-
-    public Document getRecordDocument(){
-        return recordDocument;
-    }
-
-    public void createRecord(String chatRecord) {
-        NodeList chatRecordList = recordDocument.getElementsByTagName("record");
-        if (chatRecordList.getLength() == 0) {
-            Element record = recordDocument.createElement("record");
-            record.appendChild((recordDocument.createTextNode(chatRecord)));
-            recordRoot.appendChild(record);
-
-        } else {
-            for (int i = 0; i < chatRecordList.getLength(); i++) {
-                Node chatRecordNode = chatRecordList.item(i);
-                chatRecordNode.setTextContent(chatRecord);
-            }
-        }
-    }
-
-//    public void deleteElement(){
-//        NodeList recordList = recordDocument.getElementsByTagName("record");
-//        //列出每一个clients的NodeList
-//        if(recordList.getLength() >=0){
-//            for(int i = 0;i< recordList.getLength();i++){
-//                recordList.item(i).getParentNode().removeChild(recordList.item(i));
-//            }
-//        }
-//
-//    }
 
     public boolean queryElement(String name) {
         boolean flag = true;
@@ -742,13 +676,13 @@ class OperateXML{
             document = builder.parse(new File(clientsListPath));
 //            Element rootElement = document.getDocumentElement();
             NodeList clientsList = document.getElementsByTagName("clients");
-            if(clientsList.getLength() >= 0){
-                for(int i = 0;i< clientsList.getLength();i++){
+            if (clientsList.getLength() >= 0) {
+                for (int i = 0; i < clientsList.getLength(); i++) {
                     NodeList clientsChildList = clientsList.item(i).getChildNodes();
-                    for(int j = 0;j< clientsChildList.getLength();j++){
+                    for (int j = 0; j < clientsChildList.getLength(); j++) {
                         System.out.println("nnnnnnameeeee" + clientsChildList.item(i).getTextContent());
-                        if(clientsChildList.item(i).getNodeName().trim().equals("name")){
-                            if(clientsChildList.item(i).getTextContent().trim().equals(name)){
+                        if (clientsChildList.item(i).getNodeName().trim().equals("name")) {
+                            if (clientsChildList.item(i).getTextContent().trim().equals(name)) {
                                 flag = false;
 
                             }
@@ -765,21 +699,5 @@ class OperateXML{
             e.printStackTrace();
         }
         return flag;
-    }
-
-
-    public void saveXML(Document document, String path) {
-        try {
-            Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource(document);
-            transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            PrintWriter printWriter = new PrintWriter(new FileOutputStream(path));
-            StreamResult result = new StreamResult(printWriter);
-            transformer.transform(source, result);     //关键转换
-            System.out.println("生成XML文件成功!");
-        } catch (IllegalArgumentException | FileNotFoundException | TransformerException e) {
-            System.out.println(e.getMessage());
-        }
     }
 }
