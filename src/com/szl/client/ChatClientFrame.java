@@ -2,6 +2,7 @@ package com.szl.client;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -393,7 +394,7 @@ class ClientData {
  */
 //主客户端
 class ChatClient {
-    //Jlist事件设置一个标志位listener，用来区别是否建立连接，因为刷新clientslist列表时，始终监听，所以刷新之前设为true，防止连接出错
+    //JList事件设置一个标志位listener，用来区别是否建立连接，因为刷新clientslist列表时，始终监听，所以刷新之前设为true，防止连接出错
     private static boolean listener = false;
     private ConnectServer connectServer = new ConnectServer();//客户端连接服务端
     private ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
@@ -462,9 +463,9 @@ class ChatClient {
                     clientData.sendData(connectPeerClient.getDosWithPeer(), all);
                     chatRecord.append(clientData.getStr() + "\n");
 
-                    operateXML.deleteElement();
+//                    operateXML.deleteElement();
                     operateXML.createRecord(chatRecord.getText());
-                    operateXML.saveXML(path);
+                    operateXML.saveXML(operateXML.getRecordDocument(),path);
                 }
             }
         } catch (IOException e1) {
@@ -571,9 +572,9 @@ class ChatClient {
                     if (!(receiveData.getName().equals(clientData.getName()))) {
                         chatRecord.append(receiveData.getStr() + "\n");
 
-                        operateXML.deleteElement();
+//                        operateXML.deleteElement();
                         operateXML.createRecord(chatRecord.getText());
-                        operateXML.saveXML(path);
+                        operateXML.saveXML(operateXML.getRecordDocument(),path);
                     }
                     System.out.println(data);
                 }
@@ -650,9 +651,9 @@ class ChatClient {
                 try {
                     if (receiveData.getStr().length() != 0) {
                         chatRecord.append(receiveData.getStr() + "\n");
-                        operateXML.deleteElement();
+//                        operateXML.deleteElement();
                         operateXML.createRecord(chatRecord.getText());
-                        operateXML.saveXML(path);
+                        operateXML.saveXML(operateXML.getRecordDocument(),path);
                     }
                 } catch (Exception e) {
                     System.out.println("客户端关闭");
@@ -670,11 +671,16 @@ class OperateXML{
     private Element recordRoot;
     private TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
+    private String clientsListPath;
+    private String serverRecordPath;
+
+
     public OperateXML(){
         recordDocument = initDocument();
         recordRoot = recordDocument.createElement("content");
         recordDocument.appendChild(recordRoot);
-
+        this.clientsListPath = "D:/ClientsList.xml";
+        this.serverRecordPath = "D:/ServerRecord.xml";
     }
 
     public Document initDocument() {
@@ -690,22 +696,41 @@ class OperateXML{
         return document;
     }
 
-    public void createRecord(String chatRecord){
-        Element record = recordDocument.createElement("record");
-        record.appendChild((recordDocument.createTextNode(chatRecord)));
-        recordRoot.appendChild(record);
+//    public void createRecord(String chatRecord){
+//        Element record = recordDocument.createElement("record");
+//        record.appendChild((recordDocument.createTextNode(chatRecord)));
+//        recordRoot.appendChild(record);
+//    }
+
+    public Document getRecordDocument(){
+        return recordDocument;
     }
 
-    public void deleteElement(){
-        NodeList recordList = recordDocument.getElementsByTagName("record");
-        //列出每一个clients的NodeList
-        if(recordList.getLength() >=0){
-            for(int i = 0;i< recordList.getLength();i++){
-                recordList.item(i).getParentNode().removeChild(recordList.item(i));
+    public void createRecord(String chatRecord) {
+        NodeList chatRecordList = recordDocument.getElementsByTagName("record");
+        if (chatRecordList.getLength() == 0) {
+            Element record = recordDocument.createElement("record");
+            record.appendChild((recordDocument.createTextNode(chatRecord)));
+            recordRoot.appendChild(record);
+
+        } else {
+            for (int i = 0; i < chatRecordList.getLength(); i++) {
+                Node chatRecordNode = chatRecordList.item(i);
+                chatRecordNode.setTextContent(chatRecord);
             }
         }
-
     }
+
+//    public void deleteElement(){
+//        NodeList recordList = recordDocument.getElementsByTagName("record");
+//        //列出每一个clients的NodeList
+//        if(recordList.getLength() >=0){
+//            for(int i = 0;i< recordList.getLength();i++){
+//                recordList.item(i).getParentNode().removeChild(recordList.item(i));
+//            }
+//        }
+//
+//    }
 
     public boolean queryElement(String name) {
         boolean flag = true;
@@ -714,7 +739,7 @@ class OperateXML{
         DocumentBuilder builder;
         try {
             builder = factory.newDocumentBuilder();
-            document = builder.parse(new File("D:/ClientsList.xml"));
+            document = builder.parse(new File(clientsListPath));
 //            Element rootElement = document.getDocumentElement();
             NodeList clientsList = document.getElementsByTagName("clients");
             if(clientsList.getLength() >= 0){
@@ -740,14 +765,13 @@ class OperateXML{
             e.printStackTrace();
         }
         return flag;
-
     }
 
 
-    public void saveXML(String path) {
+    public void saveXML(Document document, String path) {
         try {
             Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource(recordDocument);
+            DOMSource source = new DOMSource(document);
             transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             PrintWriter printWriter = new PrintWriter(new FileOutputStream(path));

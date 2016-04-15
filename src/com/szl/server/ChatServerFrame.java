@@ -244,6 +244,7 @@ class UserClientMsg {
  */
 class ChatServer {
     private UserClientList userClientList = new UserClientList();//用户List,用于维护当前用户，给他们发送信息
+    private OperateXML operateXML;//启动按钮按下时再初始化
 
     //上下线记录
     private JTextArea clientRecord = new JTextArea(50, 20);
@@ -289,7 +290,6 @@ class ChatServer {
 //        chatList.setModel(listModel);
     }
 
-    private OperateXML operateXML;
 
 
     //启动服务端
@@ -369,8 +369,10 @@ class ChatServer {
                         addClientRecord(name + "已上线" + "\n");
 
                         operateXML.createElement(name, port);
-                        System.out.println("tttttt" + clientRecord.getText());
+                        operateXML.saveXML(OperateXML.getClientDocument(),operateXML.getClientsListPath());
                         operateXML.createRecord(clientRecord.getText());
+                        operateXML.saveXML(OperateXML.getRecordDocument(),operateXML.getServerRecordPath());
+
                     }
 //                    for(int k =0;k<clientList.getItemCount();k++){
 //                        name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
@@ -396,7 +398,10 @@ class ChatServer {
                 addClientRecord(name + "已下线" + "\n");
 
                 operateXML.deleteElement(name);
+                operateXML.saveXML(OperateXML.getClientDocument(),operateXML.getClientsListPath());
                 operateXML.createRecord(clientRecord.getText());
+                operateXML.saveXML(OperateXML.getRecordDocument(),operateXML.getServerRecordPath());
+
 
                 //掉线后模仿登录时发送的信息格式
                 if (clientListModel.getSize() != 0) {
@@ -436,6 +441,11 @@ class OperateXML {
     private Element recordRoot;
     private TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
+    private String clientsListPath;
+    private String serverRecordPath;
+
+
+    //初始化直接生成空文件
     public OperateXML(){
         clientDocument = initDocument();
         recordDocument = initDocument();
@@ -443,8 +453,11 @@ class OperateXML {
         recordRoot = recordDocument.createElement("content");
         clientDocument.appendChild(clientsListRoot);
         recordDocument.appendChild(recordRoot);
-        saveXML(clientDocument,"D:/ClientsList.xml");
-        saveXML(recordDocument, "D:/ServerRecord.xml");
+
+        this.clientsListPath = "D:/ClientsList.xml";
+        this.serverRecordPath = "D:/ServerRecord.xml";
+        saveXML(clientDocument,clientsListPath);
+        saveXML(recordDocument, serverRecordPath);
 
     }
 
@@ -469,7 +482,23 @@ class OperateXML {
 //        return element;
 //    }
 
-    public void createElement(String clientName,String clientPort){
+    public static Document getRecordDocument(){
+        return recordDocument;
+    }
+
+    public static Document getClientDocument() {
+        return clientDocument;
+    }
+
+    public String getServerRecordPath() {
+        return serverRecordPath;
+    }
+
+    public String getClientsListPath() {
+        return clientsListPath;
+    }
+
+    public void createElement(String clientName, String clientPort){
 
         Element client = clientDocument.createElement("clients");
 
@@ -484,7 +513,7 @@ class OperateXML {
         clientsListRoot.appendChild(client);
 
 
-        saveXML(clientDocument,"D:/ClientsList.xml");
+//        saveXML(clientDocument,"D:/ClientsList.xml");
     }
 
     public void deleteElement(String clientName){
@@ -497,35 +526,25 @@ class OperateXML {
             }
         }
 
-        saveXML(clientDocument,"D:/ClientsList.xml");
+//        saveXML(clientDocument,"D:/ClientsList.xml");
     }
 
-    public void createRecord(String chatRecord){
+    public void createRecord(String chatRecord) {
         NodeList chatRecordList = recordDocument.getElementsByTagName("record");
-        if(chatRecordList.getLength() == 0){
+        if (chatRecordList.getLength() == 0) {
             Element record = recordDocument.createElement("record");
             record.appendChild((recordDocument.createTextNode(chatRecord)));
             recordRoot.appendChild(record);
 
-        }
-        else {
-            for(int i = 0;i< chatRecordList.getLength();i++){
+        } else {
+            for (int i = 0; i < chatRecordList.getLength(); i++) {
                 Node chatRecordNode = chatRecordList.item(i);
                 chatRecordNode.setTextContent(chatRecord);
             }
         }
-        saveXML(recordDocument, "D:/ServerRecord.xml");
+//        saveXML(recordDocument, "D:/ServerRecord.xml");
     }
 
-    public void modifyRecord(String chatRecord) {
-        NodeList chatRecordList = recordDocument.getElementsByTagName("record");
-        if(chatRecordList != null && chatRecordList.getLength() >= 0){
-            for(int i = 0;i< chatRecordList.getLength();i++){
-                Node chatRecordNode = chatRecordList.item(i);
-                chatRecordNode.setTextContent(chatRecord);
-            }
-        }
-    }
 
     public void saveXML(Document document,String path) {
         try {
