@@ -1,10 +1,9 @@
-package Client;
+package com.szl.client;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import sun.plugin.javascript.JSClassLoader;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -71,6 +70,7 @@ public class ChatClientFrame {
         leftMiddleTop.add(Box.createRigidArea(new Dimension(5, 0)));
         leftMiddleTop.setLayout(new BoxLayout(leftMiddleTop, BoxLayout.X_AXIS));
         chatClient.getChatRecord().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+        chatClient.getChatRecord().setEditable(false);
         leftMiddleTop.add(chatClient.getChatRecord());
 
         JPanel leftMiddle = new JPanel();
@@ -451,7 +451,7 @@ class ChatClient {
         clientData.setStr(clientData.getName() + "说：" + chatBox.getText().trim());
         String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), clientData.getStr());
         chatBox.setText(null);
-        //发送时先判断是否为空，再判断给服务端还是客户端发送，服务端应该设为默认，给服务端发送信息时，Record不用set，等接收服务端返回的信息时set；给peer发送信息时，需要set
+        //发送时先判断是否为空，再判断给服务端还是客户端发送，服务端应该设为默认，给服务端发送信息时，Record不用append，等接收服务端返回的信息时append；给peer发送信息时，需要append
         try {
             //判断信息是否为空，利用name + "：" + "说"的长度判断
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
@@ -460,7 +460,7 @@ class ChatClient {
                     clientData.sendData(connectServer.getDosWithServer(), all);
                 } else {
                     clientData.sendData(connectPeerClient.getDosWithPeer(), all);
-                    chatRecord.setText(chatRecord.getText() + clientData.getStr() + "\n");
+                    chatRecord.append(clientData.getStr() + "\n");
 
                     operateXML.deleteElement();
                     operateXML.createRecord(chatRecord.getText());
@@ -569,7 +569,7 @@ class ChatClient {
                     receiveData = new ReceiveData(data);
                     //只需判断是否是给本人发送信息，内容不可能为空，因为发送时以判定内容不能为空，如果是给本人发送的，Record不set信息
                     if (!(receiveData.getName().equals(clientData.getName()))) {
-                        chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
+                        chatRecord.append(receiveData.getStr() + "\n");
 
                         operateXML.deleteElement();
                         operateXML.createRecord(chatRecord.getText());
@@ -649,7 +649,7 @@ class ChatClient {
                 //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
                 try {
                     if (receiveData.getStr().length() != 0) {
-                        chatRecord.setText(chatRecord.getText() + receiveData.getStr() + "\n");
+                        chatRecord.append(receiveData.getStr() + "\n");
                         operateXML.deleteElement();
                         operateXML.createRecord(chatRecord.getText());
                         operateXML.saveXML(path);
@@ -715,7 +715,7 @@ class OperateXML{
         try {
             builder = factory.newDocumentBuilder();
             document = builder.parse(new File("D:/ClientsList.xml"));
-            Element rootElement = document.getDocumentElement();
+//            Element rootElement = document.getDocumentElement();
             NodeList clientsList = document.getElementsByTagName("clients");
             if(clientsList.getLength() >= 0){
                 for(int i = 0;i< clientsList.getLength();i++){

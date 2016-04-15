@@ -1,4 +1,4 @@
-package Server;
+package com.szl.server;
 
 
 import javax.swing.*;
@@ -13,10 +13,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.*;
-import org.xml.sax.SAXException;
 
 
 /**
@@ -48,7 +48,7 @@ public class ChatServerFrame {
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
 
         JPanel leftPanel = new JPanel();
-        chatServer.getJScrollPane().setPreferredSize(new Dimension(150, 300));
+//        chatServer.getJScrollPane().setPreferredSize(new Dimension(150, 300));
 
         JPanel leftTop = new JPanel();
         leftTop.setLayout(new BoxLayout(leftTop, BoxLayout.X_AXIS));
@@ -65,7 +65,9 @@ public class ChatServerFrame {
         JPanel leftBottom = new JPanel();
         leftBottom.setLayout(new BoxLayout(leftBottom, BoxLayout.X_AXIS));
         leftBottom.add(Box.createRigidArea(new Dimension(5, 0)));
-        leftBottom.add(chatServer.getJScrollPane());
+        chatServer.getClientRecord().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+        chatServer.getClientRecord().setEditable(false);
+        leftBottom.add(chatServer.getClientRecord());
         leftBottom.add(Box.createGlue());
 
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
@@ -244,9 +246,11 @@ class ChatServer {
     private UserClientList userClientList = new UserClientList();//用户List,用于维护当前用户，给他们发送信息
 
     //上下线记录
-    private static DefaultListModel<String> listModel = new DefaultListModel<>();
-    private JList<String> chatList = new JList<>(listModel);
-    private JScrollPane jScrollPane = new JScrollPane(chatList);
+    private JTextArea clientRecord = new JTextArea(50, 20);
+
+//    private static DefaultListModel<String> listModel = new DefaultListModel<>();
+//    private JList<String> chatList = new JList<>(listModel);
+//    private JScrollPane jScrollPane = new JScrollPane(chatList);
 
     //在线人数
     private static JTextField onlineCount = new JTextField("在线人数");
@@ -259,8 +263,12 @@ class ChatServer {
         return onlineCount;
     }
 
-    public JScrollPane getJScrollPane() {
-        return jScrollPane;
+//    public JScrollPane getJScrollPane() {
+//        return jScrollPane;
+//    }
+
+    public JTextArea getClientRecord(){
+        return clientRecord;
     }
 
     public JScrollPane getClientJScrollPane() {
@@ -275,12 +283,13 @@ class ChatServer {
         clientListModel.removeElement(str);
     }
 
-    public void addListModelElement(String str) {
-        listModel.addElement(str);
-        chatList.setModel(listModel);
+    public void addClientRecord(String str) {
+        clientRecord.append(str);
+//        listModel.addElement(str);
+//        chatList.setModel(listModel);
     }
 
-    private OperateXML operateXML = new OperateXML();
+    private OperateXML operateXML;
 
 
     //启动服务端
@@ -289,6 +298,7 @@ class ChatServer {
         private UserClient userClient;
 
         public void run() {
+            operateXML = new OperateXML();
             try {
                 serverSocket = new ServerSocket(8888);
             } catch (BindException e) {
@@ -356,10 +366,11 @@ class ChatServer {
                     }
                     if (!flag) {
                         addClientListModelElement(name);
-                        addListModelElement(name + "已上线");
+                        addClientRecord(name + "已上线" + "\n");
 
                         operateXML.createElement(name, port);
-                        operateXML.createRecord(name + "已上线");
+                        System.out.println("tttttt" + clientRecord.getText());
+                        operateXML.createRecord(clientRecord.getText());
                     }
 //                    for(int k =0;k<clientList.getItemCount();k++){
 //                        name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
@@ -382,10 +393,10 @@ class ChatServer {
                 onlineCount.setText("在线人数" + ": " + clientListModel.getSize());//在线人数减一
                 clientInfo = userClientMsg.removeClientInfo(this.name);//Map中删除name_port，向其他用户发送信息
                 namePort = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
-                addListModelElement(name + "已下线");
+                addClientRecord(name + "已下线" + "\n");
 
                 operateXML.deleteElement(name);
-                operateXML.createRecord(name + "已下线");
+                operateXML.createRecord(clientRecord.getText());
 
                 //掉线后模仿登录时发送的信息格式
                 if (clientListModel.getSize() != 0) {
@@ -432,6 +443,8 @@ class OperateXML {
         recordRoot = recordDocument.createElement("content");
         clientDocument.appendChild(clientsListRoot);
         recordDocument.appendChild(recordRoot);
+        saveXML(clientDocument,"D:/ClientsList.xml");
+        saveXML(recordDocument, "D:/ServerRecord.xml");
 
     }
 
@@ -488,11 +501,30 @@ class OperateXML {
     }
 
     public void createRecord(String chatRecord){
-        Element record = recordDocument.createElement("record");
-        record.appendChild((recordDocument.createTextNode(chatRecord)));
-        recordRoot.appendChild(record);
+        NodeList chatRecordList = recordDocument.getElementsByTagName("record");
+        if(chatRecordList.getLength() == 0){
+            Element record = recordDocument.createElement("record");
+            record.appendChild((recordDocument.createTextNode(chatRecord)));
+            recordRoot.appendChild(record);
 
+        }
+        else {
+            for(int i = 0;i< chatRecordList.getLength();i++){
+                Node chatRecordNode = chatRecordList.item(i);
+                chatRecordNode.setTextContent(chatRecord);
+            }
+        }
         saveXML(recordDocument, "D:/ServerRecord.xml");
+    }
+
+    public void modifyRecord(String chatRecord) {
+        NodeList chatRecordList = recordDocument.getElementsByTagName("record");
+        if(chatRecordList != null && chatRecordList.getLength() >= 0){
+            for(int i = 0;i< chatRecordList.getLength();i++){
+                Node chatRecordNode = chatRecordList.item(i);
+                chatRecordNode.setTextContent(chatRecord);
+            }
+        }
     }
 
     public void saveXML(Document document,String path) {
