@@ -458,16 +458,20 @@ class ChatClient {
 
     //发送信息
     public void SendThread() {
-        clientData.setStr(clientData.getName(),
-                chatBox.getText().trim(), String.valueOf(clientList.getSelectedValue()));
-        String msg = clientData.buildMsg(clientData.getName(),
-                clientData.getPort(), clientData.getStr());
-        chatBox.setText(null);
+        boolean isNull = true;
+        if (chatBox.getText().trim().length() > 0) {
+            isNull = false;
+        }
         //发送时先判断是否为空，再判断给服务端还是客户端发送，服务端应该设为默认，
         //给服务端发送信息时，Record不用append，等接收服务端返回的信息时append；给peer发送信息时，需要append
         try {
             //判断信息是否为空，利用name + "：" + "说"的长度判断
-            if (clientData.getStr().length() != clientData.getName().length() + 2) {
+            if (!isNull) {
+                clientData.setStr(clientData.getName(),
+                        chatBox.getText().trim(), String.valueOf(clientList.getSelectedValue()));
+                String msg = clientData.buildMsg(clientData.getName(),
+                        clientData.getPort(), clientData.getStr());
+                chatBox.setText(null);
                 //判断给服务器还是peer端发送信息
                 if (!connectPeerClient.getSendClient()) {
                     clientData.sendData(connectServer.getDosWithServer(), msg);
@@ -479,6 +483,8 @@ class ChatClient {
                     clientOperateXML.createRecord(chatRecord.getText());
                     clientOperateXML.saveXML(ClientOperateXML.getRecordDocument(), path);
                 }
+            } else {
+                chatRecord.append("发送的内容不能为空\n");
             }
         } catch (IOException e1) {
             e1.printStackTrace();
