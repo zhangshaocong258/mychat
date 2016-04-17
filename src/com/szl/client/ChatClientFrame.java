@@ -1,5 +1,6 @@
 package com.szl.client;
 
+import com.szl.date.dayTime;
 import com.szl.xml.OperateXML;
 
 import org.w3c.dom.Document;
@@ -355,8 +356,8 @@ class ClientData {
         this.port = port;
     }
 
-    public void setStr(String str) {
-        this.str = str;
+    public void setStr(String sender, String str, String receiver) {
+        this.str = buildStr(sender,str,receiver);
     }
 
     public String getName() {
@@ -374,6 +375,18 @@ class ClientData {
     public String buildMsg(String name, String port, String str) {
         String DELIMITER = "\f";
         return name + DELIMITER + port + DELIMITER + str;
+    }
+
+    public String buildStr(String sender, String str, String receiver){
+        if(receiver.equals("null") || receiver.equals("群聊")){
+            receiver = "所有人";
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(sender).append("对").append(receiver).append("说：");
+        stringBuilder.append(" -- ").append(new dayTime().getDateString()).append(" --");
+        stringBuilder.append("\n ").append(str);
+
+        return stringBuilder.toString();
     }
 
     public void sendData(DataOutputStream dataOutputStream, String Data) throws IOException {
@@ -445,18 +458,21 @@ class ChatClient {
 
     //发送信息
     public void SendThread() {
-        clientData.setStr(clientData.getName() + "说：" + chatBox.getText().trim());
-        String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), clientData.getStr());
+        clientData.setStr(clientData.getName(),
+                chatBox.getText().trim(), String.valueOf(clientList.getSelectedValue()));
+        String msg = clientData.buildMsg(clientData.getName(),
+                clientData.getPort(), clientData.getStr());
         chatBox.setText(null);
-        //发送时先判断是否为空，再判断给服务端还是客户端发送，服务端应该设为默认，给服务端发送信息时，Record不用append，等接收服务端返回的信息时append；给peer发送信息时，需要append
+        //发送时先判断是否为空，再判断给服务端还是客户端发送，服务端应该设为默认，
+        //给服务端发送信息时，Record不用append，等接收服务端返回的信息时append；给peer发送信息时，需要append
         try {
             //判断信息是否为空，利用name + "：" + "说"的长度判断
             if (clientData.getStr().length() != clientData.getName().length() + 2) {
                 //判断给服务器还是peer端发送信息
                 if (!connectPeerClient.getSendClient()) {
-                    clientData.sendData(connectServer.getDosWithServer(), all);
+                    clientData.sendData(connectServer.getDosWithServer(), msg);
                 } else {
-                    clientData.sendData(connectPeerClient.getDosWithPeer(), all);
+                    clientData.sendData(connectPeerClient.getDosWithPeer(), msg);
                     chatRecord.append(clientData.getStr() + "\n");
 
 //                    operateXML.deleteElement();

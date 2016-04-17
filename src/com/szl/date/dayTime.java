@@ -8,7 +8,7 @@ import java.util.Date;
  */
 public class dayTime {
     private Date date = new Date();
-    private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
     private String dateString = formatter.format(date);
 
     public String getDateString() {
