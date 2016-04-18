@@ -1,4 +1,4 @@
-package com.szl.date;
+package com.szl.utils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

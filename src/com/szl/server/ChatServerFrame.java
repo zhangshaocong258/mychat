@@ -1,6 +1,6 @@
 package com.szl.server;
 
-import com.szl.xml.OperateXML;
+import com.szl.utils.OperateXML;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,6 +9,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import com.szl.utils.PropertiesGBC;
 import org.w3c.dom.*;
 
 
@@ -33,7 +34,7 @@ public class ChatServerFrame {
         new ChatServerFrame().init();
     }
 
-    public void init() {
+    private void init() {
 //        jFrame.setTitle("服务端");
 
 /*        JPanel jPanel = new JPanel();
@@ -106,65 +107,41 @@ public class ChatServerFrame {
         jPanel.setBorder(BorderFactory.createTitledBorder("服务器窗口"));
         jPanel.setLayout(new GridBagLayout());
 
-        GridBagConstraints c = new GridBagConstraints();
+//        chatServer.getClientRecord().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+        chatServer.getClientRecord().setEditable(false);
+//        chatServer.getOnlineCount().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+        chatServer.getOnlineCount().setEditable(false);
+
         /**
          * 总体窗格3*3，JTextArea占2*1，
         */
         //启动
-        c.gridx = 0; // 0行0列
-        c.gridy = 0;
-        c.gridwidth = 1;//组件的横向宽度，也就是指组件占用的列数；
-        c.gridheight = 1;//组件的纵向长度，也就是指组件占用的行数；
-        //如果显示区域比组件的区域大的时候，可以用来控制组件的行为。
-        //控制组件是垂直填充，还是水平填充，或者两个方向一起填充；
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 0;//指行的权重，告诉布局管理器如何分配额外的水平空间；同时也是最初的比例
-        c.weighty = 0;//指列的权重，告诉布局管理器如何分配额外的垂直空间；
-        c.insets = new Insets(0,5,5,5);
-        jPanel.add(login, c);
+        jPanel.add(login, new PropertiesGBC(0,0,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
 
         //记录
-        c.gridx = 0;
-        c.gridy = 1;
-        jPanel.add(record,c);
+        jPanel.add(record,new PropertiesGBC(0,1,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
 
         //JTextArea
-        c.gridy = 2;
-        c.weightx = 1;
-        c.weighty = 1;
-        c.gridwidth = 2;
-        c.gridheight = 1;
-        c.fill = GridBagConstraints.BOTH;
-        chatServer.getClientRecord().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-        chatServer.getClientRecord().setEditable(false);
-        jPanel.add(chatServer.getClientRecord(),c);
+        jPanel.add(chatServer.getClientRecordJScrollPane(),new PropertiesGBC(0,2,2,1).
+                setFill(PropertiesGBC.BOTH).setWeight(1,1).setInsets(0,5,5,5));
 
         //在线用户列表
-        c.gridx = 2;
-        c.gridy = 0;
-        c.gridwidth = 1;
-        c.gridheight = 1;
-        c.weightx = 0;
-        c.weighty = 0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        jPanel.add(online,c);
+        jPanel.add(online,new PropertiesGBC(2,0,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
 
         //在线人数JTextArea
-        c.gridy = 1;
-        chatServer.getOnlineCount().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-        chatServer.getOnlineCount().setEditable(false);
-        jPanel.add(chatServer.getOnlineCount(),c);
+        jPanel.add(chatServer.getOnlineCountJScrollPane(),new PropertiesGBC(2,1,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0.5,0).setInsets(0,5,5,5));
 
         //JList_JScrollPane
-        c.gridy = 2;
-        c.weightx = 0.3;
-        c.weighty = 1;
-        c.fill = GridBagConstraints.BOTH;
-        jPanel.add(chatServer.getClientJScrollPane(),c);
+        jPanel.add(chatServer.getClientJScrollPane(),new PropertiesGBC(2,2,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0.5,1).setInsets(0,5,5,5));
 
         jFrame = new JFrame("服务器");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jFrame.setSize(new Dimension(300, 400));
+        jFrame.setSize(new Dimension(300, 500));
         jFrame.add(jPanel);
         jFrame.setResizable(true);
         jFrame.setVisible(true);
@@ -306,10 +283,12 @@ class ChatServer {
     private ServerOperateXML serverOperateXML;//启动按钮按下时再初始化
 
     //上下线记录
-    private JTextArea clientRecord = new JTextArea(50, 20);
+    private JTextArea clientRecord = new JTextArea();
+    private JScrollPane clientRecordJScrollPane = new JScrollPane(clientRecord);
 
     //在线人数
     private static JTextArea onlineCount = new JTextArea("在线人数");
+    private JScrollPane onlineCountJScrollPane = new JScrollPane(onlineCount);
 
     private static DefaultListModel<String> clientListModel = new DefaultListModel<>();
     private JList<String> clientList = new JList<>(clientListModel);
@@ -318,9 +297,15 @@ class ChatServer {
     public JTextArea getOnlineCount() {
         return onlineCount;
     }
+    public JScrollPane getOnlineCountJScrollPane(){
+        return onlineCountJScrollPane;
+    }
 
     public JTextArea getClientRecord() {
         return clientRecord;
+    }
+    public JScrollPane getClientRecordJScrollPane(){
+        return clientRecordJScrollPane;
     }
 
     public JScrollPane getClientJScrollPane() {

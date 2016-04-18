@@ -1,11 +1,13 @@
 package com.szl.client;
 
-import com.szl.date.dayTime;
-import com.szl.xml.OperateXML;
+import com.szl.utils.PropertiesGBC;
+import com.szl.utils.dayTime;
+import com.szl.utils.OperateXML;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import sun.plugin.javascript.JSClassLoader;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -48,7 +50,7 @@ public class ChatClientFrame {
     }
 
     public void init() {
-        jFrame.setTitle("客户端");
+       /* jFrame.setTitle("客户端");
 
         JPanel jPanel = new JPanel();
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
@@ -125,13 +127,68 @@ public class ChatClientFrame {
 
         jPanel.add(leftPanel);
         jPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        jPanel.add(rightPanel);
+        jPanel.add(rightPanel);*/
+
+        JPanel jPanel = new JPanel();
+        jPanel.setBorder(BorderFactory.createTitledBorder("客户端窗口"));
+        jPanel.setLayout(new GridBagLayout());
+
+        chatClient.getChatRecord().setEditable(false);
+        chatClient.getOnlineCount().setEditable(false);
+
 
         chatClient.initModel();//初始化添加“群聊”
 
+
+        //用户名
+        jPanel.add(clientLabel, new PropertiesGBC(0,0,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,0));
+
+        //用户名输入框
+        jPanel.add(chatClient.getClientName(), new PropertiesGBC(1,0,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(1,0).setInsets(0,0,5,0));
+
+        //登录
+        jPanel.add(chatClient.getLogin(), new PropertiesGBC(2,0,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,0,5,5));
+
+        //聊天记录
+        jPanel.add(chatLabel, new PropertiesGBC(0,1,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+
+        //聊天记录框
+        jPanel.add(chatClient.getChatRecordJScrollPane(), new PropertiesGBC(0,2,3,1).
+                setFill(PropertiesGBC.BOTH).setWeight(1,1).setInsets(0,5,5,5));
+
+        //发送框
+        jPanel.add(chatClient.getChatBoxJScrollPane(), new PropertiesGBC(0,3,3,1).
+                setFill(PropertiesGBC.BOTH).setWeight(1,0).setInsets(0,5,5,5).setIpad(0,20));
+
+        //发送
+        jPanel.add(send, new PropertiesGBC(0,5,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+
+
+        //清除
+        jPanel.add(clear, new PropertiesGBC(2,5,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+
+        //在线好友列表
+        jPanel.add(onlineLabel, new PropertiesGBC(3,0,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+
+        //在线人数
+        jPanel.add(chatClient.getOnlineCountJScrollPane(), new PropertiesGBC(3,1,1,1).
+                setFill(PropertiesGBC.BOTH).setWeight(0.1,0).setInsets(0,5,5,5));
+
+        //JScrollPane
+        jPanel.add(chatClient.getJScrollPane(), new PropertiesGBC(3,2,1,4).
+                setFill(PropertiesGBC.BOTH).setWeight(0.1,1).setInsets(0,5,5,5));
+
+
         jFrame = new JFrame("客户端");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jFrame.setSize(new Dimension(200, 500));
+        jFrame.setSize(new Dimension(400, 500));
         jFrame.add(jPanel);
         jFrame.setResizable(true);
         jFrame.setVisible(true);
@@ -381,12 +438,9 @@ class ClientData {
         if(receiver.equals("null") || receiver.equals("群聊")){
             receiver = "所有人";
         }
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(sender).append("对").append(receiver).append("说：");
-        stringBuilder.append(" -- ").append(new dayTime().getDateString()).append(" --");
-        stringBuilder.append("\n ").append(str);
-
-        return stringBuilder.toString();
+        return sender + "对" + receiver + "说：" +
+                " -- " + new dayTime().getDateString() + " --" +
+                "\n " + str;
     }
 
     public void sendData(DataOutputStream dataOutputStream, String Data) throws IOException {
@@ -412,10 +466,16 @@ class ChatClient {
     private JTextField clientName = new JTextField(10);
     private JButton login = new JButton("登录");
 
-    private JTextArea chatRecord = new JTextArea(25, 20);
-    private JTextArea chatBox = new JTextArea(2, 20);
+    private JTextArea chatRecord = new JTextArea();
+    private JTextArea chatBox = new JTextArea();
+    private JScrollPane chatBoxJScrollPane = new JScrollPane(chatBox);
+    private JScrollPane chatRecordJScrollPane = new JScrollPane(chatRecord);
 
-    private static JTextField onlineCount = new JTextField("在线人数");
+
+
+    private static JTextArea onlineCount = new JTextArea("在线人数");
+    private JScrollPane onlineCountJScrollPane = new JScrollPane(onlineCount);
+
     private static DefaultListModel<String> listModel = new DefaultListModel<>();
     private static JList<String> clientList = new JList<>(listModel);
     private JScrollPane jScrollPane = new JScrollPane(clientList);
@@ -435,13 +495,23 @@ class ChatClient {
     public JTextArea getChatRecord() {
         return chatRecord;
     }
+    public JScrollPane getChatRecordJScrollPane(){
+        return chatRecordJScrollPane;
+    }
 
     public JTextArea getChatBox() {
         return chatBox;
     }
+    public JScrollPane getChatBoxJScrollPane() {
+        return chatBoxJScrollPane;
+    }
 
-    public JTextField getOnlineCount() {
+
+    public JTextArea getOnlineCount() {
         return onlineCount;
+    }
+    public JScrollPane getOnlineCountJScrollPane(){
+        return onlineCountJScrollPane;
     }
 
     public JList<String> getClientList() {
@@ -713,11 +783,7 @@ class ClientOperateXML extends OperateXML {
 
                 }
             }
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
         return flag;
