@@ -34,9 +34,9 @@ public class ChatServerFrame {
     }
 
     public void init() {
-        jFrame.setTitle("服务端");
+//        jFrame.setTitle("服务端");
 
-        JPanel jPanel = new JPanel();
+/*        JPanel jPanel = new JPanel();
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
 
         JPanel leftPanel = new JPanel();
@@ -100,6 +100,73 @@ public class ChatServerFrame {
         jFrame.setSize(new Dimension(280, 350));
         jFrame.add(jPanel);
         jFrame.setResizable(false);
+        jFrame.setVisible(true);*/
+
+        JPanel jPanel = new JPanel();
+        jPanel.setBorder(BorderFactory.createTitledBorder("服务器窗口"));
+        jPanel.setLayout(new GridBagLayout());
+
+        GridBagConstraints c = new GridBagConstraints();
+        /**
+         * 总体窗格3*3，JTextArea占2*1，
+        */
+        //启动
+        c.gridx = 0; // 0行0列
+        c.gridy = 0;
+        c.gridwidth = 1;//组件的横向宽度，也就是指组件占用的列数；
+        c.gridheight = 1;//组件的纵向长度，也就是指组件占用的行数；
+        //如果显示区域比组件的区域大的时候，可以用来控制组件的行为。
+        //控制组件是垂直填充，还是水平填充，或者两个方向一起填充；
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;//指行的权重，告诉布局管理器如何分配额外的水平空间；同时也是最初的比例
+        c.weighty = 0;//指列的权重，告诉布局管理器如何分配额外的垂直空间；
+        c.insets = new Insets(0,5,5,5);
+        jPanel.add(login, c);
+
+        //记录
+        c.gridx = 0;
+        c.gridy = 1;
+        jPanel.add(record,c);
+
+        //JTextArea
+        c.gridy = 2;
+        c.weightx = 1;
+        c.weighty = 1;
+        c.gridwidth = 2;
+        c.gridheight = 1;
+        c.fill = GridBagConstraints.BOTH;
+        chatServer.getClientRecord().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+        chatServer.getClientRecord().setEditable(false);
+        jPanel.add(chatServer.getClientRecord(),c);
+
+        //在线用户列表
+        c.gridx = 2;
+        c.gridy = 0;
+        c.gridwidth = 1;
+        c.gridheight = 1;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        jPanel.add(online,c);
+
+        //在线人数JTextArea
+        c.gridy = 1;
+        chatServer.getOnlineCount().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+        chatServer.getOnlineCount().setEditable(false);
+        jPanel.add(chatServer.getOnlineCount(),c);
+
+        //JList_JScrollPane
+        c.gridy = 2;
+        c.weightx = 0.3;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.BOTH;
+        jPanel.add(chatServer.getClientJScrollPane(),c);
+
+        jFrame = new JFrame("服务器");
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jFrame.setSize(new Dimension(300, 400));
+        jFrame.add(jPanel);
+        jFrame.setResizable(true);
         jFrame.setVisible(true);
 
         login.addActionListener(new loginListener());
@@ -242,13 +309,13 @@ class ChatServer {
     private JTextArea clientRecord = new JTextArea(50, 20);
 
     //在线人数
-    private static JTextField onlineCount = new JTextField("在线人数");
+    private static JTextArea onlineCount = new JTextArea("在线人数");
 
     private static DefaultListModel<String> clientListModel = new DefaultListModel<>();
     private JList<String> clientList = new JList<>(clientListModel);
     private JScrollPane clientJScrollPane = new JScrollPane(clientList);
 
-    public JTextField getOnlineCount() {
+    public JTextArea getOnlineCount() {
         return onlineCount;
     }
 
