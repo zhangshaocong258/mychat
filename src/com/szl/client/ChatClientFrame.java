@@ -4,7 +4,6 @@ import com.szl.utils.PropertiesGBC;
 import com.szl.utils.dayTime;
 import com.szl.utils.OperateXML;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
