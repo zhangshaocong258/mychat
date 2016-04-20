@@ -4,6 +4,7 @@ import com.szl.utils.PropertiesGBC;
 import com.szl.utils.dayTime;
 import com.szl.utils.OperateXML;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -443,6 +444,27 @@ class ClientData {
                 "\n " + str;
     }
 
+    //替换
+    public String formatStr(String str){
+        return str.replaceAll("\\n", "\n" + " ");
+    }
+
+    //将字符串转为Ascii，判断换行符
+    public String stringToAscii(String value)
+    {
+        StringBuffer sbu = new StringBuffer();
+        char[] chars = value.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            if(i != chars.length - 1)
+            {
+                sbu.append((int)chars[i]).append(",");
+            }
+            else {
+                sbu.append((int)chars[i]);
+            }
+        }
+        return sbu.toString();
+    }
     public void sendData(DataOutputStream dataOutputStream, String Data) throws IOException {
         dataOutputStream.writeUTF(Data);
     }
@@ -538,7 +560,8 @@ class ChatClient {
             //判断信息是否为空，利用name + "：" + "说"的长度判断
             if (!isNull) {
                 clientData.setStr(clientData.getName(),
-                        chatBox.getText().trim(), String.valueOf(clientList.getSelectedValue()));
+                        clientData.formatStr(chatBox.getText().trim()), String.valueOf(clientList.getSelectedValue()));
+                System.out.println(clientData.stringToAscii(chatBox.getText().trim()));
                 String msg = clientData.buildMsg(clientData.getName(),
                         clientData.getPort(), clientData.getStr());
                 chatBox.setText(null);
