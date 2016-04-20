@@ -772,9 +772,9 @@ class ClientOperateXML extends OperateXML {
                 for (int i = 0; i < clientsList.getLength(); i++) {
                     NodeList clientsChildList = clientsList.item(i).getChildNodes();
                     for (int j = 0; j < clientsChildList.getLength(); j++) {
-                        System.out.println("nnnnnnameeeee" + clientsChildList.item(i).getTextContent());
-                        if (clientsChildList.item(i).getNodeName().trim().equals("name")) {
-                            if (clientsChildList.item(i).getTextContent().trim().equals(name)) {
+                        System.out.println("nnnnnname" + clientsChildList.item(j).getTextContent());
+                        if (clientsChildList.item(j).getNodeName().trim().equals("name")) {
+                            if (clientsChildList.item(j).getTextContent().trim().equals(name)) {
                                 flag = false;
 
                             }

@@ -107,11 +107,10 @@ public class ChatServerFrame {
         jPanel.setBorder(BorderFactory.createTitledBorder("服务器窗口"));
         jPanel.setLayout(new GridBagLayout());
 
-//        chatServer.getClientRecord().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
         chatServer.getClientRecord().setEditable(false);
-//        chatServer.getOnlineCount().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
         chatServer.getOnlineCount().setEditable(false);
-
+        //设置大小，防止出现突然变大错误
+        chatServer.getClientRecordJScrollPane().setPreferredSize(new Dimension(2000,1000));
         /**
          * 总体窗格3*3，JTextArea占2*1，
         */
@@ -141,7 +140,7 @@ public class ChatServerFrame {
 
         jFrame = new JFrame("服务器");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jFrame.setSize(new Dimension(300, 500));
+        jFrame.setSize(new Dimension(300, 400));
         jFrame.add(jPanel);
         jFrame.setResizable(true);
         jFrame.setVisible(true);
