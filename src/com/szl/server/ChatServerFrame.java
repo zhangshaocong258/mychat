@@ -15,15 +15,12 @@ import org.w3c.dom.*;
 
 /**
  * Created by zsc on 2015/3/9.
- */
-
-/**
+ * <p>
  * 创建ChatServer对象、带有监听事件的Swing、Frame初始化、监听类、main函数
  */
+
 public class ChatServerFrame {
     private ChatServer chatServer = new ChatServer();
-
-    private JFrame jFrame = new JFrame();
 
     //固定的
     private JButton login = new JButton("启动");
@@ -110,35 +107,35 @@ public class ChatServerFrame {
         chatServer.getClientRecord().setEditable(false);
         chatServer.getOnlineCount().setEditable(false);
         //设置大小，防止出现突然变大错误
-        chatServer.getClientRecordJScrollPane().setPreferredSize(new Dimension(2000,1000));
+        chatServer.getClientRecordJScrollPane().setPreferredSize(new Dimension(2000, 1000));
         /**
          * 总体窗格3*3，JTextArea占2*1，
-        */
+         */
         //启动
-        jPanel.add(login, new PropertiesGBC(0,0,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+        jPanel.add(login, new PropertiesGBC(0, 0, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //记录
-        jPanel.add(record,new PropertiesGBC(0,1,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+        jPanel.add(record, new PropertiesGBC(0, 1, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //JTextArea
-        jPanel.add(chatServer.getClientRecordJScrollPane(),new PropertiesGBC(0,2,2,1).
-                setFill(PropertiesGBC.BOTH).setWeight(1,1).setInsets(0,5,5,5));
+        jPanel.add(chatServer.getClientRecordJScrollPane(), new PropertiesGBC(0, 2, 2, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(1, 1).setInsets(0, 5, 5, 5));
 
         //在线用户列表
-        jPanel.add(online,new PropertiesGBC(2,0,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+        jPanel.add(online, new PropertiesGBC(2, 0, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //在线人数JTextArea
-        jPanel.add(chatServer.getOnlineCountJScrollPane(),new PropertiesGBC(2,1,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0.5,0).setInsets(0,5,5,5));
+        jPanel.add(chatServer.getOnlineCountJScrollPane(), new PropertiesGBC(2, 1, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0.5, 0).setInsets(0, 5, 5, 5));
 
         //JList_JScrollPane
-        jPanel.add(chatServer.getClientJScrollPane(),new PropertiesGBC(2,2,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0.5,1).setInsets(0,5,5,5));
+        jPanel.add(chatServer.getClientJScrollPane(), new PropertiesGBC(2, 2, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0.5, 1).setInsets(0, 5, 5, 5));
 
-        jFrame = new JFrame("服务器");
+        JFrame jFrame = new JFrame("服务器");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setSize(new Dimension(300, 400));
         jFrame.add(jPanel);
@@ -296,14 +293,16 @@ class ChatServer {
     public JTextArea getOnlineCount() {
         return onlineCount;
     }
-    public JScrollPane getOnlineCountJScrollPane(){
+
+    public JScrollPane getOnlineCountJScrollPane() {
         return onlineCountJScrollPane;
     }
 
     public JTextArea getClientRecord() {
         return clientRecord;
     }
-    public JScrollPane getClientRecordJScrollPane(){
+
+    public JScrollPane getClientRecordJScrollPane() {
         return clientRecordJScrollPane;
     }
 
@@ -327,11 +326,13 @@ class ChatServer {
     class Server implements Runnable {
         private ServerSocket serverSocket = null;
         private UserClient userClient;
+        private boolean start = false;
 
         public void run() {
             serverOperateXML = new ServerOperateXML();
             try {
                 serverSocket = new ServerSocket(8888);
+                start = true;
             } catch (BindException e) {
                 System.out.println("端口使用中...");
                 System.exit(0);
@@ -339,7 +340,7 @@ class ChatServer {
                 e.printStackTrace();
             }
             try {
-                while (true) {
+                while (start) {
                     Socket socket = serverSocket.accept();
                     userClient = new UserClient(socket);
                     ReceiveMsg client = new ReceiveMsg(userClient);
@@ -353,6 +354,7 @@ class ChatServer {
             } finally {
                 try {
                     serverSocket.close();
+                    start = false;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

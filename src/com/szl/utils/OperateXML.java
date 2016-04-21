@@ -18,6 +18,8 @@ import java.io.*;
 
 /**
  * Created by zsc on 2016/4/15.
+ * <p>
+ * 作为父类，仅包含record，server端再增加content内容
  */
 public class OperateXML {
     private static Document recordDocument;
@@ -31,6 +33,7 @@ public class OperateXML {
         recordDocument.appendChild(recordRoot);
     }
 
+    //初始化，要生成多个xml文件，必须多次初始化
     public Document initDocument() {
         Document document;
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -44,17 +47,18 @@ public class OperateXML {
         return document;
     }
 
+    //得到Document作为saveXML的参数
     public static Document getRecordDocument() {
         return recordDocument;
     }
 
+    //第一次添加时，生成record，以后的添加不生成record，直接更改内容
     public void createRecord(String chatRecord) {
         NodeList chatRecordList = recordDocument.getElementsByTagName("record");
         if (chatRecordList.getLength() == 0) {
             Element record = recordDocument.createElement("record");
             record.appendChild((recordDocument.createTextNode(chatRecord)));
             recordRoot.appendChild(record);
-
         } else {
             for (int i = 0; i < chatRecordList.getLength(); i++) {
                 Node chatRecordNode = chatRecordList.item(i);
@@ -63,6 +67,7 @@ public class OperateXML {
         }
     }
 
+    //保存文件
     public void saveXML(Document document, String path) {
         try {
             Transformer transformer = transformerFactory.newTransformer();

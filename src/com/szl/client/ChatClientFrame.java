@@ -7,7 +7,6 @@ import com.szl.utils.OperateXML;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import sun.plugin.javascript.JSClassLoader;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -24,17 +23,13 @@ import java.util.*;
 
 /**
  * Created by zsc on 2015/3/9.
- */
-
-/**
+ * <p>
  * 创建ChatClient对象、带有监听事件的Swing、Frame初始化、监听类、main函数
  */
+
 public class ChatClientFrame {
 
     private ChatClient chatClient = new ChatClient();
-
-    //不变的组件
-    private JFrame jFrame = new JFrame();
 
     private JLabel clientLabel = new JLabel("用户名");
 
@@ -141,52 +136,52 @@ public class ChatClientFrame {
 
 
         //用户名
-        jPanel.add(clientLabel, new PropertiesGBC(0,0,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,0));
+        jPanel.add(clientLabel, new PropertiesGBC(0, 0, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 0));
 
         //用户名输入框
-        jPanel.add(chatClient.getClientName(), new PropertiesGBC(1,0,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(1,0).setInsets(0,0,5,0));
+        jPanel.add(chatClient.getClientName(), new PropertiesGBC(1, 0, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(1, 0).setInsets(0, 0, 5, 0));
 
         //登录
-        jPanel.add(chatClient.getLogin(), new PropertiesGBC(2,0,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,0,5,5));
+        jPanel.add(chatClient.getLogin(), new PropertiesGBC(2, 0, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 0, 5, 5));
 
         //聊天记录
-        jPanel.add(chatLabel, new PropertiesGBC(0,1,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+        jPanel.add(chatLabel, new PropertiesGBC(0, 1, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //聊天记录框
-        jPanel.add(chatClient.getChatRecordJScrollPane(), new PropertiesGBC(0,2,3,1).
-                setFill(PropertiesGBC.BOTH).setWeight(1,1).setInsets(0,5,5,5));
+        jPanel.add(chatClient.getChatRecordJScrollPane(), new PropertiesGBC(0, 2, 3, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(1, 1).setInsets(0, 5, 5, 5));
 
         //发送框
-        jPanel.add(chatClient.getChatBoxJScrollPane(), new PropertiesGBC(0,3,3,1).
-                setFill(PropertiesGBC.BOTH).setWeight(1,0).setInsets(0,5,5,5).setIpad(0,20));
+        jPanel.add(chatClient.getChatBoxJScrollPane(), new PropertiesGBC(0, 3, 3, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(1, 0).setInsets(0, 5, 5, 5).setIpad(0, 20));
 
         //发送
-        jPanel.add(send, new PropertiesGBC(0,5,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+        jPanel.add(send, new PropertiesGBC(0, 5, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
 
         //清除
-        jPanel.add(clear, new PropertiesGBC(2,5,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+        jPanel.add(clear, new PropertiesGBC(2, 5, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //在线好友列表
-        jPanel.add(onlineLabel, new PropertiesGBC(3,0,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0,0).setInsets(0,5,5,5));
+        jPanel.add(onlineLabel, new PropertiesGBC(3, 0, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //在线人数
-        jPanel.add(chatClient.getOnlineCountJScrollPane(), new PropertiesGBC(3,1,1,1).
-                setFill(PropertiesGBC.BOTH).setWeight(0.1,0).setInsets(0,5,5,5));
+        jPanel.add(chatClient.getOnlineCountJScrollPane(), new PropertiesGBC(3, 1, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0.1, 0).setInsets(0, 5, 5, 5));
 
         //JScrollPane
-        jPanel.add(chatClient.getJScrollPane(), new PropertiesGBC(3,2,1,4).
-                setFill(PropertiesGBC.BOTH).setWeight(0.1,1).setInsets(0,5,5,5));
+        jPanel.add(chatClient.getJScrollPane(), new PropertiesGBC(3, 2, 1, 4).
+                setFill(PropertiesGBC.BOTH).setWeight(0.1, 1).setInsets(0, 5, 5, 5));
 
 
-        jFrame = new JFrame("客户端");
+        JFrame jFrame = new JFrame("客户端");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setSize(new Dimension(400, 500));
         jFrame.add(jPanel);
@@ -209,7 +204,7 @@ public class ChatClientFrame {
 
     private class clearListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            chatClient.getChatBox().getText().trim();
+//            chatClient.getChatBox().getText().trim();
             chatClient.getChatBox().setText(null);
 
         }
@@ -413,8 +408,8 @@ class ClientData {
         this.port = port;
     }
 
-    public void setStr(String sender, String str, String receiver) {
-        this.str = buildStr(sender,str,receiver);
+    public void setStr(String sender, String receiver, String str) {
+        this.str = buildStr(sender, receiver, str);
     }
 
     public String getName() {
@@ -434,36 +429,39 @@ class ClientData {
         return name + DELIMITER + port + DELIMITER + str;
     }
 
-    public String buildStr(String sender, String str, String receiver){
-        if(receiver.equals("null") || receiver.equals("群聊")){
-            receiver = "所有人";
-        }
-        return sender + "对" + receiver + "说：" +
-                " -- " + new dayTime().getDateString() + " --" +
-                "\n " + str;
+    public String buildMsg(String name, String port) {
+        String DELIMITER = "\f";
+        return name + DELIMITER + port;
     }
 
-    //替换
-    public String formatStr(String str){
-        return str.replaceAll("\\n", "\n" + " ");
+    public String buildStr(String sender, String receiver, String str) {
+        if (receiver.equals("null") || receiver.equals("群聊")) {
+            receiver = "所有人";
+        }
+        return sender + " 对 " + receiver + " 说：" +
+                " -- " + new dayTime().getDateString() + " --" +
+                "\n  " + str;
+    }
+
+    //替换回车，replace用"\n"，替换"\n"，用"\\n"，键盘回车是"\n"，replaceAll另说
+    public String formatStr(String str) {
+        return str.replace("\n", "\n  ");
     }
 
     //将字符串转为Ascii，判断换行符
-    public String stringToAscii(String value)
-    {
-        StringBuffer sbu = new StringBuffer();
+    public String stringToAscii(String value) {
+        StringBuilder sbu = new StringBuilder();
         char[] chars = value.toCharArray();
         for (int i = 0; i < chars.length; i++) {
-            if(i != chars.length - 1)
-            {
-                sbu.append((int)chars[i]).append(",");
-            }
-            else {
-                sbu.append((int)chars[i]);
+            if (i != chars.length - 1) {
+                sbu.append((int) chars[i]).append(",");
+            } else {
+                sbu.append((int) chars[i]);
             }
         }
         return sbu.toString();
     }
+
     public void sendData(DataOutputStream dataOutputStream, String Data) throws IOException {
         dataOutputStream.writeUTF(Data);
     }
@@ -493,7 +491,6 @@ class ChatClient {
     private JScrollPane chatRecordJScrollPane = new JScrollPane(chatRecord);
 
 
-
     private static JTextArea onlineCount = new JTextArea("在线人数");
     private JScrollPane onlineCountJScrollPane = new JScrollPane(onlineCount);
 
@@ -516,13 +513,15 @@ class ChatClient {
     public JTextArea getChatRecord() {
         return chatRecord;
     }
-    public JScrollPane getChatRecordJScrollPane(){
+
+    public JScrollPane getChatRecordJScrollPane() {
         return chatRecordJScrollPane;
     }
 
     public JTextArea getChatBox() {
         return chatBox;
     }
+
     public JScrollPane getChatBoxJScrollPane() {
         return chatBoxJScrollPane;
     }
@@ -531,7 +530,8 @@ class ChatClient {
     public JTextArea getOnlineCount() {
         return onlineCount;
     }
-    public JScrollPane getOnlineCountJScrollPane(){
+
+    public JScrollPane getOnlineCountJScrollPane() {
         return onlineCountJScrollPane;
     }
 
@@ -559,7 +559,7 @@ class ChatClient {
             //判断信息是否为空，利用name + "：" + "说"的长度判断
             if (!isNull) {
                 clientData.setStr(clientData.getName(),
-                        clientData.formatStr(chatBox.getText().trim()), String.valueOf(clientList.getSelectedValue()));
+                        String.valueOf(clientList.getSelectedValue()), clientData.formatStr(chatBox.getText().trim()));
                 System.out.println(clientData.stringToAscii(chatBox.getText().trim()));
                 String msg = clientData.buildMsg(clientData.getName(),
                         clientData.getPort(), clientData.getStr());
@@ -592,10 +592,10 @@ class ChatClient {
             connectServer.connect();//客户端连接服务端
             clientData.setName(clientName.getText());
             clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
-            String all = clientData.buildMsg(clientData.getName(), clientData.getPort(), "");
+            String msg = clientData.buildMsg(clientData.getName(), clientData.getPort());
             path = "D:/" + clientData.getName() + "ChatRecord.xml";
             try {
-                clientData.sendData(connectServer.getDosWithServer(), all);//客户端向服务端发送登录信息
+                clientData.sendData(connectServer.getDosWithServer(), msg);//客户端向服务端发送登录信息
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
@@ -628,7 +628,7 @@ class ChatClient {
     class ClientServer implements Runnable {
         private PeerClient peerClient;
         private ServerSocket clientServerSocket = null;
-        boolean start = false;
+        private boolean start = false;
 
         public void run() {
             try {
@@ -788,17 +788,15 @@ class ClientOperateXML extends OperateXML {
         try {
             builder = factory.newDocumentBuilder();
             document = builder.parse(new File(clientsListPath));
-//            Element rootElement = document.getDocumentElement();
             NodeList clientsList = document.getElementsByTagName("clients");
             if (clientsList.getLength() >= 0) {
                 for (int i = 0; i < clientsList.getLength(); i++) {
                     NodeList clientsChildList = clientsList.item(i).getChildNodes();
                     for (int j = 0; j < clientsChildList.getLength(); j++) {
-                        System.out.println("nnnnnname" + clientsChildList.item(j).getTextContent());
+                        System.out.println("name" + clientsChildList.item(j).getTextContent());
                         if (clientsChildList.item(j).getNodeName().trim().equals("name")) {
                             if (clientsChildList.item(j).getTextContent().trim().equals(name)) {
                                 flag = false;
-
                             }
                         }
                     }
