@@ -55,14 +55,16 @@ public class OperateXML {
     //第一次添加时，生成record，以后的添加不生成record，直接更改内容
     public void createRecord(String chatRecord) {
         NodeList chatRecordList = recordDocument.getElementsByTagName("record");
+        //格式化，第一行加换行符
+        String formatChatRecord = "\n" + chatRecord;
         if (chatRecordList.getLength() == 0) {
             Element record = recordDocument.createElement("record");
-            record.appendChild((recordDocument.createTextNode(chatRecord)));
+            record.appendChild((recordDocument.createTextNode(formatChatRecord)));
             recordRoot.appendChild(record);
         } else {
             for (int i = 0; i < chatRecordList.getLength(); i++) {
                 Node chatRecordNode = chatRecordList.item(i);
-                chatRecordNode.setTextContent(chatRecord);
+                chatRecordNode.setTextContent(formatChatRecord);
             }
         }
     }
