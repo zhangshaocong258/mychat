@@ -17,15 +17,19 @@ public class Dom4jXML {
     private static Document recordDocument;
     private Element recordRoot;
 
-    public Dom4jXML(){
+    public Dom4jXML() {
         recordDocument = initDocument();
         recordRoot = recordDocument.addElement("content");
     }
 
-    public Document initDocument(){
+    public Document initDocument() {
         DocumentFactory documentFactory = new DocumentFactory();
         Document document = documentFactory.createDocument();
         return document;
+    }
+
+    public static Document getRecordDocument() {
+        return recordDocument;
     }
 
     public void createRecord(String chatRecord) {

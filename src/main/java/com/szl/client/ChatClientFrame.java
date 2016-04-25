@@ -1,12 +1,14 @@
 package com.szl.client;
 
+import com.szl.utils.Dom4jXML;
 import com.szl.utils.PropertiesGBC;
 import com.szl.utils.dayTime;
 import com.szl.utils.OperateXML;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -19,6 +21,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.List;
 
 
 /**
@@ -543,7 +546,8 @@ class ChatClient {
         return jScrollPane;
     }
 
-    private ClientOperateXML clientOperateXML = new ClientOperateXML();
+    private ClientDom4j clientDom4j = new ClientDom4j();
+
 
     private String path;
 
@@ -572,8 +576,8 @@ class ChatClient {
                     chatRecord.append(clientData.getStr() + "\n");
 
 //                    operateXML.deleteElement();
-                    clientOperateXML.createRecord(chatRecord.getText());
-                    clientOperateXML.saveXML(ClientOperateXML.getRecordDocument(), path);
+                    clientDom4j.createRecord(chatRecord.getText());
+                    clientDom4j.saveXML(clientDom4j.getRecordDocument(), path);
                 }
             } else {
                 chatRecord.append("发送的内容不能为空\n");
@@ -586,7 +590,7 @@ class ChatClient {
     //登录监听，设置XML路径
     public void ClientLogin() {
         //登录名不能为空，为空则set null，重新输入
-        if ((clientName.getText().trim().length() >= 1) && clientOperateXML.queryElement(clientName.getText())) {
+        if ((clientName.getText().trim().length() >= 1) && clientDom4j.queryElement(clientName.getText())) {
             login.setEnabled(false);
             clientName.setEnabled(false);
             connectServer.connect();//客户端连接服务端
@@ -602,6 +606,11 @@ class ChatClient {
             new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
             new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
         } else {
+            if (clientName.getText().trim().length() == 0) {
+                chatRecord.append("用户名不能为空\n");
+            } else if (!clientDom4j.queryElement(clientName.getText())) {
+                chatRecord.append("用户名已存在\n");
+            }
             clientName.setText(null);
         }
     }
@@ -681,8 +690,8 @@ class ChatClient {
                         chatRecord.append(receiveData.getStr() + "\n");
 
 //                        operateXML.deleteElement();
-                        clientOperateXML.createRecord(chatRecord.getText());
-                        clientOperateXML.saveXML(ClientOperateXML.getRecordDocument(), path);
+                        clientDom4j.createRecord(chatRecord.getText());
+                        clientDom4j.saveXML(clientDom4j.getRecordDocument(), path);
                     }
                     System.out.println(data);
                 }
@@ -759,8 +768,8 @@ class ChatClient {
                     if (receiveData.getStr().length() != 0) {
                         chatRecord.append(receiveData.getStr() + "\n");
 //                        operateXML.deleteElement();
-                        clientOperateXML.createRecord(chatRecord.getText());
-                        clientOperateXML.saveXML(ClientOperateXML.getRecordDocument(), path);
+                        clientDom4j.createRecord(chatRecord.getText());
+                        clientDom4j.saveXML(clientDom4j.getRecordDocument(), path);
                     }
                 } catch (Exception e) {
                     System.out.println("客户端关闭");
@@ -773,7 +782,7 @@ class ChatClient {
 /**
  * 操作XML进行记录，创建XML文件保存Record
  */
-class ClientOperateXML extends OperateXML {
+/*class ClientOperateXML extends OperateXML {
     private String clientsListPath;
 
     public ClientOperateXML() {
@@ -806,6 +815,34 @@ class ClientOperateXML extends OperateXML {
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
+        return flag;
+    }
+}*/
+
+class ClientDom4j extends Dom4jXML {
+    private String clientsListPath;
+
+    public ClientDom4j() {
+        this.clientsListPath = "D:/ClientsList.xml";
+    }
+
+    public boolean queryElement(String name) {
+        boolean flag = true;
+        try {
+            SAXReader saxReader = new SAXReader();
+            Document document = saxReader.read(new File(clientsListPath));
+            Element rootElement = document.getRootElement();
+            List<Element> clientsList = rootElement.elements("clients");
+            for (int i = 0; i < clientsList.size(); i++) {
+                Element nameElement = clientsList.get(i).element("name");
+                if (nameElement.getText().equals(name)) {
+                    flag = false;
+                }
+            }
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
+
         return flag;
     }
 }

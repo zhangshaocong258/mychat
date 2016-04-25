@@ -1,5 +1,6 @@
 package com.szl.server;
 
+import com.szl.utils.Dom4jXML;
 import com.szl.utils.OperateXML;
 
 import javax.swing.*;
@@ -8,9 +9,11 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.List;
 
 import com.szl.utils.PropertiesGBC;
-import org.w3c.dom.*;
+import org.dom4j.Document;
+import org.dom4j.Element;
 
 
 /**
@@ -276,7 +279,7 @@ class UserClientMsg {
  */
 class ChatServer {
     private UserClientList userClientList = new UserClientList();//用户List,用于维护当前用户，给他们发送信息
-    private ServerOperateXML serverOperateXML;//启动按钮按下时再初始化
+    private ServerDom4j serverDom4j;//启动按钮按下时再初始化
 
     //上下线记录
     private JTextArea clientRecord = new JTextArea();
@@ -329,7 +332,7 @@ class ChatServer {
         private boolean start = false;
 
         public void run() {
-            serverOperateXML = new ServerOperateXML();
+            serverDom4j = new ServerDom4j();
             try {
                 serverSocket = new ServerSocket(8888);
                 start = true;
@@ -401,10 +404,10 @@ class ChatServer {
                         addClientListModelElement(name);
                         addClientRecord(name + "已上线" + "\n");
 
-                        serverOperateXML.createElement(name, port);
-                        serverOperateXML.saveXML(ServerOperateXML.getClientDocument(), serverOperateXML.getClientsListPath());
-                        serverOperateXML.createRecord(clientRecord.getText());
-                        serverOperateXML.saveXML(ServerOperateXML.getRecordDocument(), serverOperateXML.getServerRecordPath());
+                        serverDom4j.createElement(name, port);
+                        serverDom4j.saveXML(ServerDom4j.getClientDocument(), serverDom4j.getClientsListPath());
+                        serverDom4j.createRecord(clientRecord.getText());
+                        serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getServerRecordPath());
 
                     }
 //                    for(int k =0;k<clientList.getItemCount();k++){
@@ -430,10 +433,10 @@ class ChatServer {
                 namePort = userClientMsg.buildNamePort(clientInfo);//建立name_port,发送
                 addClientRecord(name + "已下线" + "\n");
 
-                serverOperateXML.deleteElement(name);
-                serverOperateXML.saveXML(ServerOperateXML.getClientDocument(), serverOperateXML.getClientsListPath());
-                serverOperateXML.createRecord(clientRecord.getText());
-                serverOperateXML.saveXML(ServerOperateXML.getRecordDocument(), serverOperateXML.getServerRecordPath());
+                serverDom4j.deleteElement(name);
+                serverDom4j.saveXML(ServerDom4j.getClientDocument(), serverDom4j.getClientsListPath());
+                serverDom4j.createRecord(clientRecord.getText());
+                serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getServerRecordPath());
 
                 //掉线后模仿登录时发送的信息格式
                 if (clientListModel.getSize() != 0) {
@@ -465,7 +468,68 @@ class ChatServer {
 /**
  * 操作XML进行记录，创建2个XML文件分别保存Record和ClientsList
  */
-class ServerOperateXML extends OperateXML {
+//class ServerOperateXML extends OperateXML {
+//    private static Document clientDocument;
+//
+//    private Element clientsListRoot;
+//
+//    private String clientsListPath;
+//    private String serverRecordPath;
+//
+//    //初始化直接生成空文件
+//    public ServerOperateXML() {
+//        clientDocument = initDocument();
+//        clientsListRoot = clientDocument.createElement("content");
+//        clientDocument.appendChild(clientsListRoot);
+//
+//        this.clientsListPath = "D:/ClientsList.xml";
+//        this.serverRecordPath = "D:/ServerRecord.xml";
+//
+//        saveXML(clientDocument, clientsListPath);
+//        saveXML(getRecordDocument(), serverRecordPath);
+//
+//    }
+//
+//    public static Document getClientDocument() {
+//        return clientDocument;
+//    }
+//
+//    public String getServerRecordPath() {
+//        return serverRecordPath;
+//    }
+//
+//    public String getClientsListPath() {
+//        return clientsListPath;
+//    }
+//
+//    public void createElement(String clientName, String clientPort) {
+//
+//        Element client = clientDocument.createElement("clients");
+//
+//        Element name = clientDocument.createElement("name");
+//        name.appendChild(clientDocument.createTextNode(clientName));
+//        client.appendChild(name);
+//
+//        Element port = clientDocument.createElement("port");
+//        port.appendChild(clientDocument.createTextNode(clientPort));
+//        client.appendChild(port);
+//
+//        clientsListRoot.appendChild(client);
+//    }
+//
+//    public void deleteElement(String clientName) {
+//        NodeList clientsList = clientDocument.getElementsByTagName("clients");
+//        //列出每一个clients的NodeList
+//        for (int i = 0; i < clientsList.getLength(); i++) {
+//            NodeList clientsChildList = clientsList.item(i).getChildNodes();
+//            if (clientsChildList.item(0).getTextContent().trim().equals(clientName)) {
+//                clientsList.item(i).getParentNode().removeChild(clientsList.item(i));
+//            }
+//        }
+//    }
+//}
+
+class ServerDom4j extends Dom4jXML {
     private static Document clientDocument;
 
     private Element clientsListRoot;
@@ -474,17 +538,16 @@ class ServerOperateXML extends OperateXML {
     private String serverRecordPath;
 
     //初始化直接生成空文件
-    public ServerOperateXML() {
+    public ServerDom4j() {
         clientDocument = initDocument();
-        clientsListRoot = clientDocument.createElement("content");
-        clientDocument.appendChild(clientsListRoot);
+        clientsListRoot = clientDocument.addElement("content");
+
 
         this.clientsListPath = "D:/ClientsList.xml";
         this.serverRecordPath = "D:/ServerRecord.xml";
 
         saveXML(clientDocument, clientsListPath);
         saveXML(getRecordDocument(), serverRecordPath);
-
     }
 
     public static Document getClientDocument() {
@@ -501,26 +564,21 @@ class ServerOperateXML extends OperateXML {
 
     public void createElement(String clientName, String clientPort) {
 
-        Element client = clientDocument.createElement("clients");
+        Element client = clientsListRoot.addElement("clients");
 
-        Element name = clientDocument.createElement("name");
-        name.appendChild(clientDocument.createTextNode(clientName));
-        client.appendChild(name);
-
-        Element port = clientDocument.createElement("port");
-        port.appendChild(clientDocument.createTextNode(clientPort));
-        client.appendChild(port);
-
-        clientsListRoot.appendChild(client);
+        Element name = client.addElement("name");
+        name.setText(clientName);
+        Element port = client.addElement("port");
+        port.setText(clientPort);
     }
 
     public void deleteElement(String clientName) {
-        NodeList clientsList = clientDocument.getElementsByTagName("clients");
-        //列出每一个clients的NodeList
-        for (int i = 0; i < clientsList.getLength(); i++) {
-            NodeList clientsChildList = clientsList.item(i).getChildNodes();
-            if (clientsChildList.item(0).getTextContent().trim().equals(clientName)) {
-                clientsList.item(i).getParentNode().removeChild(clientsList.item(i));
+        List<Element> clientsList = clientsListRoot.elements("clients");
+        //列出每一个clients的List
+        for (int i = 0; i < clientsList.size(); i++) {
+            Element nameElement = clientsList.get(i).element("name");
+            if (nameElement.getText().equals(clientName)) {
+                clientsList.get(i).getParent().remove(clientsList.get(i));
             }
         }
     }
