@@ -437,6 +437,7 @@ class ClientData {
         return name + DELIMITER + port;
     }
 
+    //当receiver为空时，StringValueof返回"null"字符串
     public String buildStr(String sender, String receiver, String str) {
         if (receiver.equals("null") || receiver.equals("群聊")) {
             receiver = "所有人";
@@ -446,12 +447,12 @@ class ClientData {
                 "\n  " + str;
     }
 
-    //替换回车，replace用"\n"，替换"\n"，用"\\n"，键盘回车是"\n"，replaceAll另说
+    //替换回车，replace用"\n"，替换"\n"，用"\\n"，键盘回车是"\n"，replaceAll是转义字符，另说
     public String formatStr(String str) {
         return str.replace("\n", "\n  ");
     }
 
-    //将字符串转为Ascii，判断换行符
+    //将字符串转为Ascii，得到换行符的Ascii码，判断是哪个转义字符
     public String stringToAscii(String value) {
         StringBuilder sbu = new StringBuilder();
         char[] chars = value.toCharArray();
@@ -577,7 +578,7 @@ class ChatClient {
 
 //                    operateXML.deleteElement();
                     clientDom4j.createRecord(chatRecord.getText());
-                    clientDom4j.saveXML(clientDom4j.getRecordDocument(), path);
+                    clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
                 }
             } else {
                 chatRecord.append("发送的内容不能为空\n");
@@ -691,7 +692,7 @@ class ChatClient {
 
 //                        operateXML.deleteElement();
                         clientDom4j.createRecord(chatRecord.getText());
-                        clientDom4j.saveXML(clientDom4j.getRecordDocument(), path);
+                        clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
                     }
                     System.out.println(data);
                 }
@@ -769,7 +770,7 @@ class ChatClient {
                         chatRecord.append(receiveData.getStr() + "\n");
 //                        operateXML.deleteElement();
                         clientDom4j.createRecord(chatRecord.getText());
-                        clientDom4j.saveXML(clientDom4j.getRecordDocument(), path);
+                        clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
                     }
                 } catch (Exception e) {
                     System.out.println("客户端关闭");
@@ -832,13 +833,20 @@ class ClientDom4j extends Dom4jXML {
             SAXReader saxReader = new SAXReader();
             Document document = saxReader.read(new File(clientsListPath));
             Element rootElement = document.getRootElement();
-            List<Element> clientsList = rootElement.elements("clients");
-            for (int i = 0; i < clientsList.size(); i++) {
-                Element nameElement = clientsList.get(i).element("name");
-                if (nameElement.getText().equals(name)) {
+            List clientsList = rootElement.elements("clients");
+            //foreach遍历
+            for (Object clientsListElement : clientsList) {
+                Element nameElement = (Element) clientsListElement;
+                if (nameElement.element("name").getText().equals(name)) {
                     flag = false;
                 }
             }
+//            for (int i = 0; i < clientsList.size(); i++) {
+//                Element nameElement = (Element) clientsList.get(i);
+//                if (nameElement.element("name").getText().equals(name)) {
+//                    flag = false;
+//                }
+//            }
         } catch (DocumentException e) {
             e.printStackTrace();
         }
