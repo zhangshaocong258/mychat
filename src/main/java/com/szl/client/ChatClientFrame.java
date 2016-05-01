@@ -41,7 +41,9 @@ public class ChatClientFrame {
     private JLabel onlineLabel = new JLabel("在线好友列表");
 
     private JButton send = new JButton("发送");
-    private JButton clear = new JButton("清除");
+    private JButton clear = new JButton("清空");
+    private JButton fileTransfer = new JButton("文件");
+
 
     public static void main(String[] args) {
         new ChatClientFrame().init();
@@ -150,6 +152,10 @@ public class ChatClientFrame {
         jPanel.add(chatClient.getLogin(), new PropertiesGBC(2, 0, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 0, 5, 5));
 
+//        //退出
+//        jPanel.add(chatClient.getExit(), new PropertiesGBC(3, 0, 1, 1).
+//                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 0, 5, 5));
+
         //聊天记录
         jPanel.add(chatLabel, new PropertiesGBC(0, 1, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
@@ -162,14 +168,18 @@ public class ChatClientFrame {
         jPanel.add(chatClient.getChatBoxJScrollPane(), new PropertiesGBC(0, 3, 3, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(1, 0).setInsets(0, 5, 5, 5).setIpad(0, 20));
 
+        //清空
+        jPanel.add(clear, new PropertiesGBC(0, 5, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
+
+        //文件
+        jPanel.add(fileTransfer, new PropertiesGBC(1, 5, 1, 1).
+                setAnchor(PropertiesGBC.EAST).setWeight(0, 0).setInsets(0, 5, 5, 5));
+
         //发送
-        jPanel.add(send, new PropertiesGBC(0, 5, 1, 1).
+        jPanel.add(send, new PropertiesGBC(2, 5, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
-
-        //清除
-        jPanel.add(clear, new PropertiesGBC(2, 5, 1, 1).
-                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //在线好友列表
         jPanel.add(onlineLabel, new PropertiesGBC(3, 0, 1, 1).
@@ -488,6 +498,8 @@ class ChatClient {
 
     private JTextField clientName = new JTextField(10);
     private JButton login = new JButton("登录");
+    private JButton exit = new JButton("退出");
+
 
     private JTextArea chatRecord = new JTextArea();
     private JTextArea chatBox = new JTextArea();
@@ -512,6 +524,10 @@ class ChatClient {
 
     public JButton getLogin() {
         return login;
+    }
+
+    public JButton getExit() {
+        return exit;
     }
 
     public JTextArea getChatRecord() {
