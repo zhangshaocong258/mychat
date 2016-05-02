@@ -2,8 +2,7 @@ package com.szl.client;
 
 import com.szl.utils.Dom4jXML;
 import com.szl.utils.PropertiesGBC;
-import com.szl.utils.dayTime;
-import com.szl.utils.OperateXML;
+import com.szl.utils.DayTime;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -13,9 +12,6 @@ import org.dom4j.io.SAXReader;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -229,7 +225,7 @@ public class ChatClientFrame {
             if(btnText.equals("登录")){
                 chatClient.ClientConnect();
             } else if(btnText.equals("退出")){
-
+                chatClient.ClientExit();
             }
         }
     }
@@ -279,14 +275,24 @@ class ConnectPeerClient {
     //两个标志位
     private static boolean sendClient = false;
     private static boolean receiveClient = false;
+    private Socket socketWithPeer = null;
     private DataOutputStream dosWithPeer;
 
     //客户端连接客户端
     public void connectPeer(int peerPort) {
         try {
-            Socket socketWithPeer = new Socket("127.0.0.1", peerPort);
+            socketWithPeer = new Socket("127.0.0.1", peerPort);
             dosWithPeer = new DataOutputStream(socketWithPeer.getOutputStream());
             sendClient = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void disConnectPeer(){
+        try {
+            if (socketWithPeer != null) socketWithPeer.close();
+            if (dosWithPeer != null) dosWithPeer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -347,6 +353,17 @@ class ConnectServer {
         } catch (IOException e) {
             System.out.println("服务端未启动");
             System.exit(1);
+            e.printStackTrace();
+        }
+    }
+
+    public void disconnected(){
+        try {
+            if (disWithServer != null) disWithServer.close();
+            if (clientSocket != null) clientSocket.close();
+            if (dosWithServer != null) dosWithServer.close();
+            connectedWithServer = false;
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -458,7 +475,7 @@ class ClientData {
             receiver = "所有人";
         }
         return sender + " 对 " + receiver + " 说：" +
-                " -- " + new dayTime().getDateString() + " --" +
+                " -- " + new DayTime().getDateString() + " --" +
                 "\n  " + str;
     }
 
@@ -591,7 +608,6 @@ class ChatClient {
                     clientData.sendData(connectPeerClient.getDosWithPeer(), msg);
                     chatRecord.append(clientData.getStr() + "\n");
 
-//                    operateXML.deleteElement();
                     clientDom4j.createRecord(chatRecord.getText());
                     clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
                 }
@@ -607,7 +623,8 @@ class ChatClient {
     public void ClientConnect() {
         //登录名不能为空，为空则set null，重新输入
         if ((clientName.getText().trim().length() >= 1) && clientDom4j.queryElement(clientName.getText())) {
-            btnConnect.setEnabled(false);
+//            btnConnect.setEnabled(false);
+            btnConnect.setText("退出");
             clientName.setEnabled(false);
             connectServer.connect();//客户端连接服务端
             clientData.setName(clientName.getText());
@@ -632,7 +649,8 @@ class ChatClient {
     }
 
     public void ClientExit(){
-
+        btnConnect.setText("登录");
+        clientName.setEnabled(true);
     }
 
     //连接peer监听
@@ -658,6 +676,10 @@ class ChatClient {
         private PeerClient peerClient;
         private ServerSocket clientServerSocket = null;
         private boolean start = false;
+
+        public void close(){
+            start = false;
+        }
 
         public void run() {
             try {
