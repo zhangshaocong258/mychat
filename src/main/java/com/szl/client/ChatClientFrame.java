@@ -149,7 +149,7 @@ public class ChatClientFrame {
                 setFill(PropertiesGBC.BOTH).setWeight(1, 0).setInsets(0, 0, 5, 0));
 
         //登录
-        jPanel.add(chatClient.getLogin(), new PropertiesGBC(2, 0, 1, 1).
+        jPanel.add(chatClient.getBtnConnect(), new PropertiesGBC(2, 0, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 0, 5, 5));
 
 //        //退出
@@ -203,7 +203,7 @@ public class ChatClientFrame {
 
         send.addActionListener(new sendListener());
         clear.addActionListener(new clearListener());
-        chatClient.getLogin().addActionListener(new clientLoginListener());
+        chatClient.getBtnConnect().addActionListener(new clientLoginListener());
         chatClient.getClientList().addListSelectionListener(new p2pListener());
         jFrame.setVisible(true);
     }
@@ -225,7 +225,12 @@ public class ChatClientFrame {
 
     private class clientLoginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            chatClient.ClientLogin();
+            String btnText = chatClient.getBtnConnect().getText();
+            if(btnText.equals("登录")){
+                chatClient.ClientConnect();
+            } else if(btnText.equals("退出")){
+
+            }
         }
     }
 
@@ -497,9 +502,7 @@ class ChatClient {
     private ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端作为服务端
 
     private JTextField clientName = new JTextField(10);
-    private JButton login = new JButton("登录");
-    private JButton exit = new JButton("退出");
-
+    private JButton btnConnect = new JButton("登录");
 
     private JTextArea chatRecord = new JTextArea();
     private JTextArea chatBox = new JTextArea();
@@ -522,12 +525,8 @@ class ChatClient {
         return clientName;
     }
 
-    public JButton getLogin() {
-        return login;
-    }
-
-    public JButton getExit() {
-        return exit;
+    public JButton getBtnConnect() {
+        return btnConnect;
     }
 
     public JTextArea getChatRecord() {
@@ -605,10 +604,10 @@ class ChatClient {
     }
 
     //登录监听，设置XML路径
-    public void ClientLogin() {
+    public void ClientConnect() {
         //登录名不能为空，为空则set null，重新输入
         if ((clientName.getText().trim().length() >= 1) && clientDom4j.queryElement(clientName.getText())) {
-            login.setEnabled(false);
+            btnConnect.setEnabled(false);
             clientName.setEnabled(false);
             connectServer.connect();//客户端连接服务端
             clientData.setName(clientName.getText());
@@ -630,6 +629,10 @@ class ChatClient {
             }
             clientName.setText(null);
         }
+    }
+
+    public void ClientExit(){
+
     }
 
     //连接peer监听
