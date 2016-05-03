@@ -1,5 +1,6 @@
 package com.szl.client;
 
+import com.szl.utils.Disconnect;
 import com.szl.utils.Dom4jXML;
 import com.szl.utils.PropertiesGBC;
 import com.szl.utils.DayTime;
@@ -238,7 +239,12 @@ public class ChatClientFrame {
 }
 
 /**
- * 客户端的客户端类，只用来接收信息
+ * 外部类
+ */
+
+/**
+ * 客户端的客户端类，只用来接收信息，用于封装
+ * 上层关闭
  */
 
 class PeerClient {
@@ -258,13 +264,8 @@ class PeerClient {
         return disWithPeer;
     }
 
-    public void close() throws IOException {
-        try {
-            if (disWithPeer != null) disWithPeer.close();
-            if (peerSocket != null) peerSocket.close();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
+    public void close() {
+        Disconnect.disconnect(null, peerSocket, disWithPeer, null);
     }
 }
 
@@ -289,13 +290,8 @@ class ConnectPeerClient {
         }
     }
 
-    public void disConnectPeer(){
-        try {
-            if (socketWithPeer != null) socketWithPeer.close();
-            if (dosWithPeer != null) dosWithPeer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void close(){
+        Disconnect.disconnect(null, socketWithPeer, null, dosWithPeer);
     }
 
     public void setReceiveClientTrue() {
@@ -327,10 +323,14 @@ class ConnectPeerClient {
  * 客户端连接服务端类
  */
 class ConnectServer {
-    Socket clientSocket = null;//Client自己的scoket
+    private Socket clientSocket = null;//Client自己的scoket
     private DataOutputStream dosWithServer = null;
     private DataInputStream disWithServer = null;
     static boolean connectedWithServer = false;
+
+    public Socket getClientSocket(){
+        return clientSocket;
+    }
 
     public DataInputStream getDisWithServer() {
         return disWithServer;
@@ -357,15 +357,9 @@ class ConnectServer {
         }
     }
 
-    public void disconnected(){
-        try {
-            if (disWithServer != null) disWithServer.close();
-            if (clientSocket != null) clientSocket.close();
-            if (dosWithServer != null) dosWithServer.close();
-            connectedWithServer = false;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void close(){
+        Disconnect.disconnect(null, clientSocket, disWithServer, dosWithServer);
+        connectedWithServer = false;
     }
 }
 
@@ -509,14 +503,17 @@ class ClientData {
 
 /**
  * 主客户端，封装监听的Swing，XML的路径，发送信息方法，部分监听方法
+ * 内部类
  */
 //主客户端
 class ChatClient {
+    private ClientServer clientServer = new ClientServer();//客户端作为服务端
+    private ReceiveServerMsg receiveServerMsg = new ReceiveServerMsg();//接收服务端信息
     //JList事件设置一个标志位listener，用来区别是否建立连接，因为刷新clientslist列表时，始终监听，所以刷新之前设为true，防止连接出错
     private static boolean listener = false;
     private ConnectServer connectServer = new ConnectServer();//客户端连接服务端
     private ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
-    private ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端作为服务端
+    private ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端连接客户端服务端，本身是客户端的客户端
 
     private JTextField clientName = new JTextField(10);
     private JButton btnConnect = new JButton("登录");
@@ -581,7 +578,6 @@ class ChatClient {
 
     private ClientDom4j clientDom4j = new ClientDom4j();
 
-
     private String path;
 
     //发送信息
@@ -628,7 +624,7 @@ class ChatClient {
             clientName.setEnabled(false);
             connectServer.connect();//客户端连接服务端
             clientData.setName(clientName.getText());
-            clientData.setPort(String.valueOf(connectServer.clientSocket.getLocalPort() + 1));
+            clientData.setPort(String.valueOf(connectServer.getClientSocket().getLocalPort() + 1));
             String msg = clientData.buildMsg(clientData.getName(), clientData.getPort());
             path = "D:/" + clientData.getName() + "ChatRecord.xml";
             try {
@@ -636,8 +632,8 @@ class ChatClient {
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-            new Thread(new ClientServer()).start();//启动客户端作为服务端的服务
-            new Thread(new ReceiveServerMsg()).start();//启动接受信息服务
+            new Thread(clientServer).start();//启动客户端作为服务端的服务
+            new Thread(receiveServerMsg).start();//启动接受信息服务
         } else {
             if (clientName.getText().trim().length() == 0) {
                 chatRecord.append("用户名不能为空\n");
@@ -651,6 +647,17 @@ class ChatClient {
     public void ClientExit(){
         btnConnect.setText("登录");
         clientName.setEnabled(true);
+        //客户端断开与服务端的连接
+        connectServer.close();
+        //客户端客户端断开与客户端服务端的连接
+        connectPeerClient.close();
+        //客户端作为服务端关闭，结束while循环
+        clientServer.close();
+        //客户端接收客户端消息关闭，结束while循环
+        receiveServerMsg.close();
+        listModel.removeAllElements();
+        listModel.addElement("群聊");
+        clientList.setModel(listModel);
     }
 
     //连接peer监听
@@ -673,8 +680,9 @@ class ChatClient {
 
     //客户端作为服务端
     class ClientServer implements Runnable {
-        private PeerClient peerClient;
         private ServerSocket clientServerSocket = null;
+        private PeerClient peerClient;
+        private ReceivePeerMsg receivePeerMsg;
         private boolean start = false;
 
         public void close(){
@@ -683,8 +691,8 @@ class ChatClient {
 
         public void run() {
             try {
-                clientServerSocket = new ServerSocket(connectServer.clientSocket.getLocalPort() + 1);
-                System.out.println("自己的端口" + connectServer.clientSocket.getLocalPort());
+                clientServerSocket = new ServerSocket(connectServer.getClientSocket().getLocalPort() + 1);
+                System.out.println("自己的端口" + connectServer.getClientSocket().getLocalPort());
                 start = true;
             } catch (BindException e) {
                 System.out.println("端口使用中");
@@ -696,7 +704,7 @@ class ChatClient {
                 while (start) {
                     Socket socket = clientServerSocket.accept();
                     peerClient = new PeerClient(socket);
-                    ReceivePeerMsg receivePeerMsg = new ReceivePeerMsg(peerClient);
+                    receivePeerMsg = new ReceivePeerMsg(peerClient);
                     System.out.println("客户端已连接");
                     new Thread(receivePeerMsg).start();
                 }
@@ -704,7 +712,9 @@ class ChatClient {
                 e.printStackTrace();
             } finally {
                 try {
+                    peerClient.close();
                     clientServerSocket.close();
+                    receivePeerMsg.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -712,7 +722,7 @@ class ChatClient {
         }
     }
 
-    //客户端接收客户端信息
+    //客户端接收客户端信息，socket和流封装在PeerClient
     class ReceivePeerMsg implements Runnable {
         private ReceiveData receiveData;
         private PeerClient peerClient;
@@ -720,6 +730,11 @@ class ChatClient {
         public ReceivePeerMsg(PeerClient peerClient) {
             this.peerClient = peerClient;
             connectPeerClient.setReceiveClientTrue();//接收标志位，有别于发送标志位
+        }
+
+        public void close(){
+//            peerClient.close();
+            connectPeerClient.setReceiveClientFalse();
         }
 
         public void run() {
@@ -746,18 +761,12 @@ class ChatClient {
                 System.out.println("客户端关闭3");
 
             } finally {
-                //关闭要封装一下
-                try {
-                    peerClient.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-
+                peerClient.close();
             }
         }
     }
 
-    //接收服务端信息
+    //接收服务端信息,没有finally，因为connectServer另有地方关闭它
     class ReceiveServerMsg implements Runnable {
         ReceiveData receiveData;
         String data = null;
@@ -780,6 +789,10 @@ class ChatClient {
             listener = false;
         }
 
+        public void close(){
+            ConnectServer.connectedWithServer = false;
+        }
+
         public void run() {
             while (ConnectServer.connectedWithServer) {
                 try {
@@ -797,19 +810,22 @@ class ChatClient {
                     }
                     connectPeerClient.setSendClientFalse();//下线后JList全部清空，默认群聊
                 } catch (SocketException e1) {
-                    System.out.println("服务端关闭");
-                    System.exit(0);
+                    System.out.println("服务端关闭1");
+                    //用来判断是客户端断开还是服务端断开，服务端断开为true，客户端断开为false
+                    if (ConnectServer.connectedWithServer == true){
+                        System.exit(0);
+                    }
                 } catch (EOFException e2) {
-                    System.exit(0);
+                    System.out.println("服务端关闭2");
+//                    System.exit(0);
                 } catch (IOException e) {
-                    System.out.println("服务端关闭");
+                    System.out.println("服务端关闭3");
 
                 }
                 //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
                 try {
                     if (receiveData.getStr().length() != 0) {
                         chatRecord.append(receiveData.getStr() + "\n");
-//                        operateXML.deleteElement();
                         clientDom4j.createRecord(chatRecord.getText());
                         clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
                     }

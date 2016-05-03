@@ -424,7 +424,7 @@ class ChatServer {
                     onlineCount.setText("在线人数" + ": " + clientListModel.getSize());
                     System.out.println("接收到的数据" + dataFromClient);
                 }
-            } catch (SocketException e) {
+            } catch (IOException e) {
 //                e.printStackTrace();
                 userClientList.removeClients(this.userClient);//List删除下线用户
                 removeClientListModelElement(this.name);//Frame中删除下线用户
@@ -448,12 +448,12 @@ class ChatServer {
                     }
                 }
                 System.out.println("客户端关闭1");
-            } catch (EOFException e) {
-                userClientList.removeClients(this.userClient);
-                removeClientListModelElement(this.name);
-                System.out.println("客户端关闭2");
-            } catch (IOException e) {
-                System.out.println("客户端关闭3");
+//            } catch (EOFException e) {
+//                userClientList.removeClients(this.userClient);
+//                removeClientListModelElement(this.name);
+//                System.out.println("客户端关闭2");
+//            } catch (IOException e) {
+//                System.out.println("客户端关闭3");
             } finally {
                 try {
                     this.userClient.close();

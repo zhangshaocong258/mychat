@@ -47,14 +47,20 @@ public class Dom4jXML {
     }
 
     public void saveXML(Document document, String path) {
+        FileWriter fileWriter = null;
         try {
             OutputFormat outputFormat = new OutputFormat("   ", true, "UTF-8");
-            FileWriter fileWriter = new FileWriter(path);
+            fileWriter = new FileWriter(path);
             XMLWriter xmlWriter = new XMLWriter(fileWriter, outputFormat);
             xmlWriter.write(document);
-            fileWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                fileWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }
