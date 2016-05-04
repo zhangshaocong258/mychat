@@ -223,9 +223,9 @@ public class ChatClientFrame {
     private class clientLoginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             String btnText = chatClient.getBtnConnect().getText();
-            if(btnText.equals("登录")){
+            if (btnText.equals("登录")) {
                 chatClient.ClientConnect();
-            } else if(btnText.equals("退出")){
+            } else if (btnText.equals("退出")) {
                 chatClient.ClientExit();
             }
         }
@@ -290,7 +290,7 @@ class ConnectPeerClient {
         }
     }
 
-    public void close(){
+    public void close() {
         Disconnect.disconnect(null, socketWithPeer, null, dosWithPeer);
     }
 
@@ -328,7 +328,7 @@ class ConnectServer {
     private DataInputStream disWithServer = null;
     static boolean connectedWithServer = false;
 
-    public Socket getClientSocket(){
+    public Socket getClientSocket() {
         return clientSocket;
     }
 
@@ -357,7 +357,7 @@ class ConnectServer {
         }
     }
 
-    public void close(){
+    public void close() {
         Disconnect.disconnect(null, clientSocket, disWithServer, dosWithServer);
         connectedWithServer = false;
     }
@@ -644,7 +644,7 @@ class ChatClient {
         }
     }
 
-    public void ClientExit(){
+    public void ClientExit() {
         btnConnect.setText("登录");
         clientName.setEnabled(true);
         //客户端断开与服务端的连接
@@ -655,9 +655,15 @@ class ChatClient {
         clientServer.close();
         //客户端接收客户端消息关闭，结束while循环
         receiveServerMsg.close();
-        listModel.removeAllElements();
-        listModel.addElement("群聊");
-        clientList.setModel(listModel);
+
+        //转为lambda表达式
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                listModel.removeAllElements();
+                listModel.addElement("群聊");
+                clientList.setModel(listModel);
+            }
+        });
     }
 
     //连接peer监听
@@ -685,7 +691,7 @@ class ChatClient {
         private ReceivePeerMsg receivePeerMsg;
         private boolean start = false;
 
-        public void close(){
+        public void close() {
             start = false;
         }
 
@@ -732,7 +738,7 @@ class ChatClient {
             connectPeerClient.setReceiveClientTrue();//接收标志位，有别于发送标志位
         }
 
-        public void close(){
+        public void close() {
 //            peerClient.close();
             connectPeerClient.setReceiveClientFalse();
         }
@@ -789,7 +795,7 @@ class ChatClient {
             listener = false;
         }
 
-        public void close(){
+        public void close() {
             ConnectServer.connectedWithServer = false;
         }
 
@@ -812,7 +818,7 @@ class ChatClient {
                 } catch (SocketException e1) {
                     System.out.println("服务端关闭1");
                     //用来判断是客户端断开还是服务端断开，服务端断开为true，客户端断开为false
-                    if (ConnectServer.connectedWithServer == true){
+                    if (ConnectServer.connectedWithServer == true) {
                         System.exit(0);
                     }
                 } catch (EOFException e2) {
