@@ -35,74 +35,6 @@ public class ChatServerFrame {
     }
 
     private void init() {
-//        jFrame.setTitle("服务端");
-
-/*        JPanel jPanel = new JPanel();
-        jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
-
-        JPanel leftPanel = new JPanel();
-//        chatServer.getJScrollPane().setPreferredSize(new Dimension(150, 300));
-
-        JPanel leftTop = new JPanel();
-        leftTop.setLayout(new BoxLayout(leftTop, BoxLayout.X_AXIS));
-        leftTop.add(Box.createRigidArea(new Dimension(5, 0)));
-        leftTop.add(login);
-        leftTop.add(Box.createGlue());
-
-        JPanel leftMiddle = new JPanel();
-        leftMiddle.setLayout(new BoxLayout(leftMiddle, BoxLayout.X_AXIS));
-        leftMiddle.add(Box.createRigidArea(new Dimension(5, 0)));
-        leftMiddle.add(record);
-        leftMiddle.add(Box.createGlue());
-
-        JPanel leftBottom = new JPanel();
-        leftBottom.setLayout(new BoxLayout(leftBottom, BoxLayout.X_AXIS));
-        leftBottom.add(Box.createRigidArea(new Dimension(5, 0)));
-        chatServer.getClientRecord().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-        chatServer.getClientRecord().setEditable(false);
-        leftBottom.add(chatServer.getClientRecord());
-        leftBottom.add(Box.createGlue());
-
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(leftTop);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(leftMiddle);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        leftPanel.add(leftBottom);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-
-        JPanel rightPanel = new JPanel();
-        chatServer.getClientJScrollPane().setPreferredSize(new Dimension(100, 300));
-
-
-        JPanel rightTop = new JPanel();
-        rightTop.setLayout(new BoxLayout(rightTop, BoxLayout.X_AXIS));
-        rightTop.add(online);
-        rightTop.add(Box.createGlue());
-
-        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        rightPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        rightPanel.add(rightTop);
-        rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        rightPanel.add(chatServer.getOnlineCount());
-        rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        rightPanel.add(chatServer.getClientJScrollPane());
-        rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-        jPanel.add(leftPanel);
-        jPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        jPanel.add(rightPanel);
-
-
-        jFrame = new JFrame("服务器");
-        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jFrame.setSize(new Dimension(280, 350));
-        jFrame.add(jPanel);
-        jFrame.setResizable(false);
-        jFrame.setVisible(true);*/
-
         JPanel jPanel = new JPanel();
         jPanel.setBorder(BorderFactory.createTitledBorder("服务器窗口"));
         jPanel.setLayout(new GridBagLayout());
@@ -197,7 +129,7 @@ class UserClient {
  * 用户List的封装，封装了发送信息包装方法，添加用户和删除用户
  */
 class UserClientList {
-    private static java.util.List<UserClient> clients = new ArrayList<>();
+    private static List<UserClient> clients = new ArrayList<>();
 
     public void addClients(UserClient userClient) {
         clients.add(userClient);
@@ -242,7 +174,6 @@ class UserClientMsg {
     public String getPort() {
         return port;
     }
-
 
     public Map<String, String> putClientInfo() {
         clientInfo.put(getName(), getPort());
@@ -334,7 +265,7 @@ class ChatServer {
         public void run() {
             serverDom4j = new ServerDom4j();
             try {
-                serverSocket = new ServerSocket(8888);
+                serverSocket = new ServerSocket(8887);
                 start = true;
             } catch (BindException e) {
                 System.out.println("端口使用中...");
@@ -385,6 +316,7 @@ class ChatServer {
             isConnected = true;
         }
 
+        //catch由3变1
         public void run() {
             try {
                 while (isConnected) {
@@ -410,16 +342,6 @@ class ChatServer {
                         serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getServerRecordPath());
 
                     }
-//                    for(int k =0;k<clientList.getItemCount();k++){
-//                        name_port =name_port.append(clientList.getItem(k)).append(SEPARATOR).append(clientInfo.get(clientList.getItem(k))).append(DELIMITER);
-//                    }
-//                    String name_and_port=name_port.deleteCharAt(name_port.length()-1).toString();
-//                    for(Map.Entry<String,String> entry : clientInfo.entrySet()){
-//                        System.out.println("信息list" + entry.getKey() + "    " + entry.getValue());
-//                    }
-//                    for(int k =0;k<serverFrame.getClientList().getItemCount();k++){
-//                        System.out.println("信息list" + serverFrame.getClientList().getItem(k));
-//                    }
                     userClientList.sendMsg(dataFromClient, namePort);//发送从客户端发来的信息，以及封装的用户名_端口
                     onlineCount.setText("在线人数" + ": " + clientListModel.getSize());
                     System.out.println("接收到的数据" + dataFromClient);
@@ -542,7 +464,6 @@ class ServerDom4j extends Dom4jXML {
         clientDocument = initDocument();
         clientsListRoot = clientDocument.addElement("content");
 
-
         this.clientsListPath = "D:/ClientsList.xml";
         this.serverRecordPath = "D:/ServerRecord.xml";
 
@@ -563,7 +484,6 @@ class ServerDom4j extends Dom4jXML {
     }
 
     public void createElement(String clientName, String clientPort) {
-
         Element client = clientsListRoot.addElement("clients");
 
         Element name = client.addElement("name");

@@ -47,85 +47,6 @@ public class ChatClientFrame {
     }
 
     public void init() {
-       /* jFrame.setTitle("客户端");
-
-        JPanel jPanel = new JPanel();
-        jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.X_AXIS));
-
-        JPanel leftPanel = new JPanel();
-
-        JPanel leftTop = new JPanel();
-        leftTop.add(Box.createRigidArea(new Dimension(5, 0)));
-        leftTop.setLayout(new BoxLayout(leftTop, BoxLayout.X_AXIS));
-        leftTop.add(clientLabel);
-        leftTop.add(chatClient.getClientName());
-        leftTop.add(chatClient.getLogin());
-
-        JPanel leftMiddleTop = new JPanel();
-        leftMiddleTop.add(Box.createRigidArea(new Dimension(5, 0)));
-        leftMiddleTop.setLayout(new BoxLayout(leftMiddleTop, BoxLayout.X_AXIS));
-        chatClient.getChatRecord().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-        chatClient.getChatRecord().setEditable(false);
-        leftMiddleTop.add(chatClient.getChatRecord());
-
-        JPanel leftMiddle = new JPanel();
-        leftMiddle.add(Box.createRigidArea(new Dimension(5, 0)));
-        leftMiddle.setLayout(new BoxLayout(leftMiddle, BoxLayout.X_AXIS));
-        leftMiddle.add(chatLabel);
-        leftMiddle.add(Box.createGlue());
-
-        JPanel leftMiddleBottom = new JPanel();
-        leftMiddleBottom.add(Box.createRigidArea(new Dimension(5, 0)));
-        leftMiddleBottom.setLayout(new BoxLayout(leftMiddleBottom, BoxLayout.X_AXIS));
-        chatClient.getChatBox().setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-        leftMiddleBottom.add(chatClient.getChatBox());
-
-
-        JPanel leftBottom = new JPanel();
-        leftBottom.add(Box.createRigidArea(new Dimension(5, 0)));
-        leftBottom.setLayout(new BoxLayout(leftBottom, BoxLayout.X_AXIS));
-        leftBottom.add(send);
-        leftBottom.add(Box.createGlue());
-        leftBottom.add(clear);
-
-
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(leftTop);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(leftMiddle);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        leftPanel.add(leftMiddleTop);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(leftMiddleBottom);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        leftPanel.add(leftBottom);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-
-        JPanel rightPanel = new JPanel();
-        chatClient.getJScrollPane().setPreferredSize(new Dimension(30, 420));
-
-        JPanel rightTop = new JPanel();
-        rightTop.setLayout(new BoxLayout(rightTop, BoxLayout.X_AXIS));
-        rightTop.add(onlineLabel);
-        rightTop.add(Box.createGlue());
-
-
-        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        rightPanel.add(Box.createRigidArea(new Dimension(10, 10)));
-        rightPanel.add(rightTop);
-        rightPanel.add(Box.createRigidArea(new Dimension(10, 5)));
-        rightPanel.add(chatClient.getOnlineCount());
-        rightPanel.add(Box.createRigidArea(new Dimension(10, 5)));
-        rightPanel.add(chatClient.getJScrollPane());
-        rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-
-        jPanel.add(leftPanel);
-        jPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        jPanel.add(rightPanel);*/
-
         JPanel jPanel = new JPanel();
         jPanel.setBorder(BorderFactory.createTitledBorder("客户端窗口"));
         jPanel.setLayout(new GridBagLayout());
@@ -133,9 +54,7 @@ public class ChatClientFrame {
         chatClient.getChatRecord().setEditable(false);
         chatClient.getOnlineCount().setEditable(false);
 
-
         chatClient.initModel();//初始化添加“群聊”
-
 
         //用户名
         jPanel.add(clientLabel, new PropertiesGBC(0, 0, 1, 1).
@@ -190,7 +109,6 @@ public class ChatClientFrame {
         jPanel.add(chatClient.getJScrollPane(), new PropertiesGBC(3, 2, 1, 4).
                 setFill(PropertiesGBC.BOTH).setWeight(0.1, 1).setInsets(0, 5, 5, 5));
 
-
         JFrame jFrame = new JFrame("客户端");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setSize(new Dimension(400, 500));
@@ -214,7 +132,6 @@ public class ChatClientFrame {
 
     private class clearListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-//            chatClient.getChatBox().getText().trim();
             chatClient.getChatBox().setText(null);
 
         }
@@ -342,7 +259,7 @@ class ConnectServer {
 
     public void connect() {
         try {
-            clientSocket = new Socket("127.0.0.1", 8888);
+            clientSocket = new Socket("127.0.0.1", 8887);
             dosWithServer = new DataOutputStream(clientSocket.getOutputStream());
             disWithServer = new DataInputStream(clientSocket.getInputStream());
             connectedWithServer = true;
@@ -617,12 +534,12 @@ class ChatClient {
 
     //登录监听，设置XML路径
     public void ClientConnect() {
+        connectServer.connect();//客户端连接服务端
         //登录名不能为空，为空则set null，重新输入
         if ((clientName.getText().trim().length() >= 1) && clientDom4j.queryElement(clientName.getText())) {
 //            btnConnect.setEnabled(false);
             btnConnect.setText("退出");
             clientName.setEnabled(false);
-            connectServer.connect();//客户端连接服务端
             clientData.setName(clientName.getText());
             clientData.setPort(String.valueOf(connectServer.getClientSocket().getLocalPort() + 1));
             String msg = clientData.buildMsg(clientData.getName(), clientData.getPort());
@@ -644,6 +561,7 @@ class ChatClient {
         }
     }
 
+    //需要关闭流和socket以及进程，设为false
     public void ClientExit() {
         btnConnect.setText("登录");
         clientName.setEnabled(true);
@@ -656,12 +574,15 @@ class ChatClient {
         //客户端接收客户端消息关闭，结束while循环
         receiveServerMsg.close();
 
-        //转为lambda表达式
+        //转为lambda表达式,设置listener屏蔽监听
         EventQueue.invokeLater(new Runnable() {
             public void run() {
+                listener = true;
                 listModel.removeAllElements();
                 listModel.addElement("群聊");
                 clientList.setModel(listModel);
+                listener = false;
+                onlineCount.setText("在线人数" + ": " + (listModel.getSize() - 1));
             }
         });
     }
@@ -752,11 +673,9 @@ class ChatClient {
                     if (!(receiveData.getName().equals(clientData.getName()))) {
                         chatRecord.append(receiveData.getStr() + "\n");
 
-//                        operateXML.deleteElement();
                         clientDom4j.createRecord(chatRecord.getText());
                         clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
                     }
-                    System.out.println(data);
                 }
             } catch (SocketException e) {
                 connectPeerClient.setReceiveClientFalse();//接收置位false，停止接收
@@ -765,7 +684,6 @@ class ChatClient {
                 System.out.println("客户端关闭2");
             } catch (IOException e) {
                 System.out.println("客户端关闭3");
-
             } finally {
                 peerClient.close();
             }
@@ -799,6 +717,7 @@ class ChatClient {
             ConnectServer.connectedWithServer = false;
         }
 
+        //while放到try里面，setSendClientFalse()放到if里面
         public void run() {
             try {
                 while (ConnectServer.connectedWithServer) {
@@ -815,26 +734,25 @@ class ChatClient {
 //                    });
                         connectPeerClient.setSendClientFalse();//下线后JList全部清空，默认群聊
                     }
+                    //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
                     if (receiveData.getStr().length() != 0) {
                         chatRecord.append(receiveData.getStr() + "\n");
                         clientDom4j.createRecord(chatRecord.getText());
                         clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
                     }
                 }
-
-            } catch (SocketException e1) {
+            } catch (SocketException e) {
                 System.out.println("服务端关闭1");
                 //用来判断是客户端断开还是服务端断开，服务端断开为true，客户端断开为false
-                if (ConnectServer.connectedWithServer == true) {
+                if (ConnectServer.connectedWithServer) {
                     System.exit(0);
                 }
-            } catch (EOFException e2) {
+            } catch (EOFException e) {
                 System.out.println("服务端关闭2");
 //                    System.exit(0);
             } catch (IOException e) {
                 System.out.println("服务端关闭3");
             }
-            //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
 //                try {
 //
 //                } catch (Exception e) {
@@ -915,7 +833,6 @@ class ClientDom4j extends Dom4jXML {
         } catch (DocumentException e) {
             e.printStackTrace();
         }
-
         return flag;
     }
 }
