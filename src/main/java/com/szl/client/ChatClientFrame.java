@@ -800,8 +800,8 @@ class ChatClient {
         }
 
         public void run() {
-            while (ConnectServer.connectedWithServer) {
-                try {
+            try {
+                while (ConnectServer.connectedWithServer) {
                     data = clientData.receiveData(connectServer.getDisWithServer());
                     name_and_port = clientData.receiveData(connectServer.getDisWithServer());
                     receiveData = new ReceiveData(data, name_and_port);
@@ -813,32 +813,33 @@ class ChatClient {
 //                            receiveData.addLists();
 //                        }
 //                    });
+                        connectPeerClient.setSendClientFalse();//下线后JList全部清空，默认群聊
                     }
-                    connectPeerClient.setSendClientFalse();//下线后JList全部清空，默认群聊
-                } catch (SocketException e1) {
-                    System.out.println("服务端关闭1");
-                    //用来判断是客户端断开还是服务端断开，服务端断开为true，客户端断开为false
-                    if (ConnectServer.connectedWithServer == true) {
-                        System.exit(0);
-                    }
-                } catch (EOFException e2) {
-                    System.out.println("服务端关闭2");
-//                    System.exit(0);
-                } catch (IOException e) {
-                    System.out.println("服务端关闭3");
-
-                }
-                //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
-                try {
                     if (receiveData.getStr().length() != 0) {
                         chatRecord.append(receiveData.getStr() + "\n");
                         clientDom4j.createRecord(chatRecord.getText());
                         clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
                     }
-                } catch (Exception e) {
-                    System.out.println("客户端关闭");
                 }
+
+            } catch (SocketException e1) {
+                System.out.println("服务端关闭1");
+                //用来判断是客户端断开还是服务端断开，服务端断开为true，客户端断开为false
+                if (ConnectServer.connectedWithServer == true) {
+                    System.exit(0);
+                }
+            } catch (EOFException e2) {
+                System.out.println("服务端关闭2");
+//                    System.exit(0);
+            } catch (IOException e) {
+                System.out.println("服务端关闭3");
             }
+            //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
+//                try {
+//
+//                } catch (Exception e) {
+//                    System.out.println("客户端关闭");
+//                }
         }
     }
 }
@@ -896,6 +897,7 @@ class ClientDom4j extends Dom4jXML {
             SAXReader saxReader = new SAXReader();
             Document document = saxReader.read(new File(clientsListPath));
             Element rootElement = document.getRootElement();
+            //得到clients的List，进行遍历判断
             List clientsList = rootElement.elements("clients");
             //foreach遍历
             for (Object clientsListElement : clientsList) {
