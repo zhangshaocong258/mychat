@@ -6,6 +6,7 @@ import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -46,11 +47,17 @@ public class Dom4jXML {
         }
     }
 
-    public void saveXML(Document document, String path) {
+    //先创建文件夹，在创建文件
+    public void saveXML(Document document, String dirPath, String filePath) {
         FileWriter fileWriter = null;
+        File file = null;
         try {
+            file = new File(dirPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
             OutputFormat outputFormat = new OutputFormat("   ", true, "UTF-8");
-            fileWriter = new FileWriter(path);
+            fileWriter = new FileWriter(filePath);
             XMLWriter xmlWriter = new XMLWriter(fileWriter, outputFormat);
             xmlWriter.write(document);
         } catch (IOException e) {

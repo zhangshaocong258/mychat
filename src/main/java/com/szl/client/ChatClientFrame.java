@@ -495,7 +495,9 @@ class ChatClient {
 
     private ClientDom4j clientDom4j = new ClientDom4j();
 
-    private String path;
+    private String dirPath;
+
+    private String filePath;
 
     //发送信息
     public void SendThread() {
@@ -510,7 +512,8 @@ class ChatClient {
             if (!isNull) {
                 clientData.setStr(clientData.getName(),
                         String.valueOf(clientList.getSelectedValue()), clientData.formatStr(chatBox.getText().trim()));
-                System.out.println(clientData.stringToAscii(chatBox.getText().trim()));
+                //转换为Ascii码用来判断
+//                System.out.println(clientData.stringToAscii(chatBox.getText().trim()));
                 String msg = clientData.buildMsg(clientData.getName(),
                         clientData.getPort(), clientData.getStr());
                 chatBox.setText(null);
@@ -522,7 +525,7 @@ class ChatClient {
                     chatRecord.append(clientData.getStr() + "\n");
 
                     clientDom4j.createRecord(chatRecord.getText());
-                    clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
+                    clientDom4j.saveXML(Dom4jXML.getRecordDocument(), dirPath, filePath);
                 }
             } else {
                 chatRecord.append("发送的内容不能为空\n");
@@ -543,7 +546,8 @@ class ChatClient {
             clientData.setName(clientName.getText());
             clientData.setPort(String.valueOf(connectServer.getClientSocket().getLocalPort() + 1));
             String msg = clientData.buildMsg(clientData.getName(), clientData.getPort());
-            path = "D:/" + clientData.getName() + "ChatRecord.xml";
+            dirPath = "D:/" + clientData.getName() + "-" + new DayTime().getDateString();
+            filePath = dirPath + File.separator + clientData.getName() + "-" + "ChatRecord.xml";
             try {
                 clientData.sendData(connectServer.getDosWithServer(), msg);//客户端向服务端发送登录信息
             } catch (IOException e1) {
@@ -674,7 +678,7 @@ class ChatClient {
                         chatRecord.append(receiveData.getStr() + "\n");
 
                         clientDom4j.createRecord(chatRecord.getText());
-                        clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
+                        clientDom4j.saveXML(Dom4jXML.getRecordDocument(), dirPath, filePath);
                     }
                 }
             } catch (SocketException e) {
@@ -738,7 +742,7 @@ class ChatClient {
                     if (receiveData.getStr().length() != 0) {
                         chatRecord.append(receiveData.getStr() + "\n");
                         clientDom4j.createRecord(chatRecord.getText());
-                        clientDom4j.saveXML(Dom4jXML.getRecordDocument(), path);
+                        clientDom4j.saveXML(Dom4jXML.getRecordDocument(), dirPath, filePath);
                     }
                 }
             } catch (SocketException e) {
@@ -806,7 +810,7 @@ class ClientDom4j extends Dom4jXML {
     private String clientsListPath;
 
     public ClientDom4j() {
-        this.clientsListPath = "D:/ClientsList.xml";
+        this.clientsListPath = "D:/ChatServer/ClientsList.xml";
     }
 
     public boolean queryElement(String name) {

@@ -337,9 +337,9 @@ class ChatServer {
                         addClientRecord(name + "已上线" + "\n");
 
                         serverDom4j.createElement(name, port);
-                        serverDom4j.saveXML(ServerDom4j.getClientDocument(), serverDom4j.getClientsListPath());
+                        serverDom4j.saveXML(ServerDom4j.getClientDocument(), serverDom4j.getDirPath(), serverDom4j.getClientsListPath());
                         serverDom4j.createRecord(clientRecord.getText());
-                        serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getServerRecordPath());
+                        serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getDirPath(), serverDom4j.getServerRecordPath());
 
                     }
                     userClientList.sendMsg(dataFromClient, namePort);//发送从客户端发来的信息，以及封装的用户名_端口
@@ -356,9 +356,9 @@ class ChatServer {
                 addClientRecord(name + "已下线" + "\n");
 
                 serverDom4j.deleteElement(name);
-                serverDom4j.saveXML(ServerDom4j.getClientDocument(), serverDom4j.getClientsListPath());
+                serverDom4j.saveXML(ServerDom4j.getClientDocument(), serverDom4j.getDirPath(), serverDom4j.getClientsListPath());
                 serverDom4j.createRecord(clientRecord.getText());
-                serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getServerRecordPath());
+                serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getDirPath(), serverDom4j.getServerRecordPath());
 
                 //掉线后模仿登录时发送的信息格式
                 if (clientListModel.getSize() != 0) {
@@ -456,6 +456,7 @@ class ServerDom4j extends Dom4jXML {
 
     private Element clientsListRoot;
 
+    private String dirPath;
     private String clientsListPath;
     private String serverRecordPath;
 
@@ -464,15 +465,20 @@ class ServerDom4j extends Dom4jXML {
         clientDocument = initDocument();
         clientsListRoot = clientDocument.addElement("content");
 
-        this.clientsListPath = "D:/ClientsList.xml";
-        this.serverRecordPath = "D:/ServerRecord.xml";
+        this.dirPath = "D:/ChatServer";
+        this.clientsListPath = dirPath + File.separator + "ClientsList.xml";
+        this.serverRecordPath = dirPath + File.separator + "ServerRecord.xml";
 
-        saveXML(clientDocument, clientsListPath);
-        saveXML(getRecordDocument(), serverRecordPath);
+        saveXML(clientDocument, dirPath, clientsListPath);
+        saveXML(getRecordDocument(), dirPath, serverRecordPath);
     }
 
     public static Document getClientDocument() {
         return clientDocument;
+    }
+
+    public String getDirPath() {
+        return dirPath;
     }
 
     public String getServerRecordPath() {
