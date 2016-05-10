@@ -1,10 +1,9 @@
 package com.szl.client;
 
+import com.szl.utils.DayTime;
 import com.szl.utils.Disconnect;
 import com.szl.utils.Dom4jXML;
 import com.szl.utils.PropertiesGBC;
-import com.szl.utils.DayTime;
-
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -14,11 +13,14 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -39,7 +41,8 @@ public class ChatClientFrame {
 
     private JButton send = new JButton("发送");
     private JButton clear = new JButton("清空");
-    private JButton fileTransfer = new JButton("文件");
+    private JButton file = new JButton("文件");
+    private JButton receive = new JButton("接收");
 
 
     public static void main(String[] args) {
@@ -76,6 +79,10 @@ public class ChatClientFrame {
         jPanel.add(chatLabel, new PropertiesGBC(0, 1, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
+        //接收
+        jPanel.add(receive, new PropertiesGBC(2, 1, 1, 1).
+                setAnchor(PropertiesGBC.EAST).setWeight(0, 0).setInsets(0, 5, 5, 5));
+
         //聊天记录框
         jPanel.add(chatClient.getChatRecordJScrollPane(), new PropertiesGBC(0, 2, 3, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(1, 1).setInsets(0, 5, 5, 5));
@@ -89,7 +96,7 @@ public class ChatClientFrame {
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //文件
-        jPanel.add(fileTransfer, new PropertiesGBC(1, 5, 1, 1).
+        jPanel.add(file, new PropertiesGBC(1, 5, 1, 1).
                 setAnchor(PropertiesGBC.EAST).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //发送
@@ -120,16 +127,21 @@ public class ChatClientFrame {
         clear.addActionListener(new clearListener());
         chatClient.getBtnConnect().addActionListener(new clientLoginListener());
         chatClient.getClientList().addListSelectionListener(new p2pListener());
+        //接收和文件监听
+        file.addActionListener(new fileListener());
+        receive.addActionListener(new receiveListener());
         jFrame.setVisible(true);
     }
 
     //监听全部在外部实现
+    //发送
     private class sendListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            chatClient.SendThread();
+            chatClient.SendAllThread();
         }
     }
 
+    //清空
     private class clearListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             chatClient.getChatBox().setText(null);
@@ -137,6 +149,22 @@ public class ChatClientFrame {
         }
     }
 
+    //文件
+    private class fileListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            chatClient.OpenFileChooser();
+        }
+    }
+
+    //接收
+    private class receiveListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            chatClient.SaveFileChooser();
+        }
+    }
+
+
+    //登录退出
     private class clientLoginListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             String btnText = chatClient.getBtnConnect().getText();
@@ -148,6 +176,7 @@ public class ChatClientFrame {
         }
     }
 
+    //List选择监听
     private class p2pListener implements ListSelectionListener {
         public void valueChanged(ListSelectionEvent e) {
             chatClient.ConnectPeer();
@@ -164,14 +193,17 @@ public class ChatClientFrame {
  * 上层关闭
  */
 
+//out仅在传送文件的流中使用
 class PeerClient {
     private Socket peerSocket = null;//客户端的服务端
     private DataInputStream disWithPeer = null;
+    private DataOutputStream dosWithPeer = null;
 
     public PeerClient(Socket peerSocket) {
         this.peerSocket = peerSocket;
         try {
             disWithPeer = new DataInputStream(peerSocket.getInputStream());
+            dosWithPeer = new DataOutputStream(peerSocket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -181,27 +213,35 @@ class PeerClient {
         return disWithPeer;
     }
 
+    public DataOutputStream getDosWithPeer() {
+        return dosWithPeer;
+    }
+
     public void close() {
-        Disconnect.disconnect(null, peerSocket, disWithPeer, null);
+        Disconnect.disconnect(null, peerSocket, disWithPeer, dosWithPeer);
     }
 }
 
 /**
  * 客户端的客户端连接客户端的服务端类，只发送消息
  */
+//in仅在传送文件的流中使用
 class ConnectPeerClient {
     //两个标志位
     private static boolean sendClient = false;
     private static boolean receiveClient = false;
     private Socket socketWithPeer = null;
+    private DataInputStream disWithPeer;
     private DataOutputStream dosWithPeer;
 
     //客户端连接客户端
     public void connectPeer(int peerPort) {
         try {
             socketWithPeer = new Socket("127.0.0.1", peerPort);
+            disWithPeer = new DataInputStream(socketWithPeer.getInputStream());
             dosWithPeer = new DataOutputStream(socketWithPeer.getOutputStream());
             sendClient = true;
+            System.out.println("连接上的端口号" + socketWithPeer.getLocalPort());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -229,6 +269,10 @@ class ConnectPeerClient {
 
     public boolean getReceiveClient() {
         return receiveClient;
+    }
+
+    public DataInputStream getDisWithPeer() {
+        return disWithPeer;
     }
 
     public DataOutputStream getDosWithPeer() {
@@ -259,7 +303,7 @@ class ConnectServer {
 
     public void connect() {
         try {
-            clientSocket = new Socket("127.0.0.1", 8887);
+            clientSocket = new Socket("127.0.0.1", 30000);
             dosWithServer = new DataOutputStream(clientSocket.getOutputStream());
             disWithServer = new DataInputStream(clientSocket.getInputStream());
             connectedWithServer = true;
@@ -284,10 +328,12 @@ class ConnectServer {
  * 接收信息类，从服务端和客户端接收，重载
  */
 class ReceiveData {
+    private String fileName = "";
     private String name = "";
     private String str = "";
     private static Map<String, String> clientInfo = new HashMap<>();
-    private java.util.List<String> listNames = null;
+    private List<String> listNames = null;
+    private boolean isFile = false;
 
     private String DELIMITER = "\f";
 
@@ -300,7 +346,7 @@ class ReceiveData {
 
     //客户端接收服务端信息构造器初始化，信息类型为name&port（登录或退出信息格式）或者name&port&str（普通信息格式）
     ReceiveData(String data_from_client, String name_and_port) {
-        java.util.List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
+        List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         listNames = Arrays.asList(name_and_port.split(DELIMITER));
         this.name = data_from_client_split.get(0);
 //        this.str = data_from_client_split.get(2);
@@ -308,6 +354,14 @@ class ReceiveData {
         if (data_from_client_split.size() == 3) {
             this.str = data_from_client_split.get(2);
         }
+    }
+
+    public boolean isFile() {
+        return isFile;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
     public String getName() {
@@ -339,12 +393,26 @@ class ReceiveData {
 }
 
 /**
- * 用户登录信息封装类，包含发送接收信息方法,build普通信息，登录信息直接最后加""空串
+ * 基础信息类,用户登录信息封装类，包含发送接收信息方法,build普通信息，登录信息重载
  */
 class ClientData {
     private String name = "";
     private String port = "";
     private String str = "";
+    private String fileName = "";
+    private static boolean haveFile;
+
+    public void setHaveFile() {
+        this.haveFile = true;
+    }
+
+    public void setHaveFileFalse() {
+        this.haveFile = false;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
 
     public void setName(String name) {
         this.name = name;
@@ -357,6 +425,15 @@ class ClientData {
     public void setStr(String sender, String receiver, String str) {
         this.str = buildStr(sender, receiver, str);
     }
+
+    public boolean getHaveFile(){
+        return haveFile;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
 
     public String getName() {
         return name;
@@ -431,6 +508,12 @@ class ChatClient {
     private ConnectServer connectServer = new ConnectServer();//客户端连接服务端
     private ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
     private ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端连接客户端服务端，本身是客户端的客户端
+    private ConnectPeerClient connectPeerClientFile = new ConnectPeerClient();
+    private PeerClient peerClient;
+    private PeerClient peerClientFile;
+
+    private FileTransmit fileTransmit = new FileTransmit();
+
 
     private JTextField clientName = new JTextField(10);
     private JButton btnConnect = new JButton("登录");
@@ -498,6 +581,23 @@ class ChatClient {
     private String dirPath;
 
     private String filePath;
+
+
+    //send文件和聊天信息分开
+    public void SendAllThread(){
+        if (fileTransmit.getSend()) {
+            SendThreadFile();
+        } else {
+            SendThread();
+        }
+    }
+
+    //发送文件
+    public void SendThreadFile() {
+        chatBox.setText(null);//清空输入框的文件信息
+        //传输文件
+        fileTransmit.sendRunnable(connectPeerClientFile.getDosWithPeer(), connectPeerClientFile.getDisWithPeer());
+    }
 
     //发送信息
     public void SendThread() {
@@ -601,25 +701,46 @@ class ChatClient {
 //            }
             System.out.println("选中项" + peer);
             if (peer != null && !peer.equals("群聊")) {
+                //点击peer之后直接开2条路
                 connectPeerClient.connectPeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
+                connectPeerClientFile.connectPeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
             } else {
-                //断开P2P连接，默认群聊
+                //断开P2P连接，默认群聊,顺序不要错
                 connectPeerClient.setSendClientFalse();
+                connectPeerClientFile.setReceiveClientFalse();
             }
         }
+    }
+
+    public void OpenFileChooser() {
+        //设置文件传送true
+        fileTransmit.chooseFile();
+        //起一个新的连接
+        //打开后发送框显示路径，并连接识别字符发送至接收方，接收方据此判断，打开接收
+        chatBox.setText(fileTransmit.getFolderPath());
+    }
+
+    public void SaveFileChooser(){
+        fileTransmit.saveFile();
+        //打开保存对话框，确定路径后再启动线程
+//        if (fileTransmit.getReceive()) {
+//            fileTransmit.receiveRunnable(peerClient.getDisWithPeer());
+//        }
     }
 
     //客户端作为服务端
     class ClientServer implements Runnable {
         private ServerSocket clientServerSocket = null;
-        private PeerClient peerClient;
+        //        private PeerClient peerClient;
         private ReceivePeerMsg receivePeerMsg;
+        private ReceivePeerFile receivePeerFile;
         private boolean start = false;
 
         public void close() {
             start = false;
         }
 
+        @Override
         public void run() {
             try {
                 clientServerSocket = new ServerSocket(connectServer.getClientSocket().getLocalPort() + 1);
@@ -632,17 +753,24 @@ class ChatClient {
                 e.printStackTrace();
             }
             try {
+                //每次连接2条路
                 while (start) {
                     Socket socket = clientServerSocket.accept();
+                    Socket socketFile = clientServerSocket.accept();
+
                     peerClient = new PeerClient(socket);
+                    peerClientFile = new PeerClient(socketFile);
                     receivePeerMsg = new ReceivePeerMsg(peerClient);
+                    receivePeerFile = new ReceivePeerFile(peerClientFile);
                     System.out.println("客户端已连接");
                     new Thread(receivePeerMsg).start();
+                    new Thread(receivePeerFile).start();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 try {
+                    peerClientFile.close();
                     peerClient.close();
                     clientServerSocket.close();
                     receivePeerMsg.close();
@@ -652,6 +780,21 @@ class ChatClient {
             }
         }
     }
+
+    //接收文件信息
+    class ReceivePeerFile implements Runnable {
+        private PeerClient peerClientFile;
+
+        public ReceivePeerFile(PeerClient peerClientFile) {
+            this.peerClientFile = peerClientFile;
+        }
+
+        @Override
+        public void run(){
+            fileTransmit.receiveRunnable(peerClientFile.getDisWithPeer(), peerClientFile.getDosWithPeer());
+        }
+    }
+
 
     //客户端接收客户端信息，socket和流封装在PeerClient
     class ReceivePeerMsg implements Runnable {
@@ -668,6 +811,7 @@ class ChatClient {
             connectPeerClient.setReceiveClientFalse();
         }
 
+        @Override
         public void run() {
             try {
                 while (connectPeerClient.getReceiveClient()) {
@@ -722,6 +866,7 @@ class ChatClient {
         }
 
         //while放到try里面，setSendClientFalse()放到if里面
+        @Override
         public void run() {
             try {
                 while (ConnectServer.connectedWithServer) {
@@ -764,6 +909,182 @@ class ChatClient {
 //                }
         }
     }
+}
+
+class FileTransmit {
+    private static String folderPath = "";
+    private static String folderName = "";
+    private long totalLen = 0L;
+    private static boolean isSend = false;
+    private boolean isReceive = false;
+    private boolean isOver = false;
+    private static final int BUF_LEN = 102400;
+    private File file;
+    private FileInputStream fileInputStream;
+    private FileOutputStream fileOutputStream;
+    private DataInputStream disWithPeer;
+    private DataOutputStream dosWithPeer;
+
+    //set 文件名为发送来的文件名，用于接收并存储
+    public void setFolderName(String folderName) {
+        this.folderName = folderName;
+    }
+
+    public void setFolderPath(String folderPath) {
+        this.folderPath = folderPath;
+    }
+
+    public String getFolderPath() {
+        return folderPath;
+    }
+
+    public String getFolderName() {
+        return folderName;
+    }
+
+    public boolean getSend() {
+        return isSend;
+    }
+
+    public boolean getReceive(){
+        return isReceive;
+    }
+
+
+    public void chooseFile() {
+        JFileChooser jFileChooser = new JFileChooser();
+        jFileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        int returnVal = jFileChooser.showOpenDialog(null);
+        //点击打开后，发送框显示地址，点发送，接收方先收到信息，显示接收按钮，按下后设置接收地址，在接收
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            file = jFileChooser.getSelectedFile();
+            //输出文件大小
+            long l = file.length();
+            System.out.println(l);
+            this.folderPath = file.getAbsolutePath();
+            this.folderName = file.getName();
+            this.isSend = true;
+            System.out.println("发送文件夹:" + folderPath);
+            System.out.println("发送文件:" + folderName);
+
+        }
+    }
+
+    public void saveFile() {
+        JFileChooser jFileChooser = new JFileChooser();
+        jFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnVal = jFileChooser.showSaveDialog(null);
+        //点击打开后，发送框显示地址，点发送，接收方先收到信息，显示接收按钮，按下后设置接收地址，在接收
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            file = jFileChooser.getSelectedFile();
+            //输出文件大小
+            long l = file.length();
+            //接收文件名字不变，路径自设
+            this.folderPath = file.getAbsolutePath();
+            this.isReceive = true;
+            System.out.println("接收文件夹:" + folderPath);
+            System.out.println("接收文件:" + folderName);
+
+        }
+    }
+
+    public void sendRunnable(DataOutputStream dataOutputStream, DataInputStream dataInputStream) {
+        Runnable send = new Runnable() {
+            @Override
+            public void run() {
+                sendFile(dataOutputStream, dataInputStream);
+            }
+        };
+        new Thread(send).start();
+    }
+
+    public void receiveRunnable(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+        Runnable receive = new Runnable() {
+            @Override
+            public void run() {
+                receiveFile(dataInputStream,dataOutputStream);
+//                receiveInt(dataInputStream);
+            }
+        };
+        new Thread(receive).start();
+    }
+
+    public void sendFile(DataOutputStream dataOutputStream, DataInputStream dataInputStream) {
+        this.isSend = false;
+        this.disWithPeer = dataInputStream;
+        this.dosWithPeer = dataOutputStream;
+        byte[] sendBuffer = new byte[BUF_LEN];
+        int length = 0;
+
+        file = new File(folderPath);
+        System.out.println("fasong文件:" + folderPath);
+        try {
+            dosWithPeer.writeUTF(folderName);
+            String allow = disWithPeer.readUTF();
+            if (allow.equals("Agree")) {
+                //发送文件
+                fileInputStream = new FileInputStream(file);
+                while ((length = fileInputStream.read(sendBuffer, 0 , sendBuffer.length)) > 0) {
+                    System.out.println("length " + length);
+                    dosWithPeer.write(sendBuffer, 0, length);
+                    dosWithPeer.flush();
+                }
+                System.out.println("发送方结束循环" + length);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("发送文件结束");
+        } finally {
+            try {
+                if (fileInputStream != null)
+                    fileInputStream.close();
+                if (dosWithPeer != null)
+                    dosWithPeer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    public void receiveFile(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+        System.out.println("接收循环跑了吗");
+        this.disWithPeer = dataInputStream;
+        this.dosWithPeer = dataOutputStream;
+        byte[] receiveBuffer = new byte[BUF_LEN];
+        int length = 0;
+
+        try {
+            System.out.println("接收循环开始");
+            folderName = disWithPeer.readUTF();
+            while (folderPath.length() == 0) {
+                System.out.print(".");
+            }
+            System.out.println("接收循环goon..");
+
+            folderPath = folderPath + File.separator + folderName;
+            fileOutputStream = new FileOutputStream(new File(folderPath));
+            dosWithPeer.writeUTF("Agree");
+            while ((length = disWithPeer.read(receiveBuffer, 0, receiveBuffer.length)) > 0) {
+                fileOutputStream.write(receiveBuffer, 0, length);
+                fileOutputStream.flush();
+                System.out.println("接收方length  " + length);
+            }
+            System.out.println("接收方结束循环");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fileOutputStream != null)
+                    fileOutputStream.close();
+                if (disWithPeer != null)
+                    disWithPeer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }
 
 /**

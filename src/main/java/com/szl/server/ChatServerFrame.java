@@ -265,7 +265,7 @@ class ChatServer {
         public void run() {
             serverDom4j = new ServerDom4j();
             try {
-                serverSocket = new ServerSocket(8887);
+                serverSocket = new ServerSocket(30000);
                 start = true;
             } catch (BindException e) {
                 System.out.println("端口使用中...");
