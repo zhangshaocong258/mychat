@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 /**
@@ -426,7 +429,7 @@ class ClientData {
         this.str = buildStr(sender, receiver, str);
     }
 
-    public boolean getHaveFile(){
+    public boolean getHaveFile() {
         return haveFile;
     }
 
@@ -584,7 +587,7 @@ class ChatClient {
 
 
     //send文件和聊天信息分开
-    public void SendAllThread(){
+    public void SendAllThread() {
         if (fileTransmit.getSend()) {
             SendThreadFile();
         } else {
@@ -720,7 +723,7 @@ class ChatClient {
         chatBox.setText(fileTransmit.getFolderPath());
     }
 
-    public void SaveFileChooser(){
+    public void SaveFileChooser() {
         fileTransmit.saveFile();
         //打开保存对话框，确定路径后再启动线程
 //        if (fileTransmit.getReceive()) {
@@ -790,7 +793,7 @@ class ChatClient {
         }
 
         @Override
-        public void run(){
+        public void run() {
             fileTransmit.receiveRunnable(peerClientFile.getDisWithPeer(), peerClientFile.getDosWithPeer());
         }
     }
@@ -924,6 +927,8 @@ class FileTransmit {
     private FileOutputStream fileOutputStream;
     private DataInputStream disWithPeer;
     private DataOutputStream dosWithPeer;
+    private Lock lock = new ReentrantLock();
+    private Condition condition = lock.newCondition();
 
     //set 文件名为发送来的文件名，用于接收并存储
     public void setFolderName(String folderName) {
@@ -946,7 +951,7 @@ class FileTransmit {
         return isSend;
     }
 
-    public boolean getReceive(){
+    public boolean getReceive() {
         return isReceive;
     }
 
@@ -980,7 +985,13 @@ class FileTransmit {
             //输出文件大小
             long l = file.length();
             //接收文件名字不变，路径自设
-            this.folderPath = file.getAbsolutePath();
+            lock.lock();
+            try {
+                this.folderPath = file.getAbsolutePath();
+                condition.signal();
+            } finally {
+                lock.unlock();
+            }
             this.isReceive = true;
             System.out.println("接收文件夹:" + folderPath);
             System.out.println("接收文件:" + folderName);
@@ -1002,8 +1013,7 @@ class FileTransmit {
         Runnable receive = new Runnable() {
             @Override
             public void run() {
-                receiveFile(dataInputStream,dataOutputStream);
-//                receiveInt(dataInputStream);
+                receiveFile(dataInputStream, dataOutputStream);
             }
         };
         new Thread(receive).start();
@@ -1024,7 +1034,7 @@ class FileTransmit {
             if (allow.equals("Agree")) {
                 //发送文件
                 fileInputStream = new FileInputStream(file);
-                while ((length = fileInputStream.read(sendBuffer, 0 , sendBuffer.length)) > 0) {
+                while ((length = fileInputStream.read(sendBuffer, 0, sendBuffer.length)) > 0) {
                     System.out.println("length " + length);
                     dosWithPeer.write(sendBuffer, 0, length);
                     dosWithPeer.flush();
@@ -1055,14 +1065,15 @@ class FileTransmit {
         int length = 0;
 
         try {
-            System.out.println("接收循环开始");
             folderName = disWithPeer.readUTF();
-            while (folderPath.length() == 0) {
-                System.out.print(".");
-            }
-            System.out.println("接收循环goon..");
 
-            folderPath = folderPath + File.separator + folderName;
+            lock.lock();
+            try {
+                condition.await();
+                folderPath = folderPath + File.separator + folderName;
+            } finally {
+                lock.unlock();
+            }
             fileOutputStream = new FileOutputStream(new File(folderPath));
             dosWithPeer.writeUTF("Agree");
             while ((length = disWithPeer.read(receiveBuffer, 0, receiveBuffer.length)) > 0) {
@@ -1072,6 +1083,8 @@ class FileTransmit {
             }
             System.out.println("接收方结束循环");
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             try {
