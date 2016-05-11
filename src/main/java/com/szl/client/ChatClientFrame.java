@@ -33,7 +33,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 
 public class ChatClientFrame {
-
     private ChatClient chatClient = new ChatClient();
 
     private JLabel clientLabel = new JLabel("用户名");
@@ -140,7 +139,7 @@ public class ChatClientFrame {
     //发送
     private class sendListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            chatClient.SendAllThread();
+            chatClient.send();
         }
     }
 
@@ -155,14 +154,14 @@ public class ChatClientFrame {
     //文件
     private class fileListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            chatClient.OpenFileChooser();
+            chatClient.openFileChooser();
         }
     }
 
     //接收
     private class receiveListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            chatClient.SaveFileChooser();
+            chatClient.saveFileChooser();
         }
     }
 
@@ -172,9 +171,9 @@ public class ChatClientFrame {
         public void actionPerformed(ActionEvent e) {
             String btnText = chatClient.getBtnConnect().getText();
             if (btnText.equals("登录")) {
-                chatClient.ClientConnect();
+                chatClient.clientLogin();
             } else if (btnText.equals("退出")) {
-                chatClient.ClientExit();
+                chatClient.clientExit();
             }
         }
     }
@@ -182,7 +181,7 @@ public class ChatClientFrame {
     //List选择监听
     private class p2pListener implements ListSelectionListener {
         public void valueChanged(ListSelectionEvent e) {
-            chatClient.ConnectPeer();
+            chatClient.connectPeer();
         }
     }
 }
@@ -192,8 +191,8 @@ public class ChatClientFrame {
  */
 
 /**
- * 客户端的客户端类，只用来接收信息，用于封装
- * 上层关闭
+ * 客户端的客户端类，主要配合ReceivePeerMsg使用，用来接收信息;并且用于其他类的封装
+ * 由上层关闭
  */
 
 //out仅在传送文件的流中使用
@@ -229,49 +228,44 @@ class PeerClient {
  * 客户端的客户端连接客户端的服务端类，只发送消息
  */
 //in仅在传送文件的流中使用
-class ConnectPeerClient {
+class ClientConnectPeerClient {
     //两个标志位
-    private static boolean sendClient = false;
-    private static boolean receiveClient = false;
-    private Socket socketWithPeer = null;
+    private static boolean sendToClient = false;
+    private static boolean receiveFromClient = false;
+    private Socket socketWithPeerClient = null;
     private DataInputStream disWithPeer;
     private DataOutputStream dosWithPeer;
-
     //客户端连接客户端
-    public void connectPeer(int peerPort) {
+    public void connectPeerClient(int peerClientPort) {
         try {
-            socketWithPeer = new Socket("127.0.0.1", peerPort);
-            disWithPeer = new DataInputStream(socketWithPeer.getInputStream());
-            dosWithPeer = new DataOutputStream(socketWithPeer.getOutputStream());
-            sendClient = true;
-            System.out.println("连接上的端口号" + socketWithPeer.getLocalPort());
+            socketWithPeerClient = new Socket("127.0.0.1", peerClientPort);
+            disWithPeer = new DataInputStream(socketWithPeerClient.getInputStream());
+            dosWithPeer = new DataOutputStream(socketWithPeerClient.getOutputStream());
+            sendToClient = true;
+            System.out.println("连接上的端口号" + socketWithPeerClient.getLocalPort());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void close() {
-        Disconnect.disconnect(null, socketWithPeer, null, dosWithPeer);
+        Disconnect.disconnect(null, socketWithPeerClient, disWithPeer, dosWithPeer);
     }
 
-    public void setReceiveClientTrue() {
-        receiveClient = true;
+    public void setSendToClient(boolean sendToClient) {
+        ClientConnectPeerClient.sendToClient = sendToClient;
     }
 
-    public void setReceiveClientFalse() {
-        receiveClient = false;
+    public void setReceiveFromClient(boolean receiveFromClient) {
+        ClientConnectPeerClient.receiveFromClient = receiveFromClient;
     }
 
-    public void setSendClientFalse() {
-        sendClient = false;
+    public boolean getSendToClient() {
+        return sendToClient;
     }
 
-    public boolean getSendClient() {
-        return sendClient;
-    }
-
-    public boolean getReceiveClient() {
-        return receiveClient;
+    public boolean getReceiveFromClient() {
+        return receiveFromClient;
     }
 
     public DataInputStream getDisWithPeer() {
@@ -286,11 +280,18 @@ class ConnectPeerClient {
 /**
  * 客户端连接服务端类
  */
-class ConnectServer {
+class ClientConnectServer {
+    private static boolean connectWithServer = false;
     private Socket clientSocket = null;//Client自己的scoket
-    private DataOutputStream dosWithServer = null;
-    private DataInputStream disWithServer = null;
-    static boolean connectedWithServer = false;
+    private DataInputStream disWithServer;
+    private DataOutputStream dosWithServer;
+    public void setConnectWithServer(boolean connectWithServer) {
+        ClientConnectServer.connectWithServer = connectWithServer;
+    }
+
+    public boolean getConnectWithServer() {
+        return connectWithServer;
+    }
 
     public Socket getClientSocket() {
         return clientSocket;
@@ -304,12 +305,12 @@ class ConnectServer {
         return dosWithServer;
     }
 
-    public void connect() {
+    public void connectServer() {
         try {
             clientSocket = new Socket("127.0.0.1", 30000);
             dosWithServer = new DataOutputStream(clientSocket.getOutputStream());
             disWithServer = new DataInputStream(clientSocket.getInputStream());
-            connectedWithServer = true;
+            connectWithServer = true;
             System.out.println("客户端已连接");
         } catch (UnknownHostException e) {
             System.out.println("服务端未启动");
@@ -323,7 +324,7 @@ class ConnectServer {
 
     public void close() {
         Disconnect.disconnect(null, clientSocket, disWithServer, dosWithServer);
-        connectedWithServer = false;
+        connectWithServer = false;
     }
 }
 
@@ -331,12 +332,10 @@ class ConnectServer {
  * 接收信息类，从服务端和客户端接收，重载
  */
 class ReceiveData {
-    private String fileName = "";
     private String name = "";
     private String str = "";
-    private static Map<String, String> clientInfo = new HashMap<>();
-    private List<String> listNames = null;
-    private boolean isFile = false;
+    private static Map<String, String> clientInfo = new HashMap<>();//name和port
+    private List<String> namePortList = null;
 
     private String DELIMITER = "\f";
 
@@ -350,21 +349,13 @@ class ReceiveData {
     //客户端接收服务端信息构造器初始化，信息类型为name&port（登录或退出信息格式）或者name&port&str（普通信息格式）
     ReceiveData(String data_from_client, String name_and_port) {
         List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
-        listNames = Arrays.asList(name_and_port.split(DELIMITER));
+        namePortList = Arrays.asList(name_and_port.split(DELIMITER));
         this.name = data_from_client_split.get(0);
 //        this.str = data_from_client_split.get(2);
 
         if (data_from_client_split.size() == 3) {
             this.str = data_from_client_split.get(2);
         }
-    }
-
-    public boolean isFile() {
-        return isFile;
-    }
-
-    public String getFileName() {
-        return fileName;
     }
 
     public String getName() {
@@ -376,8 +367,8 @@ class ReceiveData {
     }
 
     //用于刷新在线列表
-    public java.util.List<String> getListNames() {
-        return listNames;
+    public List<String> getNamePortList() {
+        return namePortList;
     }
 
     public Map<String, String> putClientInfo(String name, String port) {
@@ -402,20 +393,6 @@ class ClientData {
     private String name = "";
     private String port = "";
     private String str = "";
-    private String fileName = "";
-    private static boolean haveFile;
-
-    public void setHaveFile() {
-        this.haveFile = true;
-    }
-
-    public void setHaveFileFalse() {
-        this.haveFile = false;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
 
     public void setName(String name) {
         this.name = name;
@@ -428,15 +405,6 @@ class ClientData {
     public void setStr(String sender, String receiver, String str) {
         this.str = buildStr(sender, receiver, str);
     }
-
-    public boolean getHaveFile() {
-        return haveFile;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
 
     public String getName() {
         return name;
@@ -508,10 +476,10 @@ class ChatClient {
     private ReceiveServerMsg receiveServerMsg = new ReceiveServerMsg();//接收服务端信息
     //JList事件设置一个标志位listener，用来区别是否建立连接，因为刷新clientslist列表时，始终监听，所以刷新之前设为true，防止连接出错
     private static boolean listener = false;
-    private ConnectServer connectServer = new ConnectServer();//客户端连接服务端
+    private ClientConnectServer clientConnectServer = new ClientConnectServer();//客户端连接服务端
     private ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
-    private ConnectPeerClient connectPeerClient = new ConnectPeerClient();//客户端连接客户端服务端，本身是客户端的客户端
-    private ConnectPeerClient connectPeerClientFile = new ConnectPeerClient();
+    private ClientConnectPeerClient clientConnectPeerClient = new ClientConnectPeerClient();//客户端连接客户端服务端，本身是客户端的客户端
+    private ClientConnectPeerClient clientConnectPeerClientFile = new ClientConnectPeerClient();
     private PeerClient peerClient;
     private PeerClient peerClientFile;
 
@@ -587,23 +555,23 @@ class ChatClient {
 
 
     //send文件和聊天信息分开
-    public void SendAllThread() {
+    public void send() {
         if (fileTransmit.getSend()) {
-            SendThreadFile();
+            sendFile();
         } else {
-            SendThread();
+            sendMsg();
         }
     }
 
     //发送文件
-    public void SendThreadFile() {
+    public void sendFile() {
         chatBox.setText(null);//清空输入框的文件信息
         //传输文件
-        fileTransmit.sendRunnable(connectPeerClientFile.getDosWithPeer(), connectPeerClientFile.getDisWithPeer());
+        fileTransmit.sendRunnable(clientConnectPeerClientFile.getDosWithPeer(), clientConnectPeerClientFile.getDisWithPeer());
     }
 
     //发送信息
-    public void SendThread() {
+    public void sendMsg() {
         boolean isNull = true;
         if (chatBox.getText().trim().length() > 0) {
             isNull = false;
@@ -621,10 +589,10 @@ class ChatClient {
                         clientData.getPort(), clientData.getStr());
                 chatBox.setText(null);
                 //判断给服务器还是peer端发送信息
-                if (!connectPeerClient.getSendClient()) {
-                    clientData.sendData(connectServer.getDosWithServer(), msg);
+                if (!clientConnectPeerClient.getSendToClient()) {
+                    clientData.sendData(clientConnectServer.getDosWithServer(), msg);
                 } else {
-                    clientData.sendData(connectPeerClient.getDosWithPeer(), msg);
+                    clientData.sendData(clientConnectPeerClient.getDosWithPeer(), msg);
                     chatRecord.append(clientData.getStr() + "\n");
 
                     clientDom4j.createRecord(chatRecord.getText());
@@ -639,20 +607,20 @@ class ChatClient {
     }
 
     //登录监听，设置XML路径
-    public void ClientConnect() {
-        connectServer.connect();//客户端连接服务端
+    public void clientLogin() {
+        clientConnectServer.connectServer();//客户端连接服务端
         //登录名不能为空，为空则set null，重新输入
         if ((clientName.getText().trim().length() >= 1) && clientDom4j.queryElement(clientName.getText())) {
 //            btnConnect.setEnabled(false);
             btnConnect.setText("退出");
             clientName.setEnabled(false);
             clientData.setName(clientName.getText());
-            clientData.setPort(String.valueOf(connectServer.getClientSocket().getLocalPort() + 1));
+            clientData.setPort(String.valueOf(clientConnectServer.getClientSocket().getLocalPort() + 1));
             String msg = clientData.buildMsg(clientData.getName(), clientData.getPort());
             dirPath = "D:/" + clientData.getName() + "-" + new DayTime().getDateString();
             filePath = dirPath + File.separator + clientData.getName() + "-" + "ChatRecord.xml";
             try {
-                clientData.sendData(connectServer.getDosWithServer(), msg);//客户端向服务端发送登录信息
+                clientData.sendData(clientConnectServer.getDosWithServer(), msg);//客户端向服务端发送登录信息
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
@@ -669,13 +637,13 @@ class ChatClient {
     }
 
     //需要关闭流和socket以及进程，设为false
-    public void ClientExit() {
+    public void clientExit() {
         btnConnect.setText("登录");
         clientName.setEnabled(true);
         //客户端断开与服务端的连接
-        connectServer.close();
+        clientConnectServer.close();
         //客户端客户端断开与客户端服务端的连接
-        connectPeerClient.close();
+        clientConnectPeerClient.close();
         //客户端作为服务端关闭，结束while循环
         clientServer.close();
         //客户端接收客户端消息关闭，结束while循环
@@ -695,7 +663,7 @@ class ChatClient {
     }
 
     //连接peer监听
-    public void ConnectPeer() {
+    public void connectPeer() {
         //设置一个listener标志位，下线后JList会有监听，不采取任何动作
         if (!listener) {
             String peer = String.valueOf(clientList.getSelectedValue());
@@ -705,17 +673,17 @@ class ChatClient {
             System.out.println("选中项" + peer);
             if (peer != null && !peer.equals("群聊")) {
                 //点击peer之后直接开2条路
-                connectPeerClient.connectPeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
-                connectPeerClientFile.connectPeer(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
+                clientConnectPeerClient.connectPeerClient(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
+                clientConnectPeerClientFile.connectPeerClient(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
             } else {
                 //断开P2P连接，默认群聊,顺序不要错
-                connectPeerClient.setSendClientFalse();
-                connectPeerClientFile.setReceiveClientFalse();
+                clientConnectPeerClient.setSendToClient(false);
+                clientConnectPeerClientFile.setReceiveFromClient(false);
             }
         }
     }
 
-    public void OpenFileChooser() {
+    public void openFileChooser() {
         //设置文件传送true
         fileTransmit.chooseFile();
         //起一个新的连接
@@ -723,7 +691,7 @@ class ChatClient {
         chatBox.setText(fileTransmit.getFolderPath());
     }
 
-    public void SaveFileChooser() {
+    public void saveFileChooser() {
         fileTransmit.saveFile();
         //打开保存对话框，确定路径后再启动线程
 //        if (fileTransmit.getReceive()) {
@@ -746,8 +714,8 @@ class ChatClient {
         @Override
         public void run() {
             try {
-                clientServerSocket = new ServerSocket(connectServer.getClientSocket().getLocalPort() + 1);
-                System.out.println("自己的端口" + connectServer.getClientSocket().getLocalPort());
+                clientServerSocket = new ServerSocket(clientConnectServer.getClientSocket().getLocalPort() + 1);
+                System.out.println("自己的端口" + clientConnectServer.getClientSocket().getLocalPort());
                 start = true;
             } catch (BindException e) {
                 System.out.println("端口使用中");
@@ -759,10 +727,10 @@ class ChatClient {
                 //每次连接2条路
                 while (start) {
                     Socket socket = clientServerSocket.accept();
-                    Socket socketFile = clientServerSocket.accept();
+                    Socket fileSocket = clientServerSocket.accept();
 
                     peerClient = new PeerClient(socket);
-                    peerClientFile = new PeerClient(socketFile);
+                    peerClientFile = new PeerClient(fileSocket);
                     receivePeerMsg = new ReceivePeerMsg(peerClient);
                     receivePeerFile = new ReceivePeerFile(peerClientFile);
                     System.out.println("客户端已连接");
@@ -806,18 +774,18 @@ class ChatClient {
 
         public ReceivePeerMsg(PeerClient peerClient) {
             this.peerClient = peerClient;
-            connectPeerClient.setReceiveClientTrue();//接收标志位，有别于发送标志位
+            clientConnectPeerClient.setReceiveFromClient(true);//接收标志位，有别于发送标志位
         }
 
         public void close() {
 //            peerClient.close();
-            connectPeerClient.setReceiveClientFalse();
+            clientConnectPeerClient.setReceiveFromClient(false);
         }
 
         @Override
         public void run() {
             try {
-                while (connectPeerClient.getReceiveClient()) {
+                while (clientConnectPeerClient.getReceiveFromClient()) {
                     String data = clientData.receiveData(peerClient.getDisWithPeer());
                     receiveData = new ReceiveData(data);
                     //只需判断是否是给本人发送信息，内容不可能为空，因为发送时以判定内容不能为空，如果是给本人发送的，Record不set信息
@@ -829,7 +797,7 @@ class ChatClient {
                     }
                 }
             } catch (SocketException e) {
-                connectPeerClient.setReceiveClientFalse();//接收置位false，停止接收
+                clientConnectPeerClient.setReceiveFromClient(false);//接收置位false，停止接收
                 System.out.println("客户端关闭1");
             } catch (EOFException e) {
                 System.out.println("客户端关闭2");
@@ -845,7 +813,7 @@ class ChatClient {
     class ReceiveServerMsg implements Runnable {
         ReceiveData receiveData;
         String data = null;
-        String name_and_port = null;
+        String namePort = null;
 
         //刷新在线列表
         public void addLists() {
@@ -853,7 +821,7 @@ class ChatClient {
             receiveData.clearClientInfo();
             listModel.removeAllElements();
             listModel.addElement("群聊");
-            for (String listName : receiveData.getListNames()) {
+            for (String listName : receiveData.getNamePortList()) {
                 String SEPARATOR = "\r";
                 listModel.addElement(listName.split(SEPARATOR)[0]);
                 receiveData.putClientInfo(listName.split(SEPARATOR)[0], listName.split(SEPARATOR)[1]);
@@ -865,17 +833,17 @@ class ChatClient {
         }
 
         public void close() {
-            ConnectServer.connectedWithServer = false;
+            clientConnectServer.setConnectWithServer(false);
         }
 
-        //while放到try里面，setSendClientFalse()放到if里面
+        //while放到try里面，setSendToClientFalse()放到if里面
         @Override
         public void run() {
             try {
-                while (ConnectServer.connectedWithServer) {
-                    data = clientData.receiveData(connectServer.getDisWithServer());
-                    name_and_port = clientData.receiveData(connectServer.getDisWithServer());
-                    receiveData = new ReceiveData(data, name_and_port);
+                while (clientConnectServer.getConnectWithServer()) {
+                    data = clientData.receiveData(clientConnectServer.getDisWithServer());
+                    namePort = clientData.receiveData(clientConnectServer.getDisWithServer());
+                    receiveData = new ReceiveData(data, namePort);
                     //Swing多线程，判断str长度是否为空，invokeLater，解决窗口没有反应，重新登录或下线才可能恢复正常的bug
                     if (receiveData.getStr().length() == 0) {
                         EventQueue.invokeLater(this::addLists);
@@ -884,7 +852,7 @@ class ChatClient {
 //                            receiveData.addLists();
 //                        }
 //                    });
-                        connectPeerClient.setSendClientFalse();//下线后JList全部清空，默认群聊
+                        clientConnectPeerClient.setSendToClient(false);//下线后JList全部清空，默认群聊
                     }
                     //判断是普通消息还是注册信息，普通消息不可能为空，注册消息为空
                     if (receiveData.getStr().length() != 0) {
@@ -896,7 +864,7 @@ class ChatClient {
             } catch (SocketException e) {
                 System.out.println("服务端关闭1");
                 //用来判断是客户端断开还是服务端断开，服务端断开为true，客户端断开为false
-                if (ConnectServer.connectedWithServer) {
+                if (clientConnectServer.getConnectWithServer()) {
                     System.exit(0);
                 }
             } catch (EOFException e) {
@@ -914,13 +882,18 @@ class ChatClient {
     }
 }
 
+/**
+ * 发送线程启动，向接收方发送文件名，接收方接收到文件名后，阻塞，等待saveFile生成路径，
+ * 生成路径后，唤起接收线程，向发送方返回Agree，然后直接启动接收，发送方接收到Agree后，
+ * 执行发送（接收线程的启动先于发送线程）
+ */
+
 class FileTransmit {
     private static String folderPath = "";
-    private static String folderName = "";
+    private static String fileName = "";
     private long totalLen = 0L;
     private static boolean isSend = false;
     private boolean isReceive = false;
-    private boolean isOver = false;
     private static final int BUF_LEN = 102400;
     private File file;
     private FileInputStream fileInputStream;
@@ -932,7 +905,7 @@ class FileTransmit {
 
     //set 文件名为发送来的文件名，用于接收并存储
     public void setFolderName(String folderName) {
-        this.folderName = folderName;
+        this.fileName = folderName;
     }
 
     public void setFolderPath(String folderPath) {
@@ -943,8 +916,8 @@ class FileTransmit {
         return folderPath;
     }
 
-    public String getFolderName() {
-        return folderName;
+    public String getFileName() {
+        return fileName;
     }
 
     public boolean getSend() {
@@ -966,12 +939,11 @@ class FileTransmit {
             //输出文件大小
             long l = file.length();
             System.out.println(l);
-            this.folderPath = file.getAbsolutePath();
-            this.folderName = file.getName();
-            this.isSend = true;
+            folderPath = file.getAbsolutePath();
+            fileName = file.getName();
+            isSend = true;
             System.out.println("发送文件夹:" + folderPath);
-            System.out.println("发送文件:" + folderName);
-
+            System.out.println("发送文件:" + fileName);
         }
     }
 
@@ -987,15 +959,14 @@ class FileTransmit {
             //接收文件名字不变，路径自设
             lock.lock();
             try {
-                this.folderPath = file.getAbsolutePath();
+                folderPath = file.getAbsolutePath();
                 condition.signal();
             } finally {
                 lock.unlock();
             }
             this.isReceive = true;
             System.out.println("接收文件夹:" + folderPath);
-            System.out.println("接收文件:" + folderName);
-
+            System.out.println("接收文件:" + fileName);
         }
     }
 
@@ -1025,11 +996,9 @@ class FileTransmit {
         this.dosWithPeer = dataOutputStream;
         byte[] sendBuffer = new byte[BUF_LEN];
         int length = 0;
-
         file = new File(folderPath);
-        System.out.println("fasong文件:" + folderPath);
         try {
-            dosWithPeer.writeUTF(folderName);
+            dosWithPeer.writeUTF(fileName);
             String allow = disWithPeer.readUTF();
             if (allow.equals("Agree")) {
                 //发送文件
@@ -1058,19 +1027,17 @@ class FileTransmit {
 
 
     public void receiveFile(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
-        System.out.println("接收循环跑了吗");
         this.disWithPeer = dataInputStream;
         this.dosWithPeer = dataOutputStream;
         byte[] receiveBuffer = new byte[BUF_LEN];
         int length = 0;
-
         try {
-            folderName = disWithPeer.readUTF();
+            fileName = disWithPeer.readUTF();
 
             lock.lock();
             try {
                 condition.await();
-                folderPath = folderPath + File.separator + folderName;
+                folderPath = folderPath + File.separator + fileName;
             } finally {
                 lock.unlock();
             }
