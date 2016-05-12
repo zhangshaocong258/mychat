@@ -591,8 +591,9 @@ class ChatClient {
     //发送文件
     public void sendFile() {
         chatBox.setText(null);//清空输入框的文件信息
+        fileTransmit.connect(clientConnectPeerClientFile.getDisWithPeer(), clientConnectPeerClientFile.getDosWithPeer());
         //传输文件
-        fileTransmit.sendRunnable(clientConnectPeerClientFile.getDosWithPeer(), clientConnectPeerClientFile.getDisWithPeer());
+        fileTransmit.sendRunnable();
     }
 
     //发送信息
@@ -788,7 +789,8 @@ class ChatClient {
 
         @Override
         public void run() {
-            fileTransmit.receiveRunnable(peerClientFile.getDisWithPeer(), peerClientFile.getDosWithPeer());
+            fileTransmit.connect(peerClientFile.getDisWithPeer(), peerClientFile.getDosWithPeer());
+            fileTransmit.receiveRunnable();
         }
     }
 
@@ -948,6 +950,11 @@ class FileTransmit {
         return isReceive;
     }
 
+    public void connect(DataInputStream dataInputStream, DataOutputStream dataOutputStream){
+        this.disWithPeer = dataInputStream;
+        this.dosWithPeer = dataOutputStream;
+    }
+
 
     public void chooseFile() {
         JFileChooser jFileChooser = new JFileChooser();
@@ -990,30 +997,28 @@ class FileTransmit {
         }
     }
 
-    public void sendRunnable(DataOutputStream dataOutputStream, DataInputStream dataInputStream) {
+    public void sendRunnable() {
         Runnable send = new Runnable() {
             @Override
             public void run() {
-                sendFile(dataOutputStream, dataInputStream);
+                sendFile();
             }
         };
         new Thread(send).start();
     }
 
-    public void receiveRunnable(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+    public void receiveRunnable() {
         Runnable receive = new Runnable() {
             @Override
             public void run() {
-                receiveFile(dataInputStream, dataOutputStream);
+                receiveFile();
             }
         };
         new Thread(receive).start();
     }
 
-    public void sendFile(DataOutputStream dataOutputStream, DataInputStream dataInputStream) {
+    public void sendFile() {
         this.isSend = false;
-        this.disWithPeer = dataInputStream;
-        this.dosWithPeer = dataOutputStream;
         byte[] sendBuffer = new byte[BUF_LEN];
         int length = 0;
         File file = new File(folderPath);
@@ -1046,9 +1051,7 @@ class FileTransmit {
     }
 
 
-    public void receiveFile(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
-        this.disWithPeer = dataInputStream;
-        this.dosWithPeer = dataOutputStream;
+    public void receiveFile() {
         byte[] receiveBuffer = new byte[BUF_LEN];
         int length = 0;
         try {
