@@ -195,32 +195,60 @@ public class ChatClientFrame {
  * 由上层关闭
  */
 
+class IOUtil{
+    private Socket socket = null;//客户端的服务端
+    private DataInputStream dataInputStream = null;
+    private DataOutputStream dataOutputStream = null;
+
+    public DataInputStream getDataInputStream() {
+        return dataInputStream;
+    }
+
+    public void setDataInputStream(DataInputStream dataInputStream) {
+        this.dataInputStream = dataInputStream;
+    }
+
+    public DataOutputStream getDataOutputStream() {
+        return dataOutputStream;
+    }
+
+    public void setDataOutputStream(DataOutputStream dataOutputStream) {
+        this.dataOutputStream = dataOutputStream;
+    }
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
+    }
+}
+
 //out仅在传送文件的流中使用
 class PeerClient {
-    private Socket peerSocket = null;//客户端的服务端
-    private DataInputStream disWithPeer = null;
-    private DataOutputStream dosWithPeer = null;
+    private IOUtil ioUtil = new IOUtil();
 
     public PeerClient(Socket peerSocket) {
-        this.peerSocket = peerSocket;
+        ioUtil.setSocket(peerSocket);
         try {
-            disWithPeer = new DataInputStream(peerSocket.getInputStream());
-            dosWithPeer = new DataOutputStream(peerSocket.getOutputStream());
+            ioUtil.setDataInputStream(new DataInputStream(peerSocket.getInputStream()));
+            ioUtil.setDataOutputStream(new DataOutputStream(peerSocket.getOutputStream()));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public DataInputStream getDisWithPeer() {
-        return disWithPeer;
+        return ioUtil.getDataInputStream();
     }
 
     public DataOutputStream getDosWithPeer() {
-        return dosWithPeer;
+        return ioUtil.getDataOutputStream();
     }
 
     public void close() {
-        Disconnect.disconnect(null, peerSocket, disWithPeer, dosWithPeer);
+        Disconnect.disconnect(null, ioUtil.getSocket(), ioUtil.getDataInputStream(), ioUtil.getDataOutputStream());
     }
 }
 
@@ -232,24 +260,23 @@ class ClientConnectPeerClient {
     //两个标志位
     private static boolean sendToClient = false;
     private static boolean receiveFromClient = false;
-    private Socket socketWithPeerClient = null;
-    private DataInputStream disWithPeer;
-    private DataOutputStream dosWithPeer;
+    private IOUtil ioUtil = new IOUtil();
+
     //客户端连接客户端
     public void connectPeerClient(int peerClientPort) {
         try {
-            socketWithPeerClient = new Socket("127.0.0.1", peerClientPort);
-            disWithPeer = new DataInputStream(socketWithPeerClient.getInputStream());
-            dosWithPeer = new DataOutputStream(socketWithPeerClient.getOutputStream());
+            ioUtil.setSocket(new Socket("127.0.0.1", peerClientPort));
+            ioUtil.setDataInputStream(new DataInputStream(ioUtil.getSocket().getInputStream()));
+            ioUtil.setDataOutputStream(new DataOutputStream(ioUtil.getSocket().getOutputStream()));
             sendToClient = true;
-            System.out.println("连接上的端口号" + socketWithPeerClient.getLocalPort());
+            System.out.println("连接上的端口号" + ioUtil.getSocket().getLocalPort());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void close() {
-        Disconnect.disconnect(null, socketWithPeerClient, disWithPeer, dosWithPeer);
+        Disconnect.disconnect(null, ioUtil.getSocket(), ioUtil.getDataInputStream(), ioUtil.getDataOutputStream());
     }
 
     public void setSendToClient(boolean sendToClient) {
@@ -269,11 +296,11 @@ class ClientConnectPeerClient {
     }
 
     public DataInputStream getDisWithPeer() {
-        return disWithPeer;
+        return ioUtil.getDataInputStream();
     }
 
     public DataOutputStream getDosWithPeer() {
-        return dosWithPeer;
+        return ioUtil.getDataOutputStream();
     }
 }
 
@@ -282,34 +309,16 @@ class ClientConnectPeerClient {
  */
 class ClientConnectServer {
     private static boolean connectWithServer = false;
-    private Socket clientSocket = null;//Client自己的scoket
-    private DataInputStream disWithServer;
-    private DataOutputStream dosWithServer;
+    private IOUtil ioUtil = new IOUtil();
     public void setConnectWithServer(boolean connectWithServer) {
         ClientConnectServer.connectWithServer = connectWithServer;
     }
 
-    public boolean getConnectWithServer() {
-        return connectWithServer;
-    }
-
-    public Socket getClientSocket() {
-        return clientSocket;
-    }
-
-    public DataInputStream getDisWithServer() {
-        return disWithServer;
-    }
-
-    public DataOutputStream getDosWithServer() {
-        return dosWithServer;
-    }
-
     public void connectServer() {
         try {
-            clientSocket = new Socket("127.0.0.1", 30000);
-            dosWithServer = new DataOutputStream(clientSocket.getOutputStream());
-            disWithServer = new DataInputStream(clientSocket.getInputStream());
+            ioUtil.setSocket(new Socket("127.0.0.1", 30000));
+            ioUtil.setDataInputStream(new DataInputStream(ioUtil.getSocket().getInputStream()));
+            ioUtil.setDataOutputStream(new DataOutputStream(ioUtil.getSocket().getOutputStream()));
             connectWithServer = true;
             System.out.println("客户端已连接");
         } catch (UnknownHostException e) {
@@ -322,8 +331,24 @@ class ClientConnectServer {
         }
     }
 
+    public boolean getConnectWithServer() {
+        return connectWithServer;
+    }
+
+    public Socket getClientSocket() {
+        return ioUtil.getSocket();
+    }
+
+    public DataInputStream getDisWithServer() {
+        return ioUtil.getDataInputStream();
+    }
+
+    public DataOutputStream getDosWithServer() {
+        return ioUtil.getDataOutputStream();
+    }
+
     public void close() {
-        Disconnect.disconnect(null, clientSocket, disWithServer, dosWithServer);
+        Disconnect.disconnect(null, ioUtil.getSocket(), ioUtil.getDataInputStream(), ioUtil.getDataOutputStream());
         connectWithServer = false;
     }
 }
