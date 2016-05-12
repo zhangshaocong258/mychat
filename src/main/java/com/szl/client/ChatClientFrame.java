@@ -196,7 +196,7 @@ public class ChatClientFrame {
  */
 
 class IOUtil{
-    private Socket socket = null;//客户端的服务端
+    private Socket socket = null;
     private DataInputStream dataInputStream = null;
     private DataOutputStream dataOutputStream = null;
 
@@ -360,7 +360,7 @@ class ReceiveData {
     private String name = "";
     private String str = "";
     private static Map<String, String> clientInfo = new HashMap<>();//name和port
-    private List<String> namePortList = null;
+    private List<String> namePortList = null;//List初始化问题？
 
     private String DELIMITER = "\f";
 
@@ -505,8 +505,8 @@ class ChatClient {
     private ClientData clientData = new ClientData();//发送用户登录信息，封装了buildMsg、send和receive
     private ClientConnectPeerClient clientConnectPeerClient = new ClientConnectPeerClient();//客户端连接客户端服务端，本身是客户端的客户端
     private ClientConnectPeerClient clientConnectPeerClientFile = new ClientConnectPeerClient();
-    private PeerClient peerClient;
-    private PeerClient peerClientFile;
+//    private PeerClient peerClient;
+//    private PeerClient peerClientFile;
 
     private FileTransmit fileTransmit = new FileTransmit();
 
@@ -574,9 +574,9 @@ class ChatClient {
 
     private ClientDom4j clientDom4j = new ClientDom4j();
 
-    private String dirPath;
+    private String dirPath = "";
 
-    private String filePath;
+    private String filePath = "";
 
 
     //send文件和聊天信息分开
@@ -727,9 +727,10 @@ class ChatClient {
     //客户端作为服务端
     class ClientServer implements Runnable {
         private ServerSocket clientServerSocket = null;
-        //        private PeerClient peerClient;
-        private ReceivePeerMsg receivePeerMsg;
-        private ReceivePeerFile receivePeerFile;
+        private PeerClient peerClient = null;
+        private PeerClient peerClientFile = null;
+        private ReceivePeerMsg receivePeerMsg = null;
+        private ReceivePeerFile receivePeerFile = null;
         private boolean start = false;
 
         public void close() {
@@ -779,7 +780,7 @@ class ChatClient {
 
     //接收文件信息
     class ReceivePeerFile implements Runnable {
-        private PeerClient peerClientFile;
+        private PeerClient peerClientFile = null;
 
         public ReceivePeerFile(PeerClient peerClientFile) {
             this.peerClientFile = peerClientFile;
@@ -836,9 +837,9 @@ class ChatClient {
 
     //接收服务端信息,没有finally，因为connectServer另有地方关闭它
     class ReceiveServerMsg implements Runnable {
-        ReceiveData receiveData;
-        String data = null;
-        String namePort = null;
+        ReceiveData receiveData = null;
+        String data = "";
+        String namePort = "";
 
         //刷新在线列表
         public void addLists() {
@@ -898,11 +899,6 @@ class ChatClient {
             } catch (IOException e) {
                 System.out.println("服务端关闭3");
             }
-//                try {
-//
-//                } catch (Exception e) {
-//                    System.out.println("客户端关闭");
-//                }
         }
     }
 }
@@ -920,7 +916,6 @@ class FileTransmit {
     private static boolean isSend = false;
     private boolean isReceive = false;
     private static final int BUF_LEN = 102400;
-    private File file;
     private FileInputStream fileInputStream;
     private FileOutputStream fileOutputStream;
     private DataInputStream disWithPeer;
@@ -960,7 +955,7 @@ class FileTransmit {
         int returnVal = jFileChooser.showOpenDialog(null);
         //点击打开后，发送框显示地址，点发送，接收方先收到信息，显示接收按钮，按下后设置接收地址，在接收
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            file = jFileChooser.getSelectedFile();
+            File file = jFileChooser.getSelectedFile();
             //输出文件大小
             long l = file.length();
             System.out.println(l);
@@ -978,7 +973,7 @@ class FileTransmit {
         int returnVal = jFileChooser.showSaveDialog(null);
         //点击打开后，发送框显示地址，点发送，接收方先收到信息，显示接收按钮，按下后设置接收地址，在接收
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            file = jFileChooser.getSelectedFile();
+            File file = jFileChooser.getSelectedFile();
             //输出文件大小
             long l = file.length();
             //接收文件名字不变，路径自设
@@ -1021,7 +1016,7 @@ class FileTransmit {
         this.dosWithPeer = dataOutputStream;
         byte[] sendBuffer = new byte[BUF_LEN];
         int length = 0;
-        file = new File(folderPath);
+        File file = new File(folderPath);
         try {
             dosWithPeer.writeUTF(fileName);
             String allow = disWithPeer.readUTF();
@@ -1058,7 +1053,6 @@ class FileTransmit {
         int length = 0;
         try {
             fileName = disWithPeer.readUTF();
-
             lock.lock();
             try {
                 condition.await();
@@ -1071,13 +1065,14 @@ class FileTransmit {
             while ((length = disWithPeer.read(receiveBuffer, 0, receiveBuffer.length)) > 0) {
                 fileOutputStream.write(receiveBuffer, 0, length);
                 fileOutputStream.flush();
-                System.out.println("接收方length  " + length);
             }
             System.out.println("接收方结束循环");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("文件传输流关闭");
+//            e.printStackTrace();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println("同步锁");
+//            e.printStackTrace();
         } finally {
             try {
                 if (fileOutputStream != null)
@@ -1133,7 +1128,7 @@ class FileTransmit {
 }*/
 
 class ClientDom4j extends Dom4jXML {
-    private String clientsListPath;
+    private String clientsListPath = "";
 
     public ClientDom4j() {
         this.clientsListPath = "D:/ChatServer/ClientsList.xml";
