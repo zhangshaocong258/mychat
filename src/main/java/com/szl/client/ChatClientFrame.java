@@ -17,10 +17,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -195,7 +193,7 @@ public class ChatClientFrame {
  * 由上层关闭
  */
 
-class IOUtil{
+class IOUtil {
     private Socket socket = null;
     private DataInputStream dataInputStream = null;
     private DataOutputStream dataOutputStream = null;
@@ -310,6 +308,7 @@ class ClientConnectPeerClient {
 class ClientConnectServer {
     private static boolean connectWithServer = false;
     private IOUtil ioUtil = new IOUtil();
+
     public void setConnectWithServer(boolean connectWithServer) {
         ClientConnectServer.connectWithServer = connectWithServer;
     }
@@ -913,10 +912,10 @@ class ChatClient {
 
 class FileTransmit {
     private static String folderPath = "";
-    private static String fileName = "";
+    private static String folderName = "";
+    private int index;
     private long totalLen = 0L;
     private static boolean isSend = false;
-    private boolean isReceive = false;
     private static final int BUF_LEN = 102400;
     private FileInputStream fileInputStream;
     private FileOutputStream fileOutputStream;
@@ -926,35 +925,29 @@ class FileTransmit {
     private Condition condition = lock.newCondition();
 
     //set 文件名为发送来的文件名，用于接收并存储
-    public void setFolderName(String folderName) {
-        this.fileName = folderName;
-    }
-
-    public void setFolderPath(String folderPath) {
-        this.folderPath = folderPath;
-    }
-
     public String getFolderPath() {
         return folderPath;
-    }
-
-    public String getFileName() {
-        return fileName;
     }
 
     public boolean getSend() {
         return isSend;
     }
 
-    public boolean getReceive() {
-        return isReceive;
-    }
-
-    public void connect(DataInputStream dataInputStream, DataOutputStream dataOutputStream){
+    public void connect(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
         this.disWithPeer = dataInputStream;
         this.dosWithPeer = dataOutputStream;
     }
 
+    public void close() {
+        try {
+            if (disWithPeer != null)
+                disWithPeer.close();
+            if (dosWithPeer != null)
+                dosWithPeer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void chooseFile() {
         JFileChooser jFileChooser = new JFileChooser();
@@ -967,10 +960,8 @@ class FileTransmit {
             long l = file.length();
             System.out.println(l);
             folderPath = file.getAbsolutePath();
-            fileName = file.getName();
+            folderName = file.getName();
             isSend = true;
-            System.out.println("发送文件夹:" + folderPath);
-            System.out.println("发送文件:" + fileName);
         }
     }
 
@@ -991,9 +982,6 @@ class FileTransmit {
             } finally {
                 lock.unlock();
             }
-            this.isReceive = true;
-            System.out.println("接收文件夹:" + folderPath);
-            System.out.println("接收文件:" + fileName);
         }
     }
 
@@ -1001,7 +989,19 @@ class FileTransmit {
         Runnable send = new Runnable() {
             @Override
             public void run() {
-                sendFile();
+                File folder = new File(folderPath);
+                index = folderPath.length() - folderName.length();
+                if (folder.isFile()) {
+//                    totalLen = folder.length();
+                    sendFile(folder);
+                } else {
+                    sendFolder(folder);
+                }
+                try {
+                    dosWithPeer.writeUTF("endTransmit");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
         new Thread(send).start();
@@ -1011,28 +1011,86 @@ class FileTransmit {
         Runnable receive = new Runnable() {
             @Override
             public void run() {
-                receiveFile();
+                String finalFolderPath = "";
+                try {
+                    lock.lock();
+                    try {
+                        condition.await();
+                        finalFolderPath = folderPath;//接收时手动窗口选择的顶层路径
+                    } finally {
+                        lock.unlock();
+                    }
+                    while (true) {
+                        String firstRead = disWithPeer.readUTF();
+                        if (firstRead.equals("sendFile")) {
+                            receiveFile(finalFolderPath);//仅文件
+                        } else if (firstRead.equals("sendFolder")) {
+                            String subFolder = disWithPeer.readUTF();//发送方的selectFolderPath子目录
+                            finalFolderPath = folderPath + File.separator + subFolder;
+                            //生成子目录
+                            File file = new File(finalFolderPath);
+                            file.mkdirs();
+                        } else if (firstRead.equals("endTransmit")) {
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    System.out.println("同步锁");
+                    e.printStackTrace();
+                }
             }
         };
         new Thread(receive).start();
     }
 
-    public void sendFile() {
+    private void sendFolder(File folder) {
+        String selectFolderPath = folder.getAbsolutePath().substring(index);//选择的文件夹名字
+        try {
+            dosWithPeer.writeUTF("sendFolder");
+            dosWithPeer.writeUTF(selectFolderPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        File[] files = folder.listFiles();
+        List<File> listFile = new ArrayList<>();
+        List<File> listFolder = new ArrayList<>();
+        for (File file : files) {
+            if (file.isFile()) {
+                listFile.add(file);
+            } else if (file.isDirectory()) {
+                listFolder.add(file);
+            }
+        }
+        //转换为foreach
+        for (File file : listFile) {
+            sendFile(file);
+        }
+        for (File file : listFolder) {
+            sendFolder(file);
+        }
+    }
+
+    public void sendFile(File file) {
         this.isSend = false;
         byte[] sendBuffer = new byte[BUF_LEN];
-        int length = 0;
-        File file = new File(folderPath);
+        int length;
         try {
-            dosWithPeer.writeUTF(fileName);
+            dosWithPeer.writeUTF("sendFile");
+            dosWithPeer.writeUTF(file.getName());
             String allow = disWithPeer.readUTF();
             if (allow.equals("Agree")) {
                 //发送文件
                 fileInputStream = new FileInputStream(file);
-                while ((length = fileInputStream.read(sendBuffer, 0, sendBuffer.length)) > 0) {
-                    System.out.println("length " + length);
+                length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
+                while (length > 0) {
+                    dosWithPeer.writeInt(length);
                     dosWithPeer.write(sendBuffer, 0, length);
                     dosWithPeer.flush();
+                    length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
                 }
+                dosWithPeer.writeInt(length);//-1
                 System.out.println("发送方结束循环" + length);
             }
         } catch (IOException e) {
@@ -1042,8 +1100,6 @@ class FileTransmit {
             try {
                 if (fileInputStream != null)
                     fileInputStream.close();
-                if (dosWithPeer != null)
-                    dosWithPeer.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -1051,37 +1107,29 @@ class FileTransmit {
     }
 
 
-    public void receiveFile() {
+    public void receiveFile(String finalFolderPath) {
         byte[] receiveBuffer = new byte[BUF_LEN];
-        int length = 0;
+        int length;
         try {
-            fileName = disWithPeer.readUTF();
-            lock.lock();
-            try {
-                condition.await();
-                folderPath = folderPath + File.separator + fileName;
-            } finally {
-                lock.unlock();
-            }
-            fileOutputStream = new FileOutputStream(new File(folderPath));
+            folderName = disWithPeer.readUTF();
+            String finalFilePath = finalFolderPath + File.separator + folderName;
+            fileOutputStream = new FileOutputStream(new File(finalFilePath));
             dosWithPeer.writeUTF("Agree");
-            while ((length = disWithPeer.read(receiveBuffer, 0, receiveBuffer.length)) > 0) {
+            length = disWithPeer.readInt();
+            while (length > 0) {
+                disWithPeer.readFully(receiveBuffer, 0, length);//read到length才返回，若用read，可能不到length就返回
                 fileOutputStream.write(receiveBuffer, 0, length);
                 fileOutputStream.flush();
+                length = disWithPeer.readInt();
             }
             System.out.println("接收方结束循环");
         } catch (IOException e) {
             System.out.println("文件传输流关闭");
 //            e.printStackTrace();
-        } catch (InterruptedException e) {
-            System.out.println("同步锁");
-//            e.printStackTrace();
         } finally {
             try {
                 if (fileOutputStream != null)
                     fileOutputStream.close();
-                if (disWithPeer != null)
-                    disWithPeer.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
