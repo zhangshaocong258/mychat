@@ -1083,19 +1083,26 @@ class FileTransmit {
         Runnable send = new Runnable() {
             @Override
             public void run() {
-                File folder = new File(folderPath);
-                index = folderPath.length() - folderName.length();
-                long beginTime = System.currentTimeMillis();
-                if (folder.isFile()) {
-                    totalLen = folder.length();
-                    sendFile(folder);
-                } else {
-                    getFolderTotalLen(folderPath);
-                    sendFolder(folder);
-                }
-                long endTime = System.currentTimeMillis();
                 try {
+                    File folder = new File(folderPath);
+                    index = folderPath.length() - folderName.length();
+                    long beginTime = 0L;
+                    long endTime;
+                    String begin;
+                    begin = disWithPeer.readUTF();
+                    if (begin.equals("Agree")) {
+                        beginTime = System.currentTimeMillis();
+                        if (folder.isFile()) {
+                            totalLen = folder.length();
+                            sendFile(folder);
+                        } else {
+                            getFolderTotalLen(folderPath);
+                            sendFolder(folder);
+                        }
+                    }
+                    endTime = System.currentTimeMillis();
                     dosWithPeer.writeUTF("endTransmit");
+                    dosWithPeer.writeLong(totalLen);
                     useTime = getUseTime(endTime - beginTime);
                     speed = getSpeed(endTime - beginTime, totalLen);
                     ChatClient.appendChatMsg("文件【" + folderName + "】发送完毕, 传送用时: "
@@ -1104,6 +1111,7 @@ class FileTransmit {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
             }
         };
         new Thread(send).start();
@@ -1114,6 +1122,8 @@ class FileTransmit {
             @Override
             public void run() {
                 String finalFolderPath = "";
+                long beginTime = 0L;
+                long endTime;
                 try {
                     lock.lock();
                     try {
@@ -1122,6 +1132,8 @@ class FileTransmit {
                     } finally {
                         lock.unlock();
                     }
+                    dosWithPeer.writeUTF("Agree");
+                    beginTime = System.currentTimeMillis();
                     while (true) {
                         String firstRead = disWithPeer.readUTF();
                         if (firstRead.equals("sendFile")) {
@@ -1136,6 +1148,13 @@ class FileTransmit {
                             break;
                         }
                     }
+                    endTime = System.currentTimeMillis();
+                    totalLen = disWithPeer.readLong();
+                    useTime = getUseTime(endTime - beginTime);
+                    speed = getSpeed(endTime - beginTime, totalLen);
+                    ChatClient.appendChatMsg("文件【" + folderName + "】发送完毕, 传送用时: "
+                            + useTime + ",速度: " + speed
+                            + " !\n");
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
@@ -1181,18 +1200,14 @@ class FileTransmit {
         try {
             dosWithPeer.writeUTF("sendFile");
             dosWithPeer.writeUTF(file.getName());
-
             //发送文件
             fileInputStream = new FileInputStream(file);
             length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
             while (length > 0) {
                 dosWithPeer.writeInt(length);
                 dosWithPeer.write(sendBuffer, 0, length);
-                System.out.println("上一句卡住了" + length);
                 dosWithPeer.flush();
-                System.out.println("flush后" + length);
                 length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
-                System.out.println("while最后的length" + length);
             }
             dosWithPeer.writeInt(length);//-1
             System.out.println("发送方结束循环" + length);
