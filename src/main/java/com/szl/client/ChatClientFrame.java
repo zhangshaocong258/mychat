@@ -632,6 +632,7 @@ class ChatClient {
         fileTransmit.connect(clientConnectPeerClientFile.getDisWithPeer(), clientConnectPeerClientFile.getDosWithPeer());
         //传输文件
         fileTransmit.sendRunnable();
+        fileTransmit.setIsSend(false);
     }
 
     //发送信息
@@ -973,7 +974,7 @@ class FileTransmit {
     private String speed = "";
     private int index;
     private long totalLen = 0L;
-    private static boolean isSend = false;
+    private boolean isSend = false;
     private static final int BUF_LEN = 102400;
     private FileInputStream fileInputStream;
     private FileOutputStream fileOutputStream;
@@ -997,6 +998,10 @@ class FileTransmit {
 
     public String getSpeed() {
         return speed;
+    }
+
+    public void setIsSend(boolean isSend){
+        this.isSend = isSend;
     }
 
     public void connect(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
@@ -1210,7 +1215,7 @@ class FileTransmit {
     }
 
     public void sendFile(File file) {
-        this.isSend = false;
+//        this.isSend = false;
         byte[] sendBuffer = new byte[BUF_LEN];
         int length;
         try {
