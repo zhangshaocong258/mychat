@@ -355,6 +355,7 @@ class ReceiveData {
     private String name = "";
     private String str = "";
     private String file = "";
+    private String fileStr = "";
     private static Map<String, String> clientInfo = new HashMap<>();//name和port
     private List<String> namePortList = null;//List初始化问题？
 
@@ -364,8 +365,10 @@ class ReceiveData {
     //客户端之间通信构造器初始化，客户peer接收的信息不可能为空
     ReceiveData(String data_from_client) {
         if (data_from_client.contains(FILE_DELIMITER)) {
+            System.out.println("进入文件接收构造");
             List<String> data_from_client_split = Arrays.asList(data_from_client.split(FILE_DELIMITER));
             this.file = data_from_client_split.get(1);
+            this.fileStr = data_from_client_split.get(0);
         }
         List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
         this.name = data_from_client_split.get(0);
@@ -394,6 +397,10 @@ class ReceiveData {
 
     public String getFile() {
         return file;
+    }
+
+    public String getFileStr(){
+        return fileStr;
     }
 
     //用于刷新在线列表
@@ -448,9 +455,9 @@ class ClientData {
         return str;
     }
 
-    public String buildFileMsg(String str){
+    public String buildFileMsg(String sender, String str){
         String FILE_DELIMITER = "\f\r\f";
-        return "file" + FILE_DELIMITER + "file" + FILE_DELIMITER + str;
+        return sender + " 发来文件 " + str + " 请接收" + FILE_DELIMITER + "file";
     }
 
     public String buildMsg(String name, String port, String str) {
@@ -640,8 +647,9 @@ class ChatClient {
             //判断信息是否为空，利用name + "：" + "说"的长度判断
             if (!isNull) {
                 if (fileTransmit.getSend()) {
-                    msg = clientData.buildFileMsg(chatBox.getText().trim());
+                    msg = clientData.buildFileMsg(clientData.getName(), chatBox.getText().trim());
                     chatBox.setText(null);
+                    clientData.sendData(clientConnectPeerClient.getDosWithPeer(), msg);
                 } else {
                     clientData.setStr(clientData.getName(),
                             String.valueOf(clientList.getSelectedValue()), clientData.formatStr(chatBox.getText().trim()));
@@ -650,18 +658,19 @@ class ChatClient {
                     msg = clientData.buildMsg(clientData.getName(),
                             clientData.getPort(), clientData.getStr());
                     chatBox.setText(null);
+                    //判断给服务器还是peer端发送信息
+                    if (!clientConnectPeerClient.getSendToClient()) {
+                        clientData.sendData(clientConnectServer.getDosWithServer(), msg);
+                    } else {
+                        clientData.sendData(clientConnectPeerClient.getDosWithPeer(), msg);
+                        chatRecord.append(clientData.getStr() + "\n");
+
+                        clientDom4j.createRecord(chatRecord.getText());
+                        clientDom4j.saveXML(Dom4jXML.getRecordDocument(), dirPath, filePath);
+                    }
                 }
 
-                //判断给服务器还是peer端发送信息
-                if (!clientConnectPeerClient.getSendToClient()) {
-                    clientData.sendData(clientConnectServer.getDosWithServer(), msg);
-                } else {
-                    clientData.sendData(clientConnectPeerClient.getDosWithPeer(), msg);
-                    chatRecord.append(clientData.getStr() + "\n");
 
-                    clientDom4j.createRecord(chatRecord.getText());
-                    clientDom4j.saveXML(Dom4jXML.getRecordDocument(), dirPath, filePath);
-                }
             } else {
                 chatRecord.append("发送的内容不能为空\n");
             }
@@ -857,7 +866,7 @@ class ChatClient {
                     //只需判断是否是给本人发送信息，内容不可能为空，因为发送时以判定内容不能为空，如果是给本人发送的，Record不set信息
                     if (!(receiveData.getName().equals(clientData.getName()))) {
                         if (receiveData.getFile().equals("file")) {
-                            System.out.println("添加状态");
+                            chatRecord.append(receiveData.getFileStr() + "\n");
                             //接收
                             jPanel.add(receive, new PropertiesGBC(2, 1, 1, 1).
                                     setAnchor(PropertiesGBC.EAST).setWeight(0, 0).setInsets(0, 5, 5, 5));
@@ -1006,10 +1015,10 @@ class FileTransmit {
         }
     }
 
-    private void getFolderTotalLen(String path) {
-        File folder = new File(path);
-        getFileLen(folder);
-    }
+//    private void getFolderTotalLen(String path) {
+//        File folder = new File(path);
+//        getFileLen(folder);
+//    }
     private void getFileLen(File folder) {
         File[] files = folder.listFiles();
         for (File file : files) {
@@ -1096,7 +1105,7 @@ class FileTransmit {
                             totalLen = folder.length();
                             sendFile(folder);
                         } else {
-                            getFolderTotalLen(folderPath);
+                            getFileLen(folder);
                             sendFolder(folder);
                         }
                     }
@@ -1122,6 +1131,9 @@ class FileTransmit {
             @Override
             public void run() {
                 String finalFolderPath = "";
+                String subFolder = "";
+                String finalFileName = "";
+                boolean firstTime = true;
                 long beginTime = 0L;
                 long endTime;
                 try {
@@ -1139,7 +1151,7 @@ class FileTransmit {
                         if (firstRead.equals("sendFile")) {
                             receiveFile(finalFolderPath);//仅文件
                         } else if (firstRead.equals("sendFolder")) {
-                            String subFolder = disWithPeer.readUTF();//发送方的selectFolderPath子目录
+                            subFolder = disWithPeer.readUTF();//发送方的selectFolderPath子目录
                             finalFolderPath = folderPath + File.separator + subFolder;
                             //生成子目录
                             File file = new File(finalFolderPath);
@@ -1147,12 +1159,16 @@ class FileTransmit {
                         } else if (firstRead.equals("endTransmit")) {
                             break;
                         }
+                        if (firstTime) {
+                            finalFileName = firstRead.equals("sendFile")? folderName : subFolder;
+                            firstTime = false;
+                        }
                     }
                     endTime = System.currentTimeMillis();
                     totalLen = disWithPeer.readLong();
                     useTime = getUseTime(endTime - beginTime);
                     speed = getSpeed(endTime - beginTime, totalLen);
-                    ChatClient.appendChatMsg("文件【" + folderName + "】发送完毕, 传送用时: "
+                    ChatClient.appendChatMsg("文件【" + finalFileName + "】发送完毕, 传送用时: "
                             + useTime + ",速度: " + speed
                             + " !\n");
                 } catch (IOException e) {
