@@ -8,6 +8,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+import org.omg.PortableInterceptor.ACTIVE;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -126,6 +127,7 @@ public class ChatClientFrame {
         //接收和文件监听
         chatClient.getFile().addActionListener(new fileListener());
         chatClient.getReceive().addActionListener(new receiveListener());
+        chatClient.getCancel().addActionListener((new cancelListener()));
         jFrame.setVisible(true);
     }
 
@@ -156,6 +158,12 @@ public class ChatClientFrame {
     private class receiveListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             chatClient.saveFileChooser();
+        }
+    }
+
+    private class cancelListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            chatClient.cancelFileTransmit();
         }
     }
 
@@ -532,10 +540,11 @@ class ChatClient {
 
     private JTextField clientName = new JTextField(10);
     private JButton btnConnect = new JButton("登录");
+
     private static JButton file = new JButton("文件");
-
-
     private static JButton receive = new JButton("接收");
+    private static JLabel rate = new JLabel("完成:  0%");
+    private static JButton cancel = new JButton("取消");
 
     private static JTextArea chatRecord = new JTextArea();
     private JTextArea chatBox = new JTextArea();
@@ -565,6 +574,15 @@ class ChatClient {
     public static JButton getReceive() {
         return receive;
     }
+
+    public static JLabel getRate(){
+        return rate;
+    }
+
+    public static JButton getCancel(){
+        return cancel;
+    }
+
 
     public static JPanel getjPanel() {
         return jPanel;
@@ -641,6 +659,7 @@ class ChatClient {
         fileTransmit.sendRunnable();
         fileTransmit.setIsSend(false);
         file.setEnabled(false);
+        fileTransmit.addRateCancel();
     }
 
     //发送信息
@@ -784,6 +803,10 @@ class ChatClient {
 //        if (fileTransmit.getReceive()) {
 //            fileTransmit.receiveRunnable(peerClient.getDisWithPeer());
 //        }
+    }
+
+    public void cancelFileTransmit(){
+        fileTransmit.close();
     }
 
     //客户端作为服务端
@@ -1022,8 +1045,31 @@ class FileTransmit {
         this.dosWithPeer = dataOutputStream;
     }
 
+    public void addRateCancel(){
+        //完成百分比
+        ChatClient.getjPanel().add(ChatClient.getRate(), new PropertiesGBC(1, 1, 1, 1).
+                setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
+
+        ChatClient.getRate().setText("完成:  0%");
+
+        //取消
+        ChatClient.getjPanel().add(ChatClient.getCancel(), new PropertiesGBC(2, 1, 1, 1).
+                setAnchor(PropertiesGBC.EAST).setWeight(0, 0).setInsets(0, 5, 5, 5));
+        ChatClient.getjFrame().validate();//刷新
+    }
+
+    public void removeRateCancel(){
+        ChatClient.getjPanel().remove(ChatClient.getRate());
+        ChatClient.getjPanel().remove(ChatClient.getCancel());
+        ChatClient.getjFrame().validate();
+    }
+
     public void close() {
         try {
+            if (fileInputStream != null)
+                fileInputStream.close();
+            if (fileOutputStream != null)
+                fileOutputStream.close();
             if (disWithPeer != null)
                 disWithPeer.close();
             if (dosWithPeer != null)
@@ -1033,10 +1079,12 @@ class FileTransmit {
         }
     }
 
-//    private void getFolderTotalLen(String path) {
-//        File folder = new File(path);
-//        getFileLen(folder);
-//    }
+    private void getFolderTotalLen(String path) {
+        this.totalLen = 0L;
+        File folder = new File(path);
+        getFileLen(folder);
+    }
+
     private void getFileLen(File folder) {
         File[] files = folder.listFiles();
         for (File file : files) {
@@ -1108,6 +1156,8 @@ class FileTransmit {
 
     public void sendRunnable() {
         Runnable send = new Runnable() {
+            private long haveSendLen = 0L;
+
             @Override
             public void run() {
                 try {
@@ -1121,25 +1171,97 @@ class FileTransmit {
                         beginTime = System.currentTimeMillis();
                         if (folder.isFile()) {
                             totalLen = folder.length();
+                            dosWithPeer.writeLong(totalLen);
                             sendFile(folder);
                         } else {
-                            getFileLen(folder);
+                            getFolderTotalLen(folderPath);//得到totalLen
+                            dosWithPeer.writeLong(totalLen);
                             sendFolder(folder);
                         }
                     }
                     endTime = System.currentTimeMillis();
                     dosWithPeer.writeUTF("endTransmit");
-                    dosWithPeer.writeLong(totalLen);
                     useTime = getUseTime(endTime - beginTime);
                     speed = getSpeed(endTime - beginTime, totalLen);
                     ChatClient.appendChatMsg("文件【" + folderName + "】发送完毕, 传送用时: "
                             + useTime + ",速度: " + speed
                             + " !\n");
                     ChatClient.getFile().setEnabled(true);
+                    removeRateCancel();
                 } catch (IOException e) {
+                    ChatClient.appendChatMsg("文件 " + folderName + " 取消传送\n");
+                    ChatClient.getFile().setEnabled(true);
+                    removeRateCancel();
                     e.printStackTrace();
                 }
 
+            }
+
+            private void sendFolder(File folder) {
+                String selectFolderPath = folder.getAbsolutePath().substring(index);//选择的文件夹名字
+                try {
+                    dosWithPeer.writeUTF("sendFolder");
+                    dosWithPeer.writeUTF(selectFolderPath);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                File[] files = folder.listFiles();
+                List<File> listFile = new ArrayList<>();
+                List<File> listFolder = new ArrayList<>();
+                for (File file : files) {
+                    if (file.isFile()) {
+                        listFile.add(file);
+                    } else if (file.isDirectory()) {
+                        listFolder.add(file);
+                    }
+                }
+                //转换为foreach
+                for (File file : listFile) {
+                    sendFile(file);
+                }
+                for (File file : listFolder) {
+                    sendFolder(file);
+                }
+            }
+
+            private void sendFile(File file) {
+                byte[] sendBuffer = new byte[BUF_LEN];
+                int length;
+                try {
+                    dosWithPeer.writeUTF("sendFile");
+                    dosWithPeer.writeUTF(file.getName());
+                    //发送文件
+                    fileInputStream = new FileInputStream(file);
+                    length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
+                    while (length > 0) {
+                        dosWithPeer.writeInt(length);
+                        dosWithPeer.write(sendBuffer, 0, length);
+                        dosWithPeer.flush();
+                        haveSendLen += length;
+                        setTransferRate(haveSendLen, totalLen);
+                        length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
+                    }
+                    dosWithPeer.writeInt(length);//-1
+                    System.out.println("发送方结束循环" + length);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.out.println("发送文件结束");
+                } finally {
+                    try {
+                        if (fileInputStream != null)
+                            fileInputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            private void setTransferRate(long haveRecvLen, long folderLen) {
+                long rate = ((haveRecvLen * 100) / folderLen);
+                ChatClient.getRate().setText("完成:  " + rate +"%");
+                ChatClient.getjFrame().validate();
+//                dataPanel.getLblInfo().setText("完成:  " + rate +"%");
             }
         };
         new Thread(send).start();
@@ -1147,11 +1269,12 @@ class FileTransmit {
 
     public void receiveRunnable() {
         Runnable receive = new Runnable() {
+            private String finalFileName = "";
+            private long haveSendLen = 0L;
             @Override
             public void run() {
                 String finalFolderPath = "";
                 String subFolder = "";
-                String finalFileName = "";
                 boolean firstTime = true;
                 long beginTime = 0L;
                 long endTime;
@@ -1164,8 +1287,9 @@ class FileTransmit {
                         lock.unlock();
                     }
                     ChatClient.getjPanel().remove(ChatClient.getReceive());
-                    ChatClient.getjFrame().validate();
+                    addRateCancel();
                     dosWithPeer.writeUTF("Agree");
+                    totalLen = disWithPeer.readLong();
                     beginTime = System.currentTimeMillis();
                     while (true) {
                         String firstRead = disWithPeer.readUTF();
@@ -1186,12 +1310,12 @@ class FileTransmit {
                         }
                     }
                     endTime = System.currentTimeMillis();
-                    totalLen = disWithPeer.readLong();
                     useTime = getUseTime(endTime - beginTime);
                     speed = getSpeed(endTime - beginTime, totalLen);
                     ChatClient.appendChatMsg("文件【" + finalFileName + "】发送完毕, 传送用时: "
                             + useTime + ",速度: " + speed
                             + " !\n");
+                    removeRateCancel();
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
@@ -1199,99 +1323,56 @@ class FileTransmit {
                     e.printStackTrace();
                 }
             }
+
+            private void receiveFile(String finalFolderPath) {
+                byte[] receiveBuffer = new byte[BUF_LEN];
+                int length;
+                try {
+                    folderName = disWithPeer.readUTF();
+                    String finalFilePath = finalFolderPath + File.separator + folderName;
+                    fileOutputStream = new FileOutputStream(new File(finalFilePath));
+                    length = disWithPeer.readInt();
+                    while (length > 0) {
+                        disWithPeer.readFully(receiveBuffer, 0, length);//read到length才返回，若用read，可能不到length就返回
+                        fileOutputStream.write(receiveBuffer, 0, length);
+                        fileOutputStream.flush();
+                        haveSendLen += length;
+                        setTransferRate(haveSendLen, totalLen);
+                        length = disWithPeer.readInt();
+                    }
+                    System.out.println("接收方结束循环");
+                } catch (IOException e) {
+                    System.out.println("文件传输流关闭");
+                    ChatClient.appendChatMsg("文件 " + finalFileName + " 取消传送\n");
+                    removeRateCancel();
+                    ChatClient.getjPanel().add(ChatClient.getReceive(), new PropertiesGBC(2, 1, 1, 1).
+                            setAnchor(PropertiesGBC.EAST).setWeight(0, 0).setInsets(0, 5, 5, 5));
+                    ChatClient.getjFrame().validate();//刷新
+//            e.printStackTrace();
+                } finally {
+                    try {
+                        if (fileOutputStream != null)
+                            fileOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            private void setTransferRate(long haveRecvLen, long folderLen) {
+                long rate = ((haveRecvLen * 100) / folderLen);
+                ChatClient.getRate().setText("完成:  " + rate +"%");
+                ChatClient.getjFrame().validate();
+//                dataPanel.getLblInfo().setText("完成:  " + rate +"%");
+            }
         };
         new Thread(receive).start();
     }
 
-    private void sendFolder(File folder) {
-        String selectFolderPath = folder.getAbsolutePath().substring(index);//选择的文件夹名字
-        try {
-            dosWithPeer.writeUTF("sendFolder");
-            dosWithPeer.writeUTF(selectFolderPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        File[] files = folder.listFiles();
-        List<File> listFile = new ArrayList<>();
-        List<File> listFolder = new ArrayList<>();
-        for (File file : files) {
-            if (file.isFile()) {
-                listFile.add(file);
-            } else if (file.isDirectory()) {
-                listFolder.add(file);
-            }
-        }
-        //转换为foreach
-        for (File file : listFile) {
-            sendFile(file);
-        }
-        for (File file : listFolder) {
-            sendFolder(file);
-        }
-    }
-
-    public void sendFile(File file) {
-//        this.isSend = false;
-        byte[] sendBuffer = new byte[BUF_LEN];
-        int length;
-        try {
-            dosWithPeer.writeUTF("sendFile");
-            dosWithPeer.writeUTF(file.getName());
-            //发送文件
-            fileInputStream = new FileInputStream(file);
-            length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
-            while (length > 0) {
-                dosWithPeer.writeInt(length);
-                dosWithPeer.write(sendBuffer, 0, length);
-                dosWithPeer.flush();
-                length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
-            }
-            dosWithPeer.writeInt(length);//-1
-            System.out.println("发送方结束循环" + length);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("发送文件结束");
-        } finally {
-            try {
-                if (fileInputStream != null)
-                    fileInputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
 
-    public void receiveFile(String finalFolderPath) {
-        byte[] receiveBuffer = new byte[BUF_LEN];
-        int length;
-        try {
-            folderName = disWithPeer.readUTF();
-            String finalFilePath = finalFolderPath + File.separator + folderName;
-            fileOutputStream = new FileOutputStream(new File(finalFilePath));
-            length = disWithPeer.readInt();
-            while (length > 0) {
-                System.out.println("while开始的length" + length);
-                disWithPeer.readFully(receiveBuffer, 0, length);//read到length才返回，若用read，可能不到length就返回
-                fileOutputStream.write(receiveBuffer, 0, length);
-                fileOutputStream.flush();
-                length = disWithPeer.readInt();
-                System.out.println("while最后的length" + length);
-            }
-            System.out.println("接收方结束循环");
-        } catch (IOException e) {
-            System.out.println("文件传输流关闭");
-//            e.printStackTrace();
-        } finally {
-            try {
-                if (fileOutputStream != null)
-                    fileOutputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
+
 
 }
 
