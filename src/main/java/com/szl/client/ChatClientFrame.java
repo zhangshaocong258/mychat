@@ -41,7 +41,6 @@ public class ChatClientFrame {
 
     private JButton send = new JButton("发送");
     private JButton clear = new JButton("清空");
-    private JButton file = new JButton("文件");
 
 
     public static void main(String[] args) {
@@ -92,8 +91,9 @@ public class ChatClientFrame {
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
         //文件
-        jPanel.add(file, new PropertiesGBC(1, 5, 1, 1).
+        jPanel.add(chatClient.getFile(), new PropertiesGBC(1, 5, 1, 1).
                 setAnchor(PropertiesGBC.EAST).setWeight(0, 0).setInsets(0, 5, 5, 5));
+        chatClient.getFile().setEnabled(false);
 
         //发送
         jPanel.add(send, new PropertiesGBC(2, 5, 1, 1).
@@ -124,7 +124,7 @@ public class ChatClientFrame {
         chatClient.getBtnConnect().addActionListener(new clientLoginListener());
         chatClient.getClientList().addListSelectionListener(new p2pListener());
         //接收和文件监听
-        file.addActionListener(new fileListener());
+        chatClient.getFile().addActionListener(new fileListener());
         chatClient.getReceive().addActionListener(new receiveListener());
         jFrame.setVisible(true);
     }
@@ -532,8 +532,10 @@ class ChatClient {
 
     private JTextField clientName = new JTextField(10);
     private JButton btnConnect = new JButton("登录");
+    private static JButton file = new JButton("文件");
 
-    private JButton receive = new JButton("接收");
+
+    private static JButton receive = new JButton("接收");
 
     private static JTextArea chatRecord = new JTextArea();
     private JTextArea chatBox = new JTextArea();
@@ -556,17 +558,22 @@ class ChatClient {
         chatRecord.append(str);
     }
 
-    public JPanel getjPanel() {
+    public static JButton getFile(){
+        return file;
+    }
+
+    public static JButton getReceive() {
+        return receive;
+    }
+
+    public static JPanel getjPanel() {
         return jPanel;
     }
 
-    public JFrame getjFrame() {
+    public static JFrame getjFrame() {
         return jFrame;
     }
 
-    public JButton getReceive() {
-        return receive;
-    }
 
     public JTextField getClientName() {
         return clientName;
@@ -633,6 +640,7 @@ class ChatClient {
         //传输文件
         fileTransmit.sendRunnable();
         fileTransmit.setIsSend(false);
+        file.setEnabled(false);
     }
 
     //发送信息
@@ -748,11 +756,16 @@ class ChatClient {
             if (peer != null && !peer.equals("群聊")) {
                 //点击peer之后直接开2条路
                 clientConnectPeerClient.connectPeerClient(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
-                clientConnectPeerClientFile.connectPeerClient(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
+                if (!peer.equals(clientData.getName().trim())) {
+                    clientConnectPeerClientFile.connectPeerClient(Integer.parseInt(ReceiveData.getClientInfo().get(peer)));
+                    file.setEnabled(true);
+                } else {
+                    clientConnectPeerClientFile.setReceiveFromClient(false);
+                    file.setEnabled(false);
+                }
             } else {
                 //断开P2P连接，默认群聊,顺序不要错
                 clientConnectPeerClient.setSendToClient(false);
-                clientConnectPeerClientFile.setReceiveFromClient(false);
             }
         }
     }
@@ -1122,6 +1135,7 @@ class FileTransmit {
                     ChatClient.appendChatMsg("文件【" + folderName + "】发送完毕, 传送用时: "
                             + useTime + ",速度: " + speed
                             + " !\n");
+                    ChatClient.getFile().setEnabled(true);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -1149,6 +1163,8 @@ class FileTransmit {
                     } finally {
                         lock.unlock();
                     }
+                    ChatClient.getjPanel().remove(ChatClient.getReceive());
+                    ChatClient.getjFrame().validate();
                     dosWithPeer.writeUTF("Agree");
                     beginTime = System.currentTimeMillis();
                     while (true) {
