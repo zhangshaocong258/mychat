@@ -377,10 +377,11 @@ class ReceiveData {
             List<String> data_from_client_split = Arrays.asList(data_from_client.split(FILE_DELIMITER));
             this.file = data_from_client_split.get(1);
             this.fileStr = data_from_client_split.get(0);
+        } else {
+            List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
+            this.name = data_from_client_split.get(0);
+            this.str = data_from_client_split.get(2);
         }
-        List<String> data_from_client_split = Arrays.asList(data_from_client.split(DELIMITER));
-        this.name = data_from_client_split.get(0);
-        this.str = data_from_client_split.get(2);
     }
 
     //客户端接收服务端信息构造器初始化，信息类型为name&port（登录或退出信息格式）或者name&port&str（普通信息格式）
@@ -407,7 +408,7 @@ class ReceiveData {
         return file;
     }
 
-    public String getFileStr(){
+    public String getFileStr() {
         return fileStr;
     }
 
@@ -463,7 +464,7 @@ class ClientData {
         return str;
     }
 
-    public String buildFileMsg(String sender, String str){
+    public String buildFileMsg(String sender, String str) {
         String FILE_DELIMITER = "\f\r\f";
         return sender + " 发来文件 " + str + " 请接收" + FILE_DELIMITER + "file";
     }
@@ -563,11 +564,11 @@ class ChatClient {
         listModel.addElement("群聊");
     }
 
-    public static void appendChatMsg(String str){
+    public static void appendChatMsg(String str) {
         chatRecord.append(str);
     }
 
-    public static JButton getFile(){
+    public static JButton getFile() {
         return file;
     }
 
@@ -575,11 +576,11 @@ class ChatClient {
         return receive;
     }
 
-    public static JLabel getRate(){
+    public static JLabel getRate() {
         return rate;
     }
 
-    public static JButton getCancel(){
+    public static JButton getCancel() {
         return cancel;
     }
 
@@ -805,8 +806,22 @@ class ChatClient {
 //        }
     }
 
-    public void cancelFileTransmit(){
+    public void cancelFileTransmit() {
         fileTransmit.close();
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                file.setEnabled(false);
+                listener = true;
+                clientList.setModel(listModel);
+                listener = false;
+                clientConnectPeerClient.setSendToClient(false);
+            }
+        });
+
+//        clientConnectPeerClientFile.
+//                connectPeerClient(Integer.parseInt(ReceiveData.getClientInfo().
+//                        get(String.valueOf(clientList.getSelectedValue()))));
+//        file.setEnabled(true);
     }
 
     //客户端作为服务端
@@ -1008,6 +1023,7 @@ class FileTransmit {
     private static String folderName = "";
     private String useTime = "";
     private String speed = "";
+    private boolean firstTime = true;//用于取消显示正确文件文件名
     private int index;
     private long totalLen = 0L;
     private boolean isSend = false;
@@ -1036,7 +1052,7 @@ class FileTransmit {
         return speed;
     }
 
-    public void setIsSend(boolean isSend){
+    public void setIsSend(boolean isSend) {
         this.isSend = isSend;
     }
 
@@ -1045,7 +1061,7 @@ class FileTransmit {
         this.dosWithPeer = dataOutputStream;
     }
 
-    public void addRateCancel(){
+    public void addRateCancel() {
         //完成百分比
         ChatClient.getjPanel().add(ChatClient.getRate(), new PropertiesGBC(1, 1, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
@@ -1058,7 +1074,7 @@ class FileTransmit {
         ChatClient.getjFrame().validate();//刷新
     }
 
-    public void removeRateCancel(){
+    public void removeRateCancel() {
         ChatClient.getjPanel().remove(ChatClient.getRate());
         ChatClient.getjPanel().remove(ChatClient.getCancel());
         ChatClient.getjFrame().validate();
@@ -1088,32 +1104,32 @@ class FileTransmit {
     private void getFileLen(File folder) {
         File[] files = folder.listFiles();
         for (File file : files) {
-            if(file.isFile()){
+            if (file.isFile()) {
                 this.totalLen += file.length();
-            }else if(file.isDirectory()){
+            } else if (file.isDirectory()) {
                 getFileLen(file);
             }
         }
     }
 
-    public String getUseTime(long time){
+    public String getUseTime(long time) {
         String useTime;
         if (time / 1000D / 60D >= 1) {
             useTime = time / 1000 / 60 + " 分钟";
-        }else{
-            if(time / 1000 == 0){
+        } else {
+            if (time / 1000 == 0) {
                 useTime = "1 秒钟";
-            }else{
+            } else {
                 useTime = time / 1000 + " 秒钟";
             }
         }
         return useTime;
     }
 
-    public String getSpeed(long time, long totalLen){
+    public String getSpeed(long time, long totalLen) {
         String speed = (totalLen * 1000D) / (1024D * 1024D * time) + "";
         int indexP = speed.indexOf(".");
-        if(indexP != -1){
+        if (indexP != -1) {
             speed = speed.substring(0, indexP + 3);
         }
         return (speed + " MB/S");
@@ -1259,7 +1275,7 @@ class FileTransmit {
 
             private void setTransferRate(long haveRecvLen, long folderLen) {
                 long rate = ((haveRecvLen * 100) / folderLen);
-                ChatClient.getRate().setText("完成:  " + rate +"%");
+                ChatClient.getRate().setText("完成:  " + rate + "%");
                 ChatClient.getjFrame().validate();
 //                dataPanel.getLblInfo().setText("完成:  " + rate +"%");
             }
@@ -1271,11 +1287,11 @@ class FileTransmit {
         Runnable receive = new Runnable() {
             private String finalFileName = "";
             private long haveSendLen = 0L;
+
             @Override
             public void run() {
                 String finalFolderPath = "";
                 String subFolder = "";
-                boolean firstTime = true;
                 long beginTime = 0L;
                 long endTime;
                 try {
@@ -1301,13 +1317,18 @@ class FileTransmit {
                             //生成子目录
                             File file = new File(finalFolderPath);
                             file.mkdirs();
+                            //记录文件名，用于取消
+                            if (firstTime) {
+                                finalFileName = subFolder;
+                                firstTime = false;
+                            }
                         } else if (firstRead.equals("endTransmit")) {
                             break;
                         }
-                        if (firstTime) {
-                            finalFileName = firstRead.equals("sendFile")? folderName : subFolder;
-                            firstTime = false;
-                        }
+//                        if (firstTime) {
+//                            finalFileName = firstRead.equals("sendFile")? folderName : subFolder;
+//                            firstTime = false;
+//                        }
                     }
                     endTime = System.currentTimeMillis();
                     useTime = getUseTime(endTime - beginTime);
@@ -1316,6 +1337,7 @@ class FileTransmit {
                             + useTime + ",速度: " + speed
                             + " !\n");
                     removeRateCancel();
+                    firstTime = true;
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
@@ -1329,6 +1351,11 @@ class FileTransmit {
                 int length;
                 try {
                     folderName = disWithPeer.readUTF();
+                    //记录文件名，用于取消
+                    if (firstTime) {
+                        finalFileName = folderName;
+                        firstTime = false;
+                    }
                     String finalFilePath = finalFolderPath + File.separator + folderName;
                     fileOutputStream = new FileOutputStream(new File(finalFilePath));
                     length = disWithPeer.readInt();
@@ -1361,17 +1388,13 @@ class FileTransmit {
 
             private void setTransferRate(long haveRecvLen, long folderLen) {
                 long rate = ((haveRecvLen * 100) / folderLen);
-                ChatClient.getRate().setText("完成:  " + rate +"%");
+                ChatClient.getRate().setText("完成:  " + rate + "%");
                 ChatClient.getjFrame().validate();
 //                dataPanel.getLblInfo().setText("完成:  " + rate +"%");
             }
         };
         new Thread(receive).start();
     }
-
-
-
-
 
 
 }
