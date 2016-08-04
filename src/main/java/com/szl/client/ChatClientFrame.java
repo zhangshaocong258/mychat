@@ -1186,7 +1186,7 @@ class FileTransmit {
                     if (begin.equals("Agree")) {
                         beginTime = System.currentTimeMillis();
                         if (folder.isFile()) {
-                            totalLen = folder.length();
+                            totalLen = folder.length();//文件长度
                             dosWithPeer.writeLong(totalLen);
                             sendFile(folder);
                         } else {
@@ -1217,7 +1217,7 @@ class FileTransmit {
                 String selectFolderPath = folder.getAbsolutePath().substring(index);//选择的文件夹名字
                 try {
                     dosWithPeer.writeUTF("sendFolder");
-                    dosWithPeer.writeUTF(selectFolderPath);
+                    dosWithPeer.writeUTF(selectFolderPath);//发送子文件夹
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -1245,8 +1245,9 @@ class FileTransmit {
                 int length;
                 try {
                     dosWithPeer.writeUTF("sendFile");
-                    dosWithPeer.writeUTF(file.getName());
+                    dosWithPeer.writeUTF(file.getName());//发送文件名，用来写
                     //发送文件
+                    //每次都要发送length，以判断单个文件开始和结束，否则全部文件会写到一个文件中
                     fileInputStream = new FileInputStream(file);
                     length = fileInputStream.read(sendBuffer, 0, sendBuffer.length);
                     while (length > 0) {
@@ -1313,7 +1314,7 @@ class FileTransmit {
                             receiveFile(finalFolderPath);//仅文件
                         } else if (firstRead.equals("sendFolder")) {
                             subFolder = disWithPeer.readUTF();//发送方的selectFolderPath子目录
-                            finalFolderPath = folderPath + File.separator + subFolder;
+                            finalFolderPath = folderPath + File.separator + subFolder;//用于创建文件夹，传入receiveFile作为参数
                             //生成子目录
                             File file = new File(finalFolderPath);
                             file.mkdirs();
@@ -1350,12 +1351,13 @@ class FileTransmit {
                 byte[] receiveBuffer = new byte[BUF_LEN];
                 int length;
                 try {
-                    folderName = disWithPeer.readUTF();
+                    folderName = disWithPeer.readUTF();//得到要写的文件的文件名
                     //记录文件名，用于取消
                     if (firstTime) {
                         finalFileName = folderName;
                         firstTime = false;
                     }
+                    //传入的finalFilePath已经包含了子文件夹，加上文件名即可
                     String finalFilePath = finalFolderPath + File.separator + folderName;
                     fileOutputStream = new FileOutputStream(new File(finalFilePath));
                     length = disWithPeer.readInt();
