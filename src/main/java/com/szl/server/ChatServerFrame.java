@@ -19,16 +19,16 @@ import org.dom4j.Element;
 /**
  * Created by zsc on 2015/3/9.
  * <p>
- * åˆ›å»ºChatServerå¯¹è±¡ã€å¸¦æœ‰ç›‘å¬äº‹ä»¶çš„Swingã€Frameåˆå§‹åŒ–ã€ç›‘å¬ç±»ã€mainå‡½æ•°
+ * ´´½¨ChatServer¶ÔÏó¡¢´øÓĞ¼àÌıÊÂ¼şµÄSwing¡¢Frame³õÊ¼»¯¡¢¼àÌıÀà¡¢mainº¯Êı
  */
 
 public class ChatServerFrame {
     private ChatServer chatServer = new ChatServer();
 
-    //å›ºå®šçš„
-    private JButton login = new JButton("å¯åŠ¨");
-    private JLabel record = new JLabel("è®°å½•");
-    private JLabel online = new JLabel("åœ¨çº¿ç”¨æˆ·åˆ—è¡¨");
+    //¹Ì¶¨µÄ
+    private JButton login = new JButton("Æô¶¯");
+    private JLabel record = new JLabel("¼ÇÂ¼");
+    private JLabel online = new JLabel("ÔÚÏßÓÃ»§ÁĞ±í");
 
     public static void main(String[] args) {
         new ChatServerFrame().init();
@@ -36,21 +36,21 @@ public class ChatServerFrame {
 
     private void init() {
         JPanel jPanel = new JPanel();
-        jPanel.setBorder(BorderFactory.createTitledBorder("æœåŠ¡å™¨çª—å£"));
+        jPanel.setBorder(BorderFactory.createTitledBorder("·şÎñÆ÷´°¿Ú"));
         jPanel.setLayout(new GridBagLayout());
 
         chatServer.getClientRecord().setEditable(false);
         chatServer.getOnlineCount().setEditable(false);
-        //è®¾ç½®å¤§å°ï¼Œé˜²æ­¢å‡ºç°çªç„¶å˜å¤§é”™è¯¯
+        //ÉèÖÃ´óĞ¡£¬·ÀÖ¹³öÏÖÍ»È»±ä´ó´íÎó
         chatServer.getClientRecordJScrollPane().setPreferredSize(new Dimension(2000, 1000));
         /**
-         * æ€»ä½“çª—æ ¼3*3ï¼ŒJTextAreaå 2*1ï¼Œ
+         * ×ÜÌå´°¸ñ3*3£¬JTextAreaÕ¼2*1£¬
          */
-        //å¯åŠ¨
+        //Æô¶¯
         jPanel.add(login, new PropertiesGBC(0, 0, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
-        //è®°å½•
+        //¼ÇÂ¼
         jPanel.add(record, new PropertiesGBC(0, 1, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
@@ -58,11 +58,11 @@ public class ChatServerFrame {
         jPanel.add(chatServer.getClientRecordJScrollPane(), new PropertiesGBC(0, 2, 2, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(1, 1).setInsets(0, 5, 5, 5));
 
-        //åœ¨çº¿ç”¨æˆ·åˆ—è¡¨
+        //ÔÚÏßÓÃ»§ÁĞ±í
         jPanel.add(online, new PropertiesGBC(2, 0, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0, 0).setInsets(0, 5, 5, 5));
 
-        //åœ¨çº¿äººæ•°JTextArea
+        //ÔÚÏßÈËÊıJTextArea
         jPanel.add(chatServer.getOnlineCountJScrollPane(), new PropertiesGBC(2, 1, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0.5, 0).setInsets(0, 5, 5, 5));
 
@@ -70,7 +70,7 @@ public class ChatServerFrame {
         jPanel.add(chatServer.getClientJScrollPane(), new PropertiesGBC(2, 2, 1, 1).
                 setFill(PropertiesGBC.BOTH).setWeight(0.5, 1).setInsets(0, 5, 5, 5));
 
-        JFrame jFrame = new JFrame("æœåŠ¡å™¨");
+        JFrame jFrame = new JFrame("·şÎñÆ÷");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setSize(new Dimension(300, 400));
         jFrame.add(jPanel);
@@ -89,7 +89,7 @@ public class ChatServerFrame {
 }
 
 /**
- * å¯åŠ¨socketè¿æ¥ï¼Œå®šä¹‰å‘é€å’Œæ¥å—ä¿¡æ¯ï¼Œå®šä¹‰å…³é—­æµæ–¹æ³•closeï¼Œå°è£…å‘é€å’Œæ¥å—æ–¹æ³•
+ * Æô¶¯socketÁ¬½Ó£¬¶¨Òå·¢ËÍºÍ½ÓÊÜĞÅÏ¢£¬¶¨Òå¹Ø±ÕÁ÷·½·¨close£¬·â×°·¢ËÍºÍ½ÓÊÜ·½·¨
  */
 class UserClient {
     private Socket socket = null;
@@ -126,7 +126,7 @@ class UserClient {
 }
 
 /**
- * ç”¨æˆ·Listçš„å°è£…ï¼Œå°è£…äº†å‘é€ä¿¡æ¯åŒ…è£…æ–¹æ³•ï¼Œæ·»åŠ ç”¨æˆ·å’Œåˆ é™¤ç”¨æˆ·
+ * ÓÃ»§ListµÄ·â×°£¬·â×°ÁË·¢ËÍĞÅÏ¢°ü×°·½·¨£¬Ìí¼ÓÓÃ»§ºÍÉ¾³ıÓÃ»§
  */
 class UserClientList {
     private static List<UserClient> clients = new ArrayList<>();
@@ -153,7 +153,7 @@ class UserClientList {
 }
 
 /**
- * ç”¨æˆ·ä¿¡æ¯ç±»ï¼Œæ‹†åˆ†ä»å®¢æˆ·ç«¯æ¥æ”¶çš„ä¿¡æ¯ï¼Œåˆå§‹åŒ–Mapï¼Œç”¨äºå»ºç«‹name&portå‘é€ç»™å®¢æˆ·ç«¯ï¼Œå°è£…buildMsg
+ * ÓÃ»§ĞÅÏ¢Àà£¬²ğ·Ö´Ó¿Í»§¶Ë½ÓÊÕµÄĞÅÏ¢£¬³õÊ¼»¯Map£¬ÓÃÓÚ½¨Á¢name&port·¢ËÍ¸ø¿Í»§¶Ë£¬·â×°buildMsg
  */
 class UserClientMsg {
     private String name = "";
@@ -206,18 +206,18 @@ class UserClientMsg {
 }
 
 /**
- * ä¸»æœåŠ¡ï¼Œåˆå§‹åŒ–ç›‘å¬çš„Swing
+ * Ö÷·şÎñ£¬³õÊ¼»¯¼àÌıµÄSwing
  */
 class ChatServer {
-    private UserClientList userClientList = new UserClientList();//ç”¨æˆ·List,ç”¨äºç»´æŠ¤å½“å‰ç”¨æˆ·ï¼Œç»™ä»–ä»¬å‘é€ä¿¡æ¯
-    private ServerDom4j serverDom4j;//å¯åŠ¨æŒ‰é’®æŒ‰ä¸‹æ—¶å†åˆå§‹åŒ–
+    private UserClientList userClientList = new UserClientList();//ÓÃ»§List,ÓÃÓÚÎ¬»¤µ±Ç°ÓÃ»§£¬¸øËûÃÇ·¢ËÍĞÅÏ¢
+    private ServerDom4j serverDom4j;//Æô¶¯°´Å¥°´ÏÂÊ±ÔÙ³õÊ¼»¯
 
-    //ä¸Šä¸‹çº¿è®°å½•
+    //ÉÏÏÂÏß¼ÇÂ¼
     private JTextArea clientRecord = new JTextArea();
     private JScrollPane clientRecordJScrollPane = new JScrollPane(clientRecord);
 
-    //åœ¨çº¿äººæ•°
-    private static JTextArea onlineCount = new JTextArea("åœ¨çº¿äººæ•°");
+    //ÔÚÏßÈËÊı
+    private static JTextArea onlineCount = new JTextArea("ÔÚÏßÈËÊı");
     private JScrollPane onlineCountJScrollPane = new JScrollPane(onlineCount);
 
     private static DefaultListModel<String> clientListModel = new DefaultListModel<>();
@@ -256,7 +256,7 @@ class ChatServer {
         clientRecord.append(str);
     }
 
-    //å¯åŠ¨æœåŠ¡ç«¯
+    //Æô¶¯·şÎñ¶Ë
     class Server implements Runnable {
         private ServerSocket serverSocket = null;
         private UserClient userClient;
@@ -268,7 +268,7 @@ class ChatServer {
                 serverSocket = new ServerSocket(30000);
                 start = true;
             } catch (BindException e) {
-                System.out.println("ç«¯å£ä½¿ç”¨ä¸­...");
+                System.out.println("¶Ë¿ÚÊ¹ÓÃÖĞ...");
                 System.exit(0);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -279,11 +279,11 @@ class ChatServer {
                     userClient = new UserClient(socket);
                     ReceiveMsg client = new ReceiveMsg(userClient);
                     userClientList.addClients(userClient);
-                    System.out.println("ä¸€ä¸ªå®¢æˆ·ç«¯å·²è¿æ¥ï¼");
+                    System.out.println("Ò»¸ö¿Í»§¶ËÒÑÁ¬½Ó£¡");
                     new Thread(client).start();
                 }
             } catch (IOException e) {
-                System.out.println("æœåŠ¡ç«¯é”™è¯¯ä½ç½®");
+                System.out.println("·şÎñ¶Ë´íÎóÎ»ÖÃ");
                 e.printStackTrace();
             } finally {
                 try {
@@ -297,9 +297,9 @@ class ChatServer {
     }
 
     /**
-     * æ¥å—å®¢æˆ·ç«¯ä¿¡æ¯ï¼Œä¸ç®¡æ˜¯æ³¨å†Œä¿¡æ¯è¿˜æ˜¯æ™®é€šä¿¡æ¯ï¼Œæ³¨å†Œä¿¡æ¯åªæœ‰name&portï¼Œæ™®é€šä¿¡æ¯æœ‰name&port&strï¼Œ
-     * ç›´æ¥è¿åŒnamePortç»„æˆçš„listå­—ç¬¦ä¸²å‘é€å›å»ï¼›
-     * å®¢æˆ·ç«¯ä¸‹çº¿æ—¶ï¼Œcatch Exceptionï¼Œå‘é€çš„ä¿¡æ¯ä¸ºname&portï¼Œå’Œå®¢æˆ·ç«¯ç™»å½•æ—¶å‘é€çš„ä¿¡æ¯æ ¼å¼ä¸€æ ·ï¼Œä¸èƒ½åŒ…å«str
+     * ½ÓÊÜ¿Í»§¶ËĞÅÏ¢£¬²»¹ÜÊÇ×¢²áĞÅÏ¢»¹ÊÇÆÕÍ¨ĞÅÏ¢£¬×¢²áĞÅÏ¢Ö»ÓĞname&port£¬ÆÕÍ¨ĞÅÏ¢ÓĞname&port&str£¬
+     * Ö±½ÓÁ¬Í¬namePort×é³ÉµÄlist×Ö·û´®·¢ËÍ»ØÈ¥£»
+     * ¿Í»§¶ËÏÂÏßÊ±£¬catch Exception£¬·¢ËÍµÄĞÅÏ¢Îªname&port£¬ºÍ¿Í»§¶ËµÇÂ¼Ê±·¢ËÍµÄĞÅÏ¢¸ñÊ½Ò»Ñù£¬²»ÄÜ°üº¬str
      */
     class ReceiveMsg implements Runnable {
         private boolean isConnected = false;
@@ -316,25 +316,25 @@ class ChatServer {
             isConnected = true;
         }
 
-        //catchç”±3å˜1
+        //catchÓÉ3±ä1
         public void run() {
             try {
                 while (isConnected) {
                     dataFromClient = userClient.receiveData();
                     userClientMsg = new UserClientMsg(dataFromClient);
-                    clientInfo = userClientMsg.putClientInfo();//å®¢æˆ·ç«¯åå­—ç«¯å£ä¿¡æ¯
+                    clientInfo = userClientMsg.putClientInfo();//¿Í»§¶ËÃû×Ö¶Ë¿ÚĞÅÏ¢
                     name = userClientMsg.getName();
                     port = userClientMsg.getPort();
                     namePort = userClientMsg.buildNamePort(clientInfo);
                     boolean flag = false;
-                    System.out.println("ç”¨æˆ·æ•°" + userClientMsg.getClientInfo().size());
+                    System.out.println("ÓÃ»§Êı" + userClientMsg.getClientInfo().size());
 
                     for (int j = 0; j < clientListModel.getSize(); j++) {
                         if (clientListModel.getElementAt(j).equals(name)) flag = true;
                     }
                     if (!flag) {
                         addClientListModelElement(name);
-                        addClientRecord(name + "å·²ä¸Šçº¿" + "\n");
+                        addClientRecord(name + "ÒÑÉÏÏß" + "\n");
 
                         serverDom4j.createElement(name, port);
                         serverDom4j.saveXML(ServerDom4j.getClientDocument(), serverDom4j.getDirPath(), serverDom4j.getClientsListPath());
@@ -342,40 +342,40 @@ class ChatServer {
                         serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getDirPath(), serverDom4j.getServerRecordPath());
 
                     }
-                    userClientList.sendMsg(dataFromClient, namePort);//å‘é€ä»å®¢æˆ·ç«¯å‘æ¥çš„ä¿¡æ¯ï¼Œä»¥åŠå°è£…çš„ç”¨æˆ·å_ç«¯å£
-                    onlineCount.setText("åœ¨çº¿äººæ•°" + ": " + clientListModel.getSize());
-                    System.out.println("æ¥æ”¶åˆ°çš„æ•°æ®" + dataFromClient);
+                    userClientList.sendMsg(dataFromClient, namePort);//·¢ËÍ´Ó¿Í»§¶Ë·¢À´µÄĞÅÏ¢£¬ÒÔ¼°·â×°µÄÓÃ»§Ãû_¶Ë¿Ú
+                    onlineCount.setText("ÔÚÏßÈËÊı" + ": " + clientListModel.getSize());
+                    System.out.println("½ÓÊÕµ½µÄÊı¾İ" + dataFromClient);
                 }
             } catch (IOException e) {
 //                e.printStackTrace();
-                userClientList.removeClients(this.userClient);//Liståˆ é™¤ä¸‹çº¿ç”¨æˆ·
-                removeClientListModelElement(this.name);//Frameä¸­åˆ é™¤ä¸‹çº¿ç”¨æˆ·
-                onlineCount.setText("åœ¨çº¿äººæ•°" + ": " + clientListModel.getSize());//åœ¨çº¿äººæ•°å‡ä¸€
-                clientInfo = userClientMsg.removeClientInfo(this.name);//Mapä¸­åˆ é™¤name_portï¼Œå‘å…¶ä»–ç”¨æˆ·å‘é€ä¿¡æ¯
-                namePort = userClientMsg.buildNamePort(clientInfo);//å»ºç«‹name_port,å‘é€
-                addClientRecord(name + "å·²ä¸‹çº¿" + "\n");
+                userClientList.removeClients(this.userClient);//ListÉ¾³ıÏÂÏßÓÃ»§
+                removeClientListModelElement(this.name);//FrameÖĞÉ¾³ıÏÂÏßÓÃ»§
+                onlineCount.setText("ÔÚÏßÈËÊı" + ": " + clientListModel.getSize());//ÔÚÏßÈËÊı¼õÒ»
+                clientInfo = userClientMsg.removeClientInfo(this.name);//MapÖĞÉ¾³ıname_port£¬ÏòÆäËûÓÃ»§·¢ËÍĞÅÏ¢
+                namePort = userClientMsg.buildNamePort(clientInfo);//½¨Á¢name_port,·¢ËÍ
+                addClientRecord(name + "ÒÑÏÂÏß" + "\n");
 
                 serverDom4j.deleteElement(name);
                 serverDom4j.saveXML(ServerDom4j.getClientDocument(), serverDom4j.getDirPath(), serverDom4j.getClientsListPath());
                 serverDom4j.createRecord(clientRecord.getText());
                 serverDom4j.saveXML(ServerDom4j.getRecordDocument(), serverDom4j.getDirPath(), serverDom4j.getServerRecordPath());
 
-                //æ‰çº¿åæ¨¡ä»¿ç™»å½•æ—¶å‘é€çš„ä¿¡æ¯æ ¼å¼
+                //µôÏßºóÄ£·ÂµÇÂ¼Ê±·¢ËÍµÄĞÅÏ¢¸ñÊ½
                 if (clientListModel.getSize() != 0) {
                     try {
                         String dataFromClientWithoutStr = userClientMsg.buildMsg(userClientMsg.getName(), userClientMsg.getPort());
-                        userClientList.sendMsg(dataFromClientWithoutStr, namePort);//å‘é€çš„strä¸º"",å®¢æˆ·ç«¯è¿›è¡Œåˆ¤æ–­
+                        userClientList.sendMsg(dataFromClientWithoutStr, namePort);//·¢ËÍµÄstrÎª"",¿Í»§¶Ë½øĞĞÅĞ¶Ï
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
                 }
-                System.out.println("å®¢æˆ·ç«¯å…³é—­1");
+                System.out.println("¿Í»§¶Ë¹Ø±Õ1");
 //            } catch (EOFException e) {
 //                userClientList.removeClients(this.userClient);
 //                removeClientListModelElement(this.name);
-//                System.out.println("å®¢æˆ·ç«¯å…³é—­2");
+//                System.out.println("¿Í»§¶Ë¹Ø±Õ2");
 //            } catch (IOException e) {
-//                System.out.println("å®¢æˆ·ç«¯å…³é—­3");
+//                System.out.println("¿Í»§¶Ë¹Ø±Õ3");
             } finally {
                 try {
                     this.userClient.close();
@@ -388,7 +388,7 @@ class ChatServer {
 }
 
 /**
- * æ“ä½œXMLè¿›è¡Œè®°å½•ï¼Œåˆ›å»º2ä¸ªXMLæ–‡ä»¶åˆ†åˆ«ä¿å­˜Recordå’ŒClientsList
+ * ²Ù×÷XML½øĞĞ¼ÇÂ¼£¬´´½¨2¸öXMLÎÄ¼ş·Ö±ğ±£´æRecordºÍClientsList
  */
 //class ServerOperateXML extends OperateXML {
 //    private static Document clientDocument;
@@ -398,7 +398,7 @@ class ChatServer {
 //    private String clientsListPath;
 //    private String serverRecordPath;
 //
-//    //åˆå§‹åŒ–ç›´æ¥ç”Ÿæˆç©ºæ–‡ä»¶
+//    //³õÊ¼»¯Ö±½ÓÉú³É¿ÕÎÄ¼ş
 //    public ServerOperateXML() {
 //        clientDocument = initDocument();
 //        clientsListRoot = clientDocument.createElement("content");
@@ -441,7 +441,7 @@ class ChatServer {
 //
 //    public void deleteElement(String clientName) {
 //        NodeList clientsList = clientDocument.getElementsByTagName("clients");
-//        //åˆ—å‡ºæ¯ä¸€ä¸ªclientsçš„NodeList
+//        //ÁĞ³öÃ¿Ò»¸öclientsµÄNodeList
 //        for (int i = 0; i < clientsList.getLength(); i++) {
 //            NodeList clientsChildList = clientsList.item(i).getChildNodes();
 //            if (clientsChildList.item(0).getTextContent().trim().equals(clientName)) {
@@ -460,7 +460,7 @@ class ServerDom4j extends Dom4jXML {
     private String clientsListPath;
     private String serverRecordPath;
 
-    //åˆå§‹åŒ–ç›´æ¥ç”Ÿæˆç©ºæ–‡ä»¶
+    //³õÊ¼»¯Ö±½ÓÉú³É¿ÕÎÄ¼ş
     public ServerDom4j() {
         clientDocument = initDocument();
         clientsListRoot = clientDocument.addElement("content");
@@ -500,7 +500,7 @@ class ServerDom4j extends Dom4jXML {
 
     public void deleteElement(String clientName) {
         List<Element> clientsList = clientsListRoot.elements("clients");
-        //åˆ—å‡ºæ¯ä¸€ä¸ªclientsçš„List
+        //ÁĞ³öÃ¿Ò»¸öclientsµÄList
         for (int i = 0; i < clientsList.size(); i++) {
             Element nameElement = clientsList.get(i).element("name");
             if (nameElement.getText().equals(clientName)) {
