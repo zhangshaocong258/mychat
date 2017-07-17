@@ -18,7 +18,7 @@ import org.dom4j.Element;
 
 /**
  * Created by zsc on 2015/3/9.
- * <p>
+ *
  * 创建ChatServer对象、带有监听事件的Swing、Frame初始化、监听类、main函数
  */
 
